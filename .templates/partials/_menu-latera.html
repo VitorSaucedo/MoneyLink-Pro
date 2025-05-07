@@ -293,6 +293,50 @@
       {% endif %}
 
 
+      {# 7. TI #}
+      {% has_access user "CT8" as can_ti_cat %}
+      {% if can_ti_cat %}
+      <li class="sidebar-category">
+        <a href="javascript:void(0)" class="category-toggle">
+          <i class="bx bx-code-alt"></i>
+          <span class="menu-label">TI</span>
+          <i class="bx bx-chevron-down category-arrow"></i>
+        </a>
+        <ul class="subcategory">
+          {% has_access user "SCT53" as can_ti_estoque %}
+          {% if can_ti_estoque %}
+          <li>
+            <a href="{% url 'ti:controle_estoque' %}">
+              <i class="bx bx-box"></i>
+              <span class="menu-label">Controle Estoque</span>
+            </a>
+          </li>
+          {% endif %}
+          
+          {% has_access user "SCT54" as can_ti_admin %}
+          {% if can_ti_admin %}
+          <li>
+            <a href="{% url 'ti:admin' %}">
+              <i class="bx bx-server"></i>
+              <span class="menu-label">Admin</span>
+            </a>
+          </li>
+          {% endif %}
+          
+          {% has_access user "SCT55" as can_ti_salas %}
+          {% if can_ti_salas %}
+          <li>
+            <a href="{% url 'ti:controle_salas' %}">
+              <i class="bx bx-door-open"></i>
+              <span class="menu-label">Controle de Salas</span>
+            </a>
+          </li>
+          {% endif %}
+        </ul>
+      </li>
+      {% endif %}
+
+
     {% else %}
       <li>
         <a href="{% url 'usuarios:login' %}">
