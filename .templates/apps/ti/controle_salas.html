@@ -1,264 +1,323 @@
-{% extends 'base.html' %}
+{% extends 'base-plus.html' %}
 {% load static %}
 
-{% block title %}{{ title }}{% endblock %}
+{% block header_title %}
+TI - Controle de Salas, Ilhas e PAs
+{% endblock %}
 
 {% block addcss_extra %}
-<link rel="stylesheet" href="{% static 'css/cards.css' %}">
-<link rel="stylesheet" href="{% static 'css/geral_forms.css' %}">
-<link rel="stylesheet" href="{% static 'css/mensagens.css' %}">
-<style>
-  .sala-card {
-    margin-bottom: 20px;
-    border: none;
-    border-radius: 10px;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-  }
-  
-  .sala-header {
-    background-color: #007bff;
-    color: white;
-    border-radius: 10px 10px 0 0;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-  }
-  
-  .ilha-card {
-    margin-bottom: 15px;
-    border: 1px solid rgba(0, 0, 0, 0.125);
-    border-radius: 8px;
-  }
-  
-  .ilha-header {
-    background-color: #f8f9fa;
-    border-bottom: 1px solid rgba(0, 0, 0, 0.125);
-    padding: 10px 15px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-  }
-  
-  .pa-item {
-    display: flex;
-    align-items: center;
-    padding: 10px 15px;
-    border-bottom: 1px solid rgba(0, 0, 0, 0.125);
-  }
-  
-  .pa-item:last-child {
-    border-bottom: none;
-  }
-  
-  .pa-number {
-    font-weight: bold;
-    margin-right: 10px;
-    background-color: #007bff;
-    color: white;
-    border-radius: 50%;
-    width: 30px;
-    height: 30px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
-  
-  .pa-info {
-    flex-grow: 1;
-  }
-  
-  .pa-status {
-    padding: 3px 8px;
-    border-radius: 4px;
-    font-size: 12px;
-  }
-  
-  .pa-status-livre {
-    background-color: #28a745;
-    color: white;
-  }
-  
-  .pa-status-ocupada {
-    background-color: #007bff;
-    color: white;
-  }
-  
-  .pa-status-manutencao {
-    background-color: #ffc107;
-    color: #212529;
-  }
-  
-  .pa-status-inativa {
-    background-color: #dc3545;
-    color: white;
-  }
-  
-  .pa-actions {
-    display: flex;
-    gap: 5px;
-  }
-  
-  .btn-action {
-    border-radius: 50%;
-    width: 30px;
-    height: 30px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 0;
-    font-size: 12px;
-  }
-  
-  .empty-state {
-    text-align: center;
-    padding: 30px;
-  }
-  
-  .empty-state i {
-    font-size: 3rem;
-    color: #dee2e6;
-    margin-bottom: 15px;
-  }
-  
-  .empty-state p {
-    color: #6c757d;
-    font-size: 1.1rem;
-  }
-</style>
+  {# Boxicons e CSS do app #}
+  <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+  <link rel="stylesheet" href="{% static 'css/mensagens.css' %}">
+  <link rel="stylesheet" href="{% static 'css/apps/ti/salas.css' %}">
 {% endblock %}
 
 {% block pre_content %}
-{% include 'partials/_messages.html' %}
+  {% include 'partials/_messages.html' %}
 {% endblock %}
 
 {% block content %}
-<div class="container-fluid mt-4">
-  <div class="row mb-4">
-    <div class="col-12">
-      <div class="card">
-        <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
-          <h5 class="card-title mb-0">
-            <i class="fas fa-building"></i> Controle de Salas, Ilhas e PAs
-          </h5>
-          <div>
-            <a href="{% url 'ti:sala_create' %}" class="btn btn-light btn-sm mr-2">
-              <i class="fas fa-plus-circle"></i> Nova Sala
-            </a>
-            <a href="{% url 'ti:ilha_create' %}" class="btn btn-light btn-sm mr-2">
-              <i class="fas fa-plus-circle"></i> Nova Ilha
-            </a>
-            <a href="{% url 'ti:posicao_atendimento_create' %}" class="btn btn-light btn-sm">
-              <i class="fas fa-plus-circle"></i> Nova PA
-            </a>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
+<div class="container my-4">
+  <h1 class="titulo-pagina mb-4"><i class='bx bx-building me-2'></i>Controle de Salas, Ilhas e PAs</h1>
   
-  <div class="row">
-    <div class="col-12">
-      {% if salas %}
-        {% for sala in salas %}
-          <div class="card sala-card">
-            <div class="card-header sala-header">
-              <h5 class="mb-0">
-                <i class="fas fa-door-open"></i> Sala: {{ sala.nome }}
-              </h5>
-              <div>
-                <a href="{% url 'ti:sala_update' sala.pk %}" class="btn btn-light btn-sm">
-                  <i class="fas fa-edit"></i> Editar
-                </a>
-                <a href="{% url 'ti:ilha_create' %}" class="btn btn-light btn-sm">
-                  <i class="fas fa-plus-circle"></i> Adicionar Ilha
-                </a>
-              </div>
-            </div>
-            <div class="card-body">
+  {# Container para mensagens de feedback (gerenciado pelo JS) #}
+  <div id="message-container"></div>
+
+  {% if salas %}
+    <!-- Abas para as salas -->
+    <div class="card mb-4">
+      <div class="card-header">
+        <i class='bx bx-door-open me-2'></i> Salas Disponíveis
+      </div>
+      <div class="card-body">
+        <ul class="nav nav-tabs" id="salas-tab" role="tablist">
+          {% for sala in salas %}
+            <li class="nav-item" role="presentation">
+              <button class="nav-link {% if forloop.first %}active{% endif %}" 
+                      id="sala-{{ sala.id }}-tab" 
+                      data-bs-toggle="tab" 
+                      data-sala-id="{{ sala.id }}"
+                      data-bs-target="#sala-{{ sala.id }}" 
+                      type="button" 
+                      role="tab" 
+                      aria-controls="sala-{{ sala.id }}" 
+                      aria-selected="{% if forloop.first %}true{% else %}false{% endif %}">
+                <i class='bx bx-door-open'></i> {{ sala.nome }}
+              </button>
+            </li>
+          {% endfor %}
+        </ul>
+        
+        <!-- Conteúdo das abas das salas -->
+        <div class="tab-content" id="salas-tab-content">
+          {% for sala in salas %}
+            <div class="tab-pane fade {% if forloop.first %}show active{% endif %}" 
+                 id="sala-{{ sala.id }}" 
+                 role="tabpanel" 
+                 aria-labelledby="sala-{{ sala.id }}-tab">
+              
               {% if sala.ilhas.all %}
-                {% for ilha in sala.ilhas.all %}
-                  <div class="card ilha-card">
-                    <div class="ilha-header">
-                      <h6 class="mb-0">
-                        <i class="fas fa-th-large"></i> Ilha: {{ ilha.nome }} ({{ ilha.quantidade_pas }} PAs)
-                      </h6>
-                      <div>
-                        <a href="{% url 'ti:ilha_update' ilha.pk %}" class="btn btn-sm btn-outline-secondary">
-                          <i class="fas fa-edit"></i> Editar
-                        </a>
-                        <a href="{% url 'ti:posicao_atendimento_create' %}" class="btn btn-sm btn-outline-primary">
-                          <i class="fas fa-plus-circle"></i> Adicionar PA
-                        </a>
-                      </div>
-                    </div>
-                    <div class="card-body p-0">
-                      {% if ilha.posicoes_atendimento.all %}
-                        <div class="list-group list-group-flush">
-                          {% for pa in ilha.posicoes_atendimento.all %}
-                            <div class="pa-item">
-                              <div class="pa-number">{{ pa.numero }}</div>
-                              <div class="pa-info">
-                                <div>
-                                  <strong>Funcionário:</strong> {{ pa.funcionario|default:"Não atribuído" }}
-                                </div>
-                                <div>
-                                  <strong>Status:</strong>
-                                  {% if pa.status == 'livre' %}
-                                    <span class="pa-status pa-status-livre">Livre</span>
-                                  {% elif pa.status == 'ocupada' %}
-                                    <span class="pa-status pa-status-ocupada">Ocupada</span>
-                                  {% elif pa.status == 'manutencao' %}
-                                    <span class="pa-status pa-status-manutencao">Em Manutenção</span>
-                                  {% elif pa.status == 'inativa' %}
-                                    <span class="pa-status pa-status-inativa">Inativa</span>
-                                  {% endif %}
-                                </div>
-                              </div>
-                              <div class="pa-actions">
-                                <a href="{% url 'ti:posicao_atendimento_update' pa.pk %}" class="btn btn-outline-primary btn-action">
-                                  <i class="fas fa-edit"></i>
-                                </a>
-                                <a href="{% url 'ti:posicao_atendimento_delete' pa.pk %}" class="btn btn-outline-danger btn-action">
-                                  <i class="fas fa-trash"></i>
-                                </a>
-                              </div>
+                <!-- Abas para as ilhas -->
+                <div class="card mt-3">
+                  <div class="card-header">
+                    <i class='bx bx-grid-alt me-2'></i> Ilhas da Sala {{ sala.nome }}
+                  </div>
+                  <div class="card-body">
+                    <ul class="nav nav-tabs nav-ilhas" id="ilhas-sala-{{ sala.id }}-tab" role="tablist">
+                      {% for ilha in sala.ilhas.all %}
+                        <li class="nav-item" role="presentation">
+                          <button class="nav-link {% if forloop.first %}active{% endif %}" 
+                                  id="ilha-{{ ilha.id }}-tab" 
+                                  data-bs-toggle="tab" 
+                                  data-ilha-id="{{ ilha.id }}"
+                                  data-bs-target="#ilha-{{ ilha.id }}" 
+                                  type="button" 
+                                  role="tab" 
+                                  aria-controls="ilha-{{ ilha.id }}" 
+                                  aria-selected="{% if forloop.first %}true{% else %}false{% endif %}">
+                            <i class='bx bx-grid'></i> {{ ilha.nome }}
+                          </button>
+                        </li>
+                      {% endfor %}
+                    </ul>
+                    
+                    <!-- Conteúdo das abas das ilhas -->
+                    <div class="tab-content" id="ilhas-sala-{{ sala.id }}-content">
+                      {% for ilha in sala.ilhas.all %}
+                        <div class="tab-pane fade {% if forloop.first %}show active{% endif %}" 
+                             id="ilha-{{ ilha.id }}" 
+                             role="tabpanel" 
+                             aria-labelledby="ilha-{{ ilha.id }}-tab">
+                          
+                          {% if ilha.posicoes_atendimento.all %}
+                            <!-- Grid de cards de PAs -->
+                            <div class="pa-grid">
+                              {% with pas=ilha.posicoes_atendimento.all|dictsortreversed:"numero" %}
+                                {% for pa in pas %}
+                                  <div class="pa-card">
+                                    <div class="pa-header">
+                                      <div class="pa-title">
+                                        <span>PA {{ pa.numero }}</span>
+                                        <div class="pa-status-indicator status-{{ pa.status }}" 
+                                           title="{% if pa.status == 'livre' %}Livre{% elif pa.status == 'ocupada' %}Ocupada{% elif pa.status == 'manutencao' %}Em Manutenção{% elif pa.status == 'inativa' %}Inativa{% endif %}">
+                                        </div>
+                                      </div>
+                                      <div class="pa-status">
+                                        {% if pa.status == 'livre' %}
+                                          <span class="badge bg-success">Livre</span>
+                                        {% elif pa.status == 'ocupada' %}
+                                          <span class="badge bg-primary">Ocupada</span>
+                                        {% elif pa.status == 'manutencao' %}
+                                          <span class="badge bg-warning text-dark">Em Manutenção</span>
+                                        {% elif pa.status == 'inativa' %}
+                                          <span class="badge bg-danger">Inativa</span>
+                                        {% endif %}
+                                      </div>
+                                    </div>
+                                    
+                                    <div class="pa-content">
+                                      <div>
+                                        <strong>Funcionário:</strong> 
+                                        {% if pa.funcionario %}
+                                          {{ pa.funcionario.nome }}
+                                        {% else %}
+                                          <span class="text-muted">Não atribuído</span>
+                                        {% endif %}
+                                      </div>
+                                      
+                                      <!-- Periféricos atribuídos a esta PA -->
+                                      <div class="pa-perifericos">
+                                        <h6><i class='bx bx-devices me-1'></i> Periféricos</h6>
+                                        <div class="perifericos-list">
+                                          {% with perifericos=pa.atribuicaoperifericopa_set.filter.all %}
+                                            {% if perifericos %}
+                                              {% for atr in perifericos %}
+                                                {% if atr.ativo %}
+                                                  <span class="periferico-tag">{{ atr.periferico.tipo.nome }} {{ atr.periferico.marca }}</span>
+                                                {% endif %}
+                                              {% endfor %}
+                                            {% else %}
+                                              <span class="text-muted">Nenhum periférico atribuído</span>
+                                            {% endif %}
+                                          {% endwith %}
+                                        </div>
+                                      </div>
+                                    </div>
+                                  </div>
+                                {% endfor %}
+                              {% endwith %}
                             </div>
-                          {% endfor %}
+                          {% else %}
+                            <!-- Estado vazio para PAs -->
+                            <div class="empty-state">
+                              <i class='bx bx-desktop'></i>
+                              <h5>Nenhuma PA cadastrada nesta ilha</h5>
+                              <p>Adicione posições de atendimento para visualizá-las aqui.</p>
+                              <a href="#" class="btn btn-outline-secondary">
+                                <i class='bx bx-plus-circle'></i> Adicionar PA
+                              </a>
+                            </div>
+                          {% endif %}
                         </div>
-                      {% else %}
-                        <div class="p-3 text-center text-muted">
-                          <i class="fas fa-info-circle"></i> Nenhuma PA cadastrada para esta ilha
-                        </div>
-                      {% endif %}
+                      {% endfor %}
                     </div>
                   </div>
-                {% endfor %}
+                </div>
               {% else %}
+                <!-- Estado vazio para ilhas -->
                 <div class="empty-state">
-                  <i class="fas fa-th-large"></i>
-                  <p>Nenhuma ilha cadastrada para esta sala</p>
-                  <a href="{% url 'ti:ilha_create' %}" class="btn btn-primary">
-                    <i class="fas fa-plus-circle"></i> Adicionar Ilha
+                  <i class='bx bx-grid-alt'></i>
+                  <h5>Nenhuma ilha cadastrada nesta sala</h5>
+                  <p>Adicione ilhas para organizar as posições de atendimento.</p>
+                  <a href="#" class="btn btn-outline-secondary">
+                    <i class='bx bx-plus-circle'></i> Adicionar Ilha
                   </a>
                 </div>
               {% endif %}
             </div>
-          </div>
-        {% endfor %}
-      {% else %}
-        <div class="empty-state">
-          <i class="fas fa-door-open"></i>
-          <p>Nenhuma sala cadastrada</p>
-          <a href="{% url 'ti:sala_create' %}" class="btn btn-primary">
-            <i class="fas fa-plus-circle"></i> Adicionar Sala
-          </a>
+          {% endfor %}
         </div>
-      {% endif %}
+      </div>
     </div>
-  </div>
+  {% else %}
+    <!-- Estado vazio para salas -->
+    <div class="empty-state">
+      <i class='bx bx-door-open'></i>
+      <h5>Nenhuma sala cadastrada</h5>
+      <p>Adicione salas para começar a organizar seu ambiente.</p>
+      <a href="#" class="btn btn-outline-secondary">
+        <i class='bx bx-plus-circle'></i> Adicionar Sala
+      </a>
+    </div>
+  {% endif %}
 </div>
 {% endblock %}
 
 {% block addjs_extra %}
-<script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/js/all.min.js"></script>
+  {# jQuery é necessário #}
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <script>
+    $(document).ready(function() {
+      // Manipulação das abas de salas
+      const salasButtons = document.querySelectorAll('#salas-tab .nav-link');
+      let currentSalaId = salasButtons.length > 0 ? salasButtons[0].getAttribute('data-sala-id') : null;
+      
+      salasButtons.forEach(button => {
+        button.addEventListener('click', function(e) {
+          const targetSalaId = this.getAttribute('data-sala-id');
+          const direction = parseInt(targetSalaId) > parseInt(currentSalaId) ? 'right' : 'left';
+          
+          // Animar transição
+          animateTabTransition('#salas-tab-content', '#sala-' + currentSalaId, '#sala-' + targetSalaId, direction);
+          
+          // Atualizar sala atual
+          currentSalaId = targetSalaId;
+          
+          // Atualizar estado ativo nas abas
+          salasButtons.forEach(btn => {
+            btn.classList.remove('active');
+            btn.setAttribute('aria-selected', 'false');
+          });
+          this.classList.add('active');
+          this.setAttribute('aria-selected', 'true');
+          
+          // Ajustar altura das grids de PAs
+          adjustPaGridsHeight();
+        });
+      });
+      
+      // Manipulação das abas de ilhas para cada sala
+      const salasContent = document.querySelectorAll('#salas-tab-content .tab-pane');
+      salasContent.forEach(salaContent => {
+        const salaId = salaContent.getAttribute('id').replace('sala-', '');
+        const ilhasButtons = salaContent.querySelectorAll('.nav-ilhas .nav-link');
+        let currentIlhaId = ilhasButtons.length > 0 ? ilhasButtons[0].getAttribute('data-ilha-id') : null;
+        
+        ilhasButtons.forEach(button => {
+          button.addEventListener('click', function(e) {
+            const targetIlhaId = this.getAttribute('data-ilha-id');
+            const direction = parseInt(targetIlhaId) > parseInt(currentIlhaId) ? 'right' : 'left';
+            
+            // Animar transição
+            animateTabTransition('#ilhas-sala-' + salaId + '-content', '#ilha-' + currentIlhaId, '#ilha-' + targetIlhaId, direction);
+            
+            // Atualizar ilha atual
+            currentIlhaId = targetIlhaId;
+            
+            // Atualizar estado ativo nas abas
+            ilhasButtons.forEach(btn => {
+              btn.classList.remove('active');
+              btn.setAttribute('aria-selected', 'false');
+            });
+            this.classList.add('active');
+            this.setAttribute('aria-selected', 'true');
+            
+            // Ajustar altura das grids de PAs
+            setTimeout(() => {
+              adjustPaGridsHeight();
+            }, 510); // Um pouco mais que a duração da animação
+          });
+        });
+      });
+      
+      // Função para ajustar a altura dos grids de PAs
+      function adjustPaGridsHeight() {
+        document.querySelectorAll('.pa-grid').forEach(grid => {
+          if (grid.closest('.tab-pane.active')) {
+            const cards = grid.querySelectorAll('.pa-card');
+            if (cards.length > 0) {
+              const cardHeight = cards[0].offsetHeight + 20; // altura + margem
+              const numRows = Math.ceil(cards.length / 2);
+              grid.style.height = (cardHeight * numRows) + 'px';
+            }
+          }
+        });
+      }
+      
+      // Ajustar altura inicial das grids de PAs
+      setTimeout(adjustPaGridsHeight, 100);
+      
+      // Ajustar altura quando a janela for redimensionada
+      window.addEventListener('resize', adjustPaGridsHeight);
+      
+      // Função para animar transição entre abas
+      function animateTabTransition(containerSelector, currentSelector, targetSelector, direction) {
+        const container = document.querySelector(containerSelector);
+        const currentTab = document.querySelector(currentSelector);
+        const targetTab = document.querySelector(targetSelector);
+        
+        if (!container || !currentTab || !targetTab) return;
+        
+        // Configurar animação baseada na direção
+        const currentExitClass = direction === 'right' ? 'slide-right-exit-active' : 'slide-left-exit-active';
+        const targetEnterClass = direction === 'right' ? 'slide-right-enter' : 'slide-left-enter';
+        const targetEnterActiveClass = direction === 'right' ? 'slide-right-enter-active' : 'slide-left-enter-active';
+        
+        // Preparar elemento alvo
+        targetTab.style.display = 'block';
+        targetTab.classList.add(targetEnterClass);
+        
+        // Forçar repaint
+        void targetTab.offsetWidth;
+        
+        // Iniciar animação
+        currentTab.classList.add(currentExitClass);
+        targetTab.classList.add(targetEnterActiveClass);
+        targetTab.classList.remove(targetEnterClass);
+        
+        // Limpar após a animação
+        setTimeout(() => {
+          currentTab.style.display = 'none';
+          currentTab.classList.remove(currentExitClass);
+          currentTab.classList.remove('show', 'active');
+          
+          targetTab.classList.add('show', 'active');
+          targetTab.classList.remove(targetEnterActiveClass);
+          
+          // Ajustar altura das grids de PAs após a transição
+          adjustPaGridsHeight();
+        }, 500); // Duração da animação
+      }
+    });
+  </script>
 {% endblock %} 

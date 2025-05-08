@@ -1,0 +1,498 @@
+/* Estilos para a página de Controle de Salas, Ilhas e PAs */
+
+/* ==========================================
+   Variáveis de Cores e Sombreamentos 
+   ========================================== */
+:root {
+    --color-primary-dark: #142650; /* Azul escuro */
+    --color-secondary: #70f611; /* Verde */
+    --color-tertiary: #0bd5f0; /* Azul claro (ciano) */
+    --color-accent: #b4874c; /* Tom terroso */
+    --color-white: #fff;
+    --color-gray: #ddd;
+    --color-light-gray: #f0f0f0;
+    --color-text-dark: #333;
+    --color-text-light: #666;
+    --color-danger: #dc3545;
+    --color-success: #198754; /* Verde escuro para sucesso */
+
+    --box-shadow-light: 0 2px 6px rgba(0,0,0,0.05);
+    --box-shadow-medium: 0 4px 12px rgba(0,0,0,0.1);
+    --box-shadow-card-hover: 0 6px 18px rgba(112, 246, 17, 0.15); /* Sombra verde no hover */
+
+    /* Gradientes com foco no verde */
+    --gradient-primary-green: linear-gradient(135deg, var(--color-secondary) 0%, var(--color-primary-dark) 100%);
+    --gradient-secondary-green: linear-gradient(135deg, var(--color-secondary) 0%, var(--color-tertiary) 50%, var(--color-secondary) 100%);
+    --gradient-metallic-green-focus: linear-gradient(135deg, #ffffff 0%, var(--color-secondary) 30%, var(--color-tertiary) 50%, var(--color-secondary) 70%, #ffffff 100%);
+    --gradient-card-header: linear-gradient(-45deg, var(--color-secondary), #5cb85c, var(--color-primary-dark), var(--color-secondary)); /* Verde, verde mais escuro, azul, verde */
+
+    /* Animação do Gradiente */
+    --gradient-animation: gradientBG 12s ease infinite;
+}
+
+/* ==========================================
+   Estilos Gerais da Página
+   ========================================== */
+body {
+    background-color: var(--color-light-gray);
+}
+
+.container {
+    max-width: 1200px;
+}
+
+.titulo-pagina {
+    color: var(--color-primary-dark);
+    font-weight: 600;
+    border-bottom: 3px solid var(--color-secondary);
+    padding-bottom: 0.5rem;
+    display: inline-block;
+}
+
+.titulo-pagina i {
+    color: var(--color-secondary);
+}
+
+/* ==========================================
+   Estilos para os Cards
+   ========================================== */
+.card {
+    background-color: var(--color-white);
+    border: 1px solid var(--color-gray);
+    border-radius: 10px;
+    box-shadow: var(--box-shadow-light);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    margin-bottom: 1.5rem;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    position: relative;
+}
+
+.card:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--box-shadow-card-hover);
+}
+
+.card .card-header {
+    background: var(--gradient-card-header) !important;
+    background-size: 400% 400% !important;
+    animation: var(--gradient-animation) !important;
+    color: var(--color-white) !important;
+    font-weight: 600;
+    font-size: 1.1em;
+    padding: 1rem 1.25rem;
+    letter-spacing: 0.5px;
+    text-shadow: 0 1px 2px rgba(0,0,0,0.1);
+    display: flex;
+    align-items: center;
+    position: relative; /* Necessário para o z-index do ::before */
+    z-index: 1; /* Garante que o conteúdo fique acima do ::before */
+}
+
+.card .card-header i {
+    margin-right: 0.75rem;
+    font-size: 1.3rem;
+    vertical-align: middle;
+}
+
+/* Efeito de brilho metálico */
+.card .card-header::before {
+    content: '';
+    position: absolute;
+    top: -100%;
+    left: -100%;
+    width: 200%;
+    height: 200%;
+    background: linear-gradient(
+      135deg,
+      rgba(255,255,255,0) 0%,
+      rgba(255,255,255,0.05) 40%,
+      rgba(255,255,255,0.3) 50%,
+      rgba(255,255,255,0.05) 60%,
+      rgba(255,255,255,0) 100%
+    );
+    transform: rotate(45deg);
+    transition: all 0.7s ease;
+    z-index: -1; /* Fica atrás do conteúdo */
+}
+
+.card:hover .card-header::before {
+    top: 100%;
+    left: 100%;
+}
+
+.card .card-body {
+    padding: 1.25rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    background: linear-gradient(135deg, rgba(255, 255, 255, 1) 0%, rgba(245, 255, 245, 0.8) 100%);
+}
+
+/* ==========================================
+   Estilos para as abas
+   ========================================== */
+.nav-tabs {
+    border-bottom: 1px solid var(--color-gray);
+    display: flex;
+    flex-wrap: wrap;
+    padding-left: 0;
+    margin-bottom: 0;
+    list-style: none;
+}
+
+.nav-tabs .nav-link {
+    margin-bottom: -1px;
+    border: 1px solid transparent;
+    border-top-left-radius: 8px;
+    border-top-right-radius: 8px;
+    padding: 0.75rem 1.25rem;
+    cursor: pointer;
+    font-weight: 500;
+    transition: all 0.2s ease-in-out;
+    display: flex;
+    align-items: center;
+    color: var(--color-text-dark);
+}
+
+.nav-tabs .nav-link i {
+    margin-right: 8px;
+    color: var(--color-secondary);
+    font-size: 1.1rem;
+}
+
+.nav-tabs .nav-link:hover {
+    background-color: rgba(112, 246, 17, 0.08);
+    border-color: var(--color-gray) var(--color-gray) transparent;
+}
+
+.nav-tabs .nav-link.active {
+    color: var(--color-primary-dark);
+    background-color: var(--color-white);
+    border-color: var(--color-gray) var(--color-gray) var(--color-white);
+    font-weight: 600;
+    position: relative;
+}
+
+.nav-tabs .nav-link.active::after {
+    content: '';
+    position: absolute;
+    bottom: -1px;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: var(--color-secondary);
+}
+
+/* Conteúdo das abas */
+.tab-content {
+    padding: 20px 0;
+    position: relative;
+    overflow: hidden;
+    min-height: 300px;
+}
+
+.tab-pane {
+    display: none;
+    width: 100%;
+    transition: transform 0.5s ease;
+    position: absolute;
+    top: 0;
+    left: 0;
+}
+
+.tab-pane.active {
+    display: block;
+}
+
+/* Animações de slide */
+.slide-right-enter {
+    transform: translateX(100%);
+}
+
+.slide-right-enter-active {
+    transform: translateX(0);
+}
+
+.slide-right-exit {
+    transform: translateX(0);
+}
+
+.slide-right-exit-active {
+    transform: translateX(-100%);
+}
+
+.slide-left-enter {
+    transform: translateX(-100%);
+}
+
+.slide-left-enter-active {
+    transform: translateX(0);
+}
+
+.slide-left-exit {
+    transform: translateX(0);
+}
+
+.slide-left-exit-active {
+    transform: translateX(100%);
+}
+
+/* ==========================================
+   Estilos para as PAs
+   ========================================== */
+.pa-grid {
+    display: flex;
+    flex-direction: column;
+    flex-wrap: wrap;
+    height: 650px; /* Altura fixa para forçar o wrap em colunas */
+    max-width: 800px;
+    margin: 20px auto;
+    gap: 20px;
+    align-content: flex-start;
+    min-height: 200px; /* Altura mínima para evitar colapso */
+}
+
+.pa-card {
+    background: var(--color-white);
+    border-radius: 10px;
+    box-shadow: var(--box-shadow-light);
+    padding: 15px;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    border-left: 4px solid var(--color-secondary);
+    width: calc(50% - 15px); /* 50% de largura menos gap */
+    margin-bottom: 20px;
+    min-height: 150px; /* Altura mínima para cada card */
+}
+
+.pa-card:hover {
+    transform: translateY(-5px);
+    box-shadow: var(--box-shadow-card-hover);
+}
+
+.pa-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 15px;
+    border-bottom: 1px solid var(--color-gray);
+    padding-bottom: 10px;
+}
+
+.pa-title {
+    font-size: 1.1rem;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    color: var(--color-primary-dark);
+}
+
+.pa-title span {
+    margin-right: 10px;
+}
+
+.pa-status-indicator {
+    width: 15px;
+    height: 15px;
+    border-radius: 50%;
+    display: inline-block;
+}
+
+.status-livre {
+    background-color: var(--color-success);
+}
+
+.status-ocupada {
+    background-color: var(--color-primary-dark);
+}
+
+.status-manutencao {
+    background-color: #ffc107; /* Amarelo */
+}
+
+.status-inativa {
+    background-color: var(--color-danger);
+}
+
+.pa-content {
+    margin-bottom: 15px;
+}
+
+.pa-content div {
+    margin-bottom: 8px;
+    color: var(--color-text-dark);
+}
+
+.pa-content strong {
+    font-weight: 500;
+    color: var(--color-primary-dark);
+}
+
+.pa-perifericos {
+    margin-top: 15px;
+    border-top: 1px solid var(--color-gray);
+    padding-top: 10px;
+}
+
+.pa-perifericos h6 {
+    font-size: 0.9rem;
+    margin-bottom: 10px;
+    color: var(--color-primary-dark);
+    display: flex;
+    align-items: center;
+}
+
+.pa-perifericos h6 i {
+    margin-right: 5px;
+    color: var(--color-secondary);
+}
+
+.perifericos-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+}
+
+.periferico-tag {
+    background-color: rgba(112, 246, 17, 0.08);
+    border-radius: 8px;
+    padding: 3px 8px;
+    font-size: 0.8rem;
+    color: var(--color-text-dark);
+}
+
+/* ==========================================
+   Estilos para Badges
+   ========================================== */
+.badge {
+    padding: 0.25rem 0.5rem;
+    font-size: 0.75rem;
+    font-weight: 500;
+    border-radius: 8px;
+}
+
+.bg-success {
+    background-color: var(--color-success) !important;
+    color: var(--color-white);
+}
+
+.bg-primary {
+    background-color: var(--color-primary-dark) !important;
+    color: var(--color-white);
+}
+
+.bg-warning {
+    background-color: #ffc107 !important;
+    color: #212529;
+}
+
+.bg-danger {
+    background-color: var(--color-danger) !important;
+    color: var(--color-white);
+}
+
+.text-muted {
+    color: var(--color-text-light) !important;
+}
+
+/* ==========================================
+   Estado vazio
+   ========================================== */
+.empty-state {
+    text-align: center;
+    padding: 40px 20px;
+    background-color: rgba(112, 246, 17, 0.05);
+    border-radius: 10px;
+    margin-top: 20px;
+    border: 1px dashed var(--color-gray);
+}
+
+.empty-state i {
+    font-size: 3rem;
+    color: var(--color-secondary);
+    margin-bottom: 20px;
+    opacity: 0.7;
+}
+
+.empty-state h5 {
+    font-weight: 500;
+    color: var(--color-primary-dark);
+    margin-bottom: 10px;
+}
+
+.empty-state p {
+    color: var(--color-text-dark);
+    margin-bottom: 20px;
+}
+
+/* ==========================================
+   Contêiner de mensagens
+   ========================================== */
+#message-container {
+    margin-bottom: 20px;
+}
+
+#message-container .alert {
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    padding: 0.8rem 1.25rem;
+    font-weight: 500;
+    box-shadow: var(--box-shadow-light);
+    border: none;
+}
+
+#message-container .alert-success {
+    background: linear-gradient(135deg, #d1e7dd, var(--color-success));
+    color: #0a3622;
+}
+
+#message-container .alert-danger {
+    background: linear-gradient(135deg, #f8d7da, var(--color-danger));
+    color: #58151c;
+}
+
+#message-container .alert i {
+    margin-right: 0.75rem;
+    font-size: 1.3rem;
+}
+
+/* ==========================================
+   Estilos responsivos
+   ========================================== */
+@media (max-width: 768px) {
+    .nav-tabs .nav-link {
+        padding: 0.5rem 0.75rem;
+        font-size: 0.9rem;
+    }
+    
+    .pa-grid {
+        flex-direction: column;
+        height: auto;
+        flex-wrap: nowrap;
+    }
+    
+    .pa-card {
+        width: 100%;
+    }
+
+    .card .card-body {
+        padding: 1rem;
+    }
+
+    .card .card-header {
+        font-size: 1em;
+        padding: 0.8rem 1rem;
+    }
+}
+
+/* ==========================================
+   Animações
+   ========================================== */
+@keyframes gradientBG {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+}

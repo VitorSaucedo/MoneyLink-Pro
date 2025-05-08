@@ -100,7 +100,7 @@ DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
         'NAME': 'moneylinkpro',
-        'USER': 'moneylink',
+        'USER': 'root',
         'PASSWORD': 'M@k9m3p1',
         'HOST': '127.0.0.1',
         'PORT': '3306',
