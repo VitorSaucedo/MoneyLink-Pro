@@ -22,12 +22,11 @@ class TipoPerifericoForm(forms.ModelForm):
 class PerifericoForm(forms.ModelForm):
     class Meta:
         model = Periferico
-        fields = ['tipo', 'marca', 'modelo', 'numero_serie', 'data_aquisicao', 'status', 'observacoes']
+        fields = ['tipo', 'marca', 'modelo', 'data_aquisicao', 'status', 'observacoes']
         widgets = {
             'tipo': forms.Select(attrs={'class': 'form-control'}),
             'marca': forms.TextInput(attrs={'class': 'form-control'}),
             'modelo': forms.TextInput(attrs={'class': 'form-control'}),
-            'numero_serie': forms.TextInput(attrs={'class': 'form-control'}),
             'data_aquisicao': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
             'status': forms.Select(attrs={'class': 'form-control'}),
             'observacoes': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
@@ -36,10 +35,9 @@ class PerifericoForm(forms.ModelForm):
 class SalaForm(forms.ModelForm):
     class Meta:
         model = Sala
-        fields = ['nome', 'andar', 'descricao']
+        fields = ['nome', 'descricao']
         widgets = {
             'nome': forms.TextInput(attrs={'class': 'form-control'}),
-            'andar': forms.TextInput(attrs={'class': 'form-control'}),
             'descricao': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
         }
 

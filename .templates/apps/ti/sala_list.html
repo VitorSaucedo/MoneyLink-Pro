@@ -109,7 +109,6 @@
             <thead>
               <tr>
                 <th>Nome</th>
-                <th>Andar</th>
                 <th>Descrição</th>
                 <th style="width: 150px">Ações</th>
               </tr>
@@ -118,7 +117,6 @@
               {% for sala in salas %}
                 <tr>
                   <td><strong>{{ sala.nome }}</strong></td>
-                  <td>{{ sala.andar|default:"-" }}</td>
                   <td>{{ sala.descricao|default:"-" }}</td>
                   <td>
                     <a href="{% url 'ti:sala_update' sala.pk %}" class="btn btn-outline-primary btn-action">

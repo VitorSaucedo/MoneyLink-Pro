@@ -23,8 +23,9 @@ class PerifericoAdmin(admin.ModelAdmin):
 
 @admin.register(Sala)
 class SalaAdmin(admin.ModelAdmin):
-    list_display = ('nome', 'andar', 'descricao')
-    search_fields = ('nome', 'andar')
+    list_display = ('nome', 'descricao')
+    search_fields = ('nome',)
+    fields = ('nome', 'descricao')
 
 @admin.register(Ilha)
 class IlhaAdmin(admin.ModelAdmin):

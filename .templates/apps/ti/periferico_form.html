@@ -53,20 +53,6 @@
           </div>
           
           <div class="col-md-6 mb-3">
-            <label for="{{ form.numero_serie.id_for_label }}" class="form-label">Número de Série</label>
-            {{ form.numero_serie }}
-            {% if form.numero_serie.errors %}
-              <div class="text-danger">
-                {% for error in form.numero_serie.errors %}
-                  <small>{{ error }}</small>
-                {% endfor %}
-              </div>
-            {% endif %}
-          </div>
-        </div>
-        
-        <div class="row">
-          <div class="col-md-6 mb-3">
             <label for="{{ form.data_aquisicao.id_for_label }}" class="form-label">Data de Aquisição</label>
             {{ form.data_aquisicao }}
             {% if form.data_aquisicao.errors %}
@@ -77,7 +63,9 @@
               </div>
             {% endif %}
           </div>
-          
+        </div>
+        
+        <div class="row">
           <div class="col-md-6 mb-3">
             <label for="{{ form.status.id_for_label }}" class="form-label">Status</label>
             {{ form.status }}

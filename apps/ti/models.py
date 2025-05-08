@@ -38,7 +38,6 @@ class Periferico(models.Model):
 
 class Sala(models.Model):
     nome = models.CharField(max_length=100)
-    andar = models.CharField(max_length=20, blank=True, null=True)
     descricao = models.TextField(blank=True, null=True)
     
     def __str__(self):

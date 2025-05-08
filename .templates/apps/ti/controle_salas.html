@@ -163,7 +163,7 @@
           <div class="card sala-card">
             <div class="card-header sala-header">
               <h5 class="mb-0">
-                <i class="fas fa-door-open"></i> Sala: {{ sala.nome }} {% if sala.andar %}(Andar: {{ sala.andar }}){% endif %}
+                <i class="fas fa-door-open"></i> Sala: {{ sala.nome }}
               </h5>
               <div>
                 <a href="{% url 'ti:sala_update' sala.pk %}" class="btn btn-light btn-sm">
