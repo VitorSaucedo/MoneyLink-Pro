@@ -1,3 +1,52 @@
 from django.contrib import admin
+from .models import (
+    TipoPeriferico, 
+    Periferico, 
+    PosicaoAtendimento, 
+    AtribuicaoFuncionarioPA, 
+    AtribuicaoPerifericoPA,
+    Sala,
+    Ilha
+)
 
 # Register your models here.
+@admin.register(TipoPeriferico)
+class TipoPerifericoAdmin(admin.ModelAdmin):
+    list_display = ('nome', 'descricao')
+    search_fields = ('nome',)
+
+@admin.register(Periferico)
+class PerifericoAdmin(admin.ModelAdmin):
+    list_display = ('tipo', 'marca', 'modelo', 'numero_serie', 'status')
+    list_filter = ('tipo', 'status', 'marca')
+    search_fields = ('marca', 'modelo', 'numero_serie')
+
+@admin.register(Sala)
+class SalaAdmin(admin.ModelAdmin):
+    list_display = ('nome', 'andar', 'descricao')
+    search_fields = ('nome', 'andar')
+
+@admin.register(Ilha)
+class IlhaAdmin(admin.ModelAdmin):
+    list_display = ('nome', 'sala', 'quantidade_pas')
+    list_filter = ('sala',)
+    search_fields = ('nome',)
+
+@admin.register(PosicaoAtendimento)
+class PosicaoAtendimentoAdmin(admin.ModelAdmin):
+    list_display = ('numero', 'sala', 'ilha', 'funcionario', 'status')
+    list_filter = ('status', 'sala', 'ilha')
+    search_fields = ('numero', 'funcionario__nome')
+    autocomplete_fields = ['funcionario']
+
+@admin.register(AtribuicaoFuncionarioPA)
+class AtribuicaoFuncionarioPAAdmin(admin.ModelAdmin):
+    list_display = ('funcionario', 'posicao_atendimento', 'data_inicio', 'data_fim', 'ativo')
+    list_filter = ('ativo', 'posicao_atendimento')
+    search_fields = ('funcionario__nome', 'posicao_atendimento__numero')
+
+@admin.register(AtribuicaoPerifericoPA)
+class AtribuicaoPerifericoPAAdmin(admin.ModelAdmin):
+    list_display = ('periferico', 'posicao_atendimento', 'data_atribuicao', 'data_remocao', 'ativo')
+    list_filter = ('ativo', 'posicao_atendimento')
+    search_fields = ('periferico__modelo', 'posicao_atendimento__numero')

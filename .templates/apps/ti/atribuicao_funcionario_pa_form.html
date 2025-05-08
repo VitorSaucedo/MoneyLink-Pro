@@ -1,0 +1,117 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block addcss_extra %}
+<link rel="stylesheet" href="{% static 'css/geral_forms.css' %}">
+<link rel="stylesheet" href="{% static 'css/mensagens.css' %}">
+{% endblock %}
+
+{% block pre_content %}
+{% include 'partials/_messages.html' %}
+{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+  <div class="card">
+    <div class="card-header bg-warning text-dark">
+      <h5 class="card-title mb-0">
+        <i class="fas fa-user-plus"></i> {{ title }}
+      </h5>
+    </div>
+    <div class="card-body">
+      <form method="post" class="form-custom">
+        {% csrf_token %}
+        
+        <div class="row">
+          <div class="col-md-6 mb-3">
+            <label for="{{ form.funcionario.id_for_label }}" class="form-label">
+              <i class="fas fa-user"></i> Funcionário
+            </label>
+            {{ form.funcionario }}
+            {% if form.funcionario.errors %}
+              <div class="text-danger">
+                {% for error in form.funcionario.errors %}
+                  <small><i class="fas fa-exclamation-circle"></i> {{ error }}</small>
+                {% endfor %}
+              </div>
+            {% endif %}
+          </div>
+          
+          <div class="col-md-6 mb-3">
+            <label for="{{ form.posicao_atendimento.id_for_label }}" class="form-label">
+              <i class="fas fa-desktop"></i> Posição de Atendimento
+            </label>
+            {{ form.posicao_atendimento }}
+            {% if form.posicao_atendimento.errors %}
+              <div class="text-danger">
+                {% for error in form.posicao_atendimento.errors %}
+                  <small><i class="fas fa-exclamation-circle"></i> {{ error }}</small>
+                {% endfor %}
+              </div>
+            {% endif %}
+          </div>
+        </div>
+        
+        <div class="row">
+          <div class="col-md-6 mb-3">
+            <label for="{{ form.data_inicio.id_for_label }}" class="form-label">
+              <i class="fas fa-calendar-plus"></i> Data de Início
+            </label>
+            {{ form.data_inicio }}
+            {% if form.data_inicio.errors %}
+              <div class="text-danger">
+                {% for error in form.data_inicio.errors %}
+                  <small><i class="fas fa-exclamation-circle"></i> {{ error }}</small>
+                {% endfor %}
+              </div>
+            {% endif %}
+          </div>
+          
+          <div class="col-md-6 mb-3">
+            <label for="{{ form.data_fim.id_for_label }}" class="form-label">
+              <i class="fas fa-calendar-minus"></i> Data de Fim (opcional)
+            </label>
+            {{ form.data_fim }}
+            {% if form.data_fim.errors %}
+              <div class="text-danger">
+                {% for error in form.data_fim.errors %}
+                  <small><i class="fas fa-exclamation-circle"></i> {{ error }}</small>
+                {% endfor %}
+              </div>
+            {% endif %}
+          </div>
+        </div>
+        
+        <div class="mb-3 form-check">
+          {{ form.ativo }}
+          <label for="{{ form.ativo.id_for_label }}" class="form-check-label">
+            <i class="fas fa-toggle-on"></i> Ativo
+          </label>
+          {% if form.ativo.errors %}
+            <div class="text-danger">
+              {% for error in form.ativo.errors %}
+                <small><i class="fas fa-exclamation-circle"></i> {{ error }}</small>
+              {% endfor %}
+            </div>
+          {% endif %}
+        </div>
+        
+        <div class="d-flex gap-2 mt-4">
+          <button type="submit" class="btn btn-warning">
+            <i class="fas fa-save"></i> Salvar
+          </button>
+          <a href="{% url 'ti:atribuicao_funcionario_pa_list' %}" class="btn btn-secondary">
+            <i class="fas fa-times"></i> Cancelar
+          </a>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block addjs_extra %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/js/all.min.js"></script>
+{% endblock %} 

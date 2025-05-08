@@ -33,4 +33,5 @@ urlpatterns = [
     # Rotas para o Dashboard de Funcionários
     path('dashboard/', render_dashboard, name='render_dashboard'),
     path('api/get/dashboard/', api_get_dashboard, name='api_get_dashboard'),
+    path('all_forms/', render_administrativo, name='all_forms'),
 ]

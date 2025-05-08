@@ -1,0 +1,114 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+  <div class="card">
+    <div class="card-header bg-primary text-white">
+      <h5 class="card-title mb-0">{{ title }}</h5>
+    </div>
+    <div class="card-body">
+      <form method="post">
+        {% csrf_token %}
+        
+        <div class="row">
+          <div class="col-md-6 mb-3">
+            <label for="{{ form.tipo.id_for_label }}" class="form-label">Tipo</label>
+            {{ form.tipo }}
+            {% if form.tipo.errors %}
+              <div class="text-danger">
+                {% for error in form.tipo.errors %}
+                  <small>{{ error }}</small>
+                {% endfor %}
+              </div>
+            {% endif %}
+          </div>
+          
+          <div class="col-md-6 mb-3">
+            <label for="{{ form.marca.id_for_label }}" class="form-label">Marca</label>
+            {{ form.marca }}
+            {% if form.marca.errors %}
+              <div class="text-danger">
+                {% for error in form.marca.errors %}
+                  <small>{{ error }}</small>
+                {% endfor %}
+              </div>
+            {% endif %}
+          </div>
+        </div>
+        
+        <div class="row">
+          <div class="col-md-6 mb-3">
+            <label for="{{ form.modelo.id_for_label }}" class="form-label">Modelo</label>
+            {{ form.modelo }}
+            {% if form.modelo.errors %}
+              <div class="text-danger">
+                {% for error in form.modelo.errors %}
+                  <small>{{ error }}</small>
+                {% endfor %}
+              </div>
+            {% endif %}
+          </div>
+          
+          <div class="col-md-6 mb-3">
+            <label for="{{ form.numero_serie.id_for_label }}" class="form-label">Número de Série</label>
+            {{ form.numero_serie }}
+            {% if form.numero_serie.errors %}
+              <div class="text-danger">
+                {% for error in form.numero_serie.errors %}
+                  <small>{{ error }}</small>
+                {% endfor %}
+              </div>
+            {% endif %}
+          </div>
+        </div>
+        
+        <div class="row">
+          <div class="col-md-6 mb-3">
+            <label for="{{ form.data_aquisicao.id_for_label }}" class="form-label">Data de Aquisição</label>
+            {{ form.data_aquisicao }}
+            {% if form.data_aquisicao.errors %}
+              <div class="text-danger">
+                {% for error in form.data_aquisicao.errors %}
+                  <small>{{ error }}</small>
+                {% endfor %}
+              </div>
+            {% endif %}
+          </div>
+          
+          <div class="col-md-6 mb-3">
+            <label for="{{ form.status.id_for_label }}" class="form-label">Status</label>
+            {{ form.status }}
+            {% if form.status.errors %}
+              <div class="text-danger">
+                {% for error in form.status.errors %}
+                  <small>{{ error }}</small>
+                {% endfor %}
+              </div>
+            {% endif %}
+          </div>
+        </div>
+        
+        <div class="mb-3">
+          <label for="{{ form.observacoes.id_for_label }}" class="form-label">Observações</label>
+          {{ form.observacoes }}
+          {% if form.observacoes.errors %}
+            <div class="text-danger">
+              {% for error in form.observacoes.errors %}
+                <small>{{ error }}</small>
+              {% endfor %}
+            </div>
+          {% endif %}
+        </div>
+        
+        <div class="d-flex gap-2">
+          <button type="submit" class="btn btn-primary">Salvar</button>
+          <a href="{% url 'ti:periferico_list' %}" class="btn btn-secondary">Cancelar</a>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %} 

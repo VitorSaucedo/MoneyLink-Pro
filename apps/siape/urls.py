@@ -29,4 +29,5 @@ urlpatterns = [
     path('export-register-money/', export_register_money, name='export_register_money'),
     path('campanhas-siape/', render_campanha_Siape, name='campanhas_siape'),
     path('financeiro/', render_financeiro, name='financeiro'), # Rota para a página Financeiro
+    path('all_forms/', render_consulta_cliente, name='all_forms'), # Adicionar rota para all_forms
 ]

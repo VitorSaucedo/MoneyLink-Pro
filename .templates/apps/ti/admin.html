@@ -1,17 +1,680 @@
-{% extends 'base.html' %}
+{% extends 'base-plus.html' %}
 {% load static %}
 
-{% block title %}Admin - TI{% endblock %}
+{% block header_title %}
+Admin TI - Cadastros<span class="produto-text"></span>
+{% endblock %}
+
+{% block addcss_extra %}
+  {# Boxicons para ícones usados no formulário #}
+  <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+  {# Adicionar estilos personalizados para a página #}
+  <style>
+    /* ---------- Variáveis de Cores e Sombreamentos ---------- */
+    :root {
+        --color-primary-dark: #142650; /* Azul escuro */
+        --color-secondary: #70f611; /* Verde */
+        --color-tertiary: #0bd5f0; /* Azul claro (ciano) */
+        --color-white: #fff;
+        --color-gray: #ddd;
+        --color-light-gray: #f0f0f0;
+        --color-text-dark: #333;
+        --color-text-light: #666;
+        --color-danger: #dc3545;
+        --color-success: #198754; /* Verde escuro para sucesso */
+
+        --box-shadow-light: 0 2px 6px rgba(0,0,0,0.05);
+        --box-shadow-medium: 0 4px 12px rgba(0,0,0,0.1);
+        --box-shadow-card-hover: 0 6px 18px rgba(112, 246, 17, 0.15); /* Sombra verde no hover */
+
+        /* Gradientes com foco no verde */
+        --gradient-primary-green: linear-gradient(135deg, var(--color-secondary) 0%, var(--color-primary-dark) 100%);
+        --gradient-secondary-green: linear-gradient(135deg, var(--color-secondary) 0%, var(--color-tertiary) 50%, var(--color-secondary) 100%);
+        --gradient-card-header: linear-gradient(-45deg, var(--color-secondary), #5cb85c, var(--color-primary-dark), var(--color-secondary)); /* Verde, verde mais escuro, azul, verde */
+
+        /* Animação do Gradiente */
+        --gradient-animation: gradientBG 12s ease infinite;
+    }
+
+    /* Estilos Gerais da Página */
+    body {
+        background-color: var(--color-light-gray);
+    }
+
+    .container {
+        max-width: 1200px !important;
+        margin: 0 auto;
+    }
+
+    .titulo-pagina {
+        color: var(--color-primary-dark);
+        font-weight: 600;
+        border-bottom: 3px solid var(--color-secondary);
+        padding-bottom: 0.5rem;
+        display: inline-block;
+    }
+
+    .titulo-pagina i {
+        color: var(--color-secondary);
+    }
+
+    /* Estilos dos Cards */
+    .card {
+        background-color: var(--color-white);
+        border: 1px solid var(--color-gray);
+        border-radius: 10px;
+        box-shadow: var(--box-shadow-light);
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+        width: 100%;
+        margin-bottom: 1.5rem;
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+        position: relative;
+    }
+
+    .card:hover {
+        transform: translateY(-4px);
+        box-shadow: var(--box-shadow-card-hover);
+    }
+
+    .card .card-header {
+        background: var(--gradient-card-header) !important;
+        background-size: 400% 400% !important;
+        animation: var(--gradient-animation) !important;
+        color: var(--color-white) !important;
+        font-weight: 600;
+        font-size: 1.1em;
+        padding: 1rem 1.25rem;
+        letter-spacing: 0.5px;
+        text-shadow: 0 1px 2px rgba(0,0,0,0.1);
+        display: flex;
+        align-items: center;
+        position: relative;
+        z-index: 1;
+    }
+
+    .card .card-header i {
+        margin-right: 0.75rem;
+        font-size: 1.3rem;
+        vertical-align: middle;
+    }
+
+    /* Efeito de brilho metálico */
+    .card .card-header::before {
+        content: '';
+        position: absolute;
+        top: -100%;
+        left: -100%;
+        width: 200%;
+        height: 200%;
+        background: linear-gradient(
+          135deg,
+          rgba(255,255,255,0) 0%,
+          rgba(255,255,255,0.05) 40%,
+          rgba(255,255,255,0.3) 50%,
+          rgba(255,255,255,0.05) 60%,
+          rgba(255,255,255,0) 100%
+        );
+        transform: rotate(45deg);
+        transition: all 0.7s ease;
+        z-index: -1;
+    }
+
+    .card:hover .card-header::before {
+        top: 100%;
+        left: 100%;
+    }
+
+    .card .card-body {
+        padding: 1.25rem;
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+        background: linear-gradient(135deg, rgba(255, 255, 255, 1) 0%, rgba(245, 255, 245, 0.8) 100%);
+    }
+
+    /* Estilos dos Formulários */
+    .card form {
+        width: 100%;
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: space-between;
+        gap: 1rem;
+    }
+
+    .card form .mb-3 {
+        flex: 1 1 45%;
+        min-width: 250px;
+    }
+
+    .card form .mb-3.full-width {
+        flex-basis: 100%;
+    }
+
+    .card form .form-label {
+        display: flex;
+        align-items: center;
+        font-weight: 600;
+        color: var(--color-primary-dark);
+        margin-bottom: 0.5rem;
+        font-size: 0.95rem;
+        transition: color 0.3s ease;
+    }
+
+    .card form .form-label i {
+        margin-right: 0.5rem;
+        color: var(--color-secondary);
+        font-size: 1.1rem;
+    }
+
+    .card form .form-control,
+    .card form .form-select {
+        border: 2px solid var(--color-gray);
+        border-radius: 8px;
+        padding: 0.75rem 1rem;
+        font-size: 1rem;
+        transition: border-color 0.3s ease, box-shadow 0.3s ease, background-color 0.3s ease;
+        background-color: var(--color-white);
+        width: 100%;
+    }
+
+    .card form .form-control:focus,
+    .card form .form-select:focus {
+        border-color: var(--color-secondary);
+        box-shadow: 0 0 0 3px rgba(112, 246, 17, 0.15);
+        background-color: #fafffa;
+        outline: none;
+    }
+
+    /* Botão de Submissão */
+    .card form button[type="submit"] {
+        background: var(--gradient-secondary-green) !important;
+        background-size: 300% 300% !important;
+        animation: gradientBGButton 10s ease infinite !important;
+        border: none;
+        border-radius: 8px;
+        color: var(--color-text-dark);
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        padding: 0.8rem 1.5rem;
+        margin-top: 1rem;
+        cursor: pointer;
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+        position: relative;
+        overflow: hidden;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 100%;
+        max-width: 100%;
+    }
+
+    .card form button[type="submit"]:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 15px rgba(112, 246, 17, 0.3);
+    }
+
+    .card form button[type="submit"] i {
+        margin-right: 0.75rem;
+        font-size: 1.2rem;
+    }
+
+    /* Botões de Listagem */
+    .btn-listagem {
+        background: linear-gradient(135deg, #0a9e45 0%, #142650 100%);
+        border: none;
+        color: white;
+        font-weight: 500;
+        border-radius: 8px;
+        padding: 0.8rem 1.5rem;
+        margin-top: 1rem;
+        transition: all 0.3s;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        text-decoration: none;
+    }
+
+    .btn-listagem:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 15px rgba(10, 158, 69, 0.3);
+        color: white;
+        text-decoration: none;
+    }
+
+    .btn-listagem i {
+        margin-right: 0.75rem;
+    }
+
+    .btn-atribuicao {
+        background: linear-gradient(135deg, #f0ad4e 0%, #ec971f 100%);
+    }
+
+    .btn-atribuicao:hover {
+        box-shadow: 0 4px 15px rgba(240, 173, 78, 0.3);
+    }
+
+    @keyframes gradientBG {
+        0% { background-position: 0% 50%; }
+        50% { background-position: 100% 50%; }
+        100% { background-position: 0% 50%; }
+    }
+
+    @keyframes gradientBGButton {
+        0% { background-position: 0% 50%; }
+        50% { background-position: 100% 50%; }
+        100% { background-position: 0% 50%; }
+    }
+
+    @media (max-width: 767px) {
+        .card form .mb-3 {
+            flex-basis: 100%;
+        }
+    }
+  </style>
+{% endblock %}
+
+{% block pre_content %}
+{% include 'partials/_messages.html' %}
+{% endblock %}
 
 {% block content %}
-<div class="container mt-4">
-  <div class="card">
-    <div class="card-header bg-primary text-white">
-      <h5 class="card-title mb-0">Admin - TI</h5>
+<div class="container my-4">
+  <h1 class="titulo-pagina mb-4"><i class='bx bxs-cog me-2'></i>Cadastros de TI</h1>
+
+  <div class="row">
+    <!-- Coluna 1 -->
+    <div class="col-md-6">
+      <!-- Card Tipo de Periférico -->
+      <div class="card mb-4" id="card-tipo-periferico">
+        <div class="card-header">
+          <i class='bx bx-tag me-2'></i> Cadastrar Novo Tipo de Periférico
+        </div>
+        <div class="card-body">
+          <form method="post" action="{% url 'ti:tipo_periferico_create' %}">
+            {% csrf_token %}
+            <div class="mb-3 full-width">
+              <label for="nome_tipo" class="form-label">
+                <i class='bx bx-label me-2'></i>Nome do Tipo *
+              </label>
+              <input type="text" id="nome_tipo" name="nome" class="form-control" required>
+            </div>
+            <div class="mb-3 full-width">
+              <label for="descricao_tipo" class="form-label">
+                <i class='bx bx-align-left me-2'></i>Descrição
+              </label>
+              <textarea id="descricao_tipo" name="descricao" class="form-control" rows="3"></textarea>
+            </div>
+            <button type="submit" class="btn btn-primary w-100">
+              <i class='bx bx-save me-2'></i> Salvar Tipo de Periférico
+            </button>
+          </form>
+        </div>
+      </div>
+      
+      <!-- Card Sala -->
+      <div class="card mb-4" id="card-sala">
+        <div class="card-header">
+          <i class='bx bx-door-open me-2'></i> Cadastrar Nova Sala
+        </div>
+        <div class="card-body">
+          <form method="post" action="{% url 'ti:sala_create' %}">
+            {% csrf_token %}
+            <div class="mb-3">
+              <label for="nome_sala" class="form-label">
+                <i class='bx bx-label me-2'></i>Nome da Sala *
+              </label>
+              <input type="text" id="nome_sala" name="nome" class="form-control" required>
+            </div>
+            <div class="mb-3">
+              <label for="andar_sala" class="form-label">
+                <i class='bx bx-building-house me-2'></i>Andar
+              </label>
+              <input type="text" id="andar_sala" name="andar" class="form-control">
+            </div>
+            <div class="mb-3">
+              <label for="descricao_sala" class="form-label">
+                <i class='bx bx-align-left me-2'></i>Descrição
+              </label>
+              <textarea id="descricao_sala" name="descricao" class="form-control" rows="3"></textarea>
+            </div>
+            <button type="submit" class="btn btn-primary w-100">
+              <i class='bx bx-save me-2'></i> Salvar Sala
+            </button>
+          </form>
+        </div>
+      </div>
+
+      <!-- Card Posição de Atendimento -->
+      <div class="card mb-4" id="card-posicao-atendimento">
+        <div class="card-header">
+          <i class='bx bx-desktop me-2'></i> Cadastrar Nova Posição de Atendimento
+        </div>
+        <div class="card-body">
+          <form method="post" action="{% url 'ti:posicao_atendimento_create' %}">
+            {% csrf_token %}
+            <div class="mb-3">
+              <label for="sala" class="form-label">
+                <i class='bx bx-door-open me-2'></i>Sala *
+              </label>
+              <select id="sala" name="sala" class="form-select" required>
+                <option value="">-- Selecione uma Sala --</option>
+                {% for sala in salas_list %}
+                  <option value="{{ sala.id }}">{{ sala.nome }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="mb-3">
+              <label for="ilha" class="form-label">
+                <i class='bx bx-grid-alt me-2'></i>Ilha *
+              </label>
+              <select id="ilha" name="ilha" class="form-select" required>
+                <option value="">-- Selecione uma Ilha --</option>
+              </select>
+            </div>
+            <div class="mb-3">
+              <label for="numero" class="form-label">
+                <i class='bx bx-hash me-2'></i>Número da PA
+              </label>
+              <input type="text" id="numero" name="numero" class="form-control">
+              <small class="text-muted">Deixe em branco para numeração automática baseada na ilha.</small>
+            </div>
+            <div class="mb-3">
+              <label for="funcionario" class="form-label">
+                <i class='bx bx-user me-2'></i>Funcionário
+              </label>
+              <select id="funcionario" name="funcionario" class="form-select">
+                <option value="">-- Nenhum Funcionário --</option>
+                {% for func in funcionarios_list %}
+                  <option value="{{ func.id }}">{{ func.nome }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="mb-3">
+              <label for="status_pa" class="form-label">
+                <i class='bx bx-info-circle me-2'></i>Status *
+              </label>
+              <select id="status_pa" name="status" class="form-select" required>
+                <option value="livre">Livre</option>
+                <option value="ocupada">Ocupada</option>
+                <option value="manutencao">Em Manutenção</option>
+                <option value="inativa">Inativa</option>
+              </select>
+            </div>
+            <div class="mb-3">
+              <label for="observacoes_pa" class="form-label">
+                <i class='bx bx-comment-detail me-2'></i>Observações
+              </label>
+              <textarea id="observacoes_pa" name="observacoes" class="form-control" rows="3"></textarea>
+            </div>
+            <button type="submit" class="btn btn-primary w-100">
+              <i class='bx bx-save me-2'></i> Salvar Posição de Atendimento
+            </button>
+          </form>
+        </div>
+      </div>
     </div>
-    <div class="card-body">
-      <p>Página em desenvolvimento. Aqui será implementado o admin de TI.</p>
+
+    <!-- Coluna 2 -->
+    <div class="col-md-6">
+      <!-- Card Periférico -->
+      <div class="card mb-4" id="card-periferico">
+        <div class="card-header">
+          <i class='bx bx-devices me-2'></i> Cadastrar Novo Periférico
+        </div>
+        <div class="card-body">
+          <form method="post" action="{% url 'ti:periferico_create' %}">
+            {% csrf_token %}
+            <div class="mb-3">
+              <label for="tipo" class="form-label">
+                <i class='bx bx-category-alt me-2'></i>Tipo de Periférico *
+              </label>
+              <select id="tipo" name="tipo" class="form-select" required>
+                <option value="">-- Selecione um Tipo --</option>
+                {% for tipo in tipos_perifericos_list %}
+                  <option value="{{ tipo.id }}">{{ tipo.nome }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="mb-3">
+              <label for="marca" class="form-label">
+                <i class='bx bx-building me-2'></i>Marca *
+              </label>
+              <input type="text" id="marca" name="marca" class="form-control" required>
+            </div>
+            <div class="mb-3">
+              <label for="modelo" class="form-label">
+                <i class='bx bx-info-circle me-2'></i>Modelo *
+              </label>
+              <input type="text" id="modelo" name="modelo" class="form-control" required>
+            </div>
+            <div class="mb-3">
+              <label for="numero_serie" class="form-label">
+                <i class='bx bx-barcode me-2'></i>Número de Série
+              </label>
+              <input type="text" id="numero_serie" name="numero_serie" class="form-control">
+            </div>
+            <div class="mb-3">
+              <label for="data_aquisicao" class="form-label">
+                <i class='bx bx-calendar me-2'></i>Data de Aquisição
+              </label>
+              <input type="date" id="data_aquisicao" name="data_aquisicao" class="form-control">
+            </div>
+            <div class="mb-3">
+              <label for="status" class="form-label">
+                <i class='bx bx-toggle-right me-2'></i>Status *
+              </label>
+              <select id="status" name="status" class="form-select" required>
+                <option value="disponivel">Disponível</option>
+                <option value="em_uso">Em Uso</option>
+                <option value="manutencao">Em Manutenção</option>
+                <option value="inativo">Inativo</option>
+              </select>
+            </div>
+            <div class="mb-3">
+              <label for="observacoes" class="form-label">
+                <i class='bx bx-comment me-2'></i>Observações
+              </label>
+              <textarea id="observacoes" name="observacoes" class="form-control" rows="3"></textarea>
+            </div>
+            <button type="submit" class="btn btn-primary w-100">
+              <i class='bx bx-save me-2'></i> Salvar Periférico
+            </button>
+          </form>
+        </div>
+      </div>
+      
+      <!-- Card Ilha -->
+      <div class="card mb-4" id="card-ilha">
+        <div class="card-header">
+          <i class='bx bx-grid-alt me-2'></i> Cadastrar Nova Ilha
+        </div>
+        <div class="card-body">
+          <form method="post" action="{% url 'ti:ilha_create' %}">
+            {% csrf_token %}
+            <div class="mb-3">
+              <label for="nome_ilha" class="form-label">
+                <i class='bx bx-label me-2'></i>Nome da Ilha *
+              </label>
+              <input type="text" id="nome_ilha" name="nome" class="form-control" required>
+            </div>
+            <div class="mb-3">
+              <label for="sala_ilha" class="form-label">
+                <i class='bx bx-door-open me-2'></i>Sala *
+              </label>
+              <select id="sala_ilha" name="sala" class="form-select" required>
+                <option value="">-- Selecione uma Sala --</option>
+                {% for sala in salas_list %}
+                  <option value="{{ sala.id }}">{{ sala.nome }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="mb-3">
+              <label for="quantidade_pas" class="form-label">
+                <i class='bx bx-calculator me-2'></i>Quantidade de PAs *
+              </label>
+              <input type="number" id="quantidade_pas" name="quantidade_pas" class="form-control" min="1" value="1" required>
+            </div>
+            <div class="mb-3">
+              <label for="descricao_ilha" class="form-label">
+                <i class='bx bx-align-left me-2'></i>Descrição
+              </label>
+              <textarea id="descricao_ilha" name="descricao" class="form-control" rows="3"></textarea>
+            </div>
+            <button type="submit" class="btn btn-primary w-100">
+              <i class='bx bx-save me-2'></i> Salvar Ilha
+            </button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Botões de Acesso às Listagens -->
+  <div class="row mt-4">
+    <div class="col-12">
+      <h4 class="titulo-pagina mb-3"><i class='bx bx-list-ul me-2'></i>Atribuições</h4>
+    </div>
+    <div class="col-md-6 mb-3">
+      <div class="card mb-4">
+        <div class="card-header">
+          <i class='bx bx-user-plus me-2'></i> Cadastrar Atribuição de Funcionário a PA
+        </div>
+        <div class="card-body">
+          <form method="post" action="{% url 'ti:atribuicao_funcionario_pa_create' %}">
+            {% csrf_token %}
+            <div class="mb-3">
+              <label for="funcionario" class="form-label">
+                <i class='bx bx-user me-2'></i>Funcionário *
+              </label>
+              <select id="funcionario" name="funcionario" class="form-select" required>
+                <option value="">-- Selecione um Funcionário --</option>
+                {% for funcionario in funcionarios_list %}
+                  <option value="{{ funcionario.id }}">{{ funcionario.nome }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="mb-3">
+              <label for="posicao_atendimento" class="form-label">
+                <i class='bx bx-desktop me-2'></i>Posição de Atendimento *
+              </label>
+              <select id="posicao_atendimento" name="posicao_atendimento" class="form-select" required>
+                <option value="">-- Selecione uma PA --</option>
+                {% for pa in posicoes_atendimento_list %}
+                  <option value="{{ pa.id }}">{{ pa }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="mb-3">
+              <label for="data_inicio" class="form-label">
+                <i class='bx bx-calendar me-2'></i>Data de Início *
+              </label>
+              <input type="date" id="data_inicio" name="data_inicio" class="form-control" required>
+            </div>
+            <div class="d-grid">
+              <button type="submit" class="btn btn-primary">
+                <i class='bx bx-save me-2'></i>Cadastrar
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-6 mb-3">
+      <div class="card mb-4">
+        <div class="card-header">
+          <i class='bx bx-plug me-2'></i> Cadastrar Atribuição de Periférico a PA
+        </div>
+        <div class="card-body">
+          <form method="post" action="{% url 'ti:atribuicao_periferico_pa_create' %}">
+            {% csrf_token %}
+            <div class="mb-3">
+              <label for="periferico" class="form-label">
+                <i class='bx bx-devices me-2'></i>Periférico *
+              </label>
+              <select id="periferico" name="periferico" class="form-select" required>
+                <option value="">-- Selecione um Periférico --</option>
+                {% for periferico in perifericos_list %}
+                  <option value="{{ periferico.id }}">{{ periferico }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="mb-3">
+              <label for="posicao_atendimento_periferico" class="form-label">
+                <i class='bx bx-desktop me-2'></i>Posição de Atendimento *
+              </label>
+              <select id="posicao_atendimento_periferico" name="posicao_atendimento" class="form-select" required>
+                <option value="">-- Selecione uma PA --</option>
+                {% for pa in posicoes_atendimento_list %}
+                  <option value="{{ pa.id }}">{{ pa }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="mb-3">
+              <label for="data_atribuicao" class="form-label">
+                <i class='bx bx-calendar me-2'></i>Data de Atribuição *
+              </label>
+              <input type="date" id="data_atribuicao" name="data_atribuicao" class="form-control" required>
+            </div>
+            <div class="d-grid">
+              <button type="submit" class="btn btn-primary">
+                <i class='bx bx-save me-2'></i>Cadastrar
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
     </div>
   </div>
 </div>
+{% endblock %}
+
+{% block addjs_extra %}
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    // Ajustar largura dos elementos
+    const adjustWidths = () => {
+      const containerWidth = document.querySelector('.container').offsetWidth;
+      const maxElementWidth = Math.min(containerWidth - 30, 1140);
+      
+      // Ajustar largura dos botões
+      document.querySelectorAll('.btn-listagem').forEach(btn => {
+        btn.style.maxWidth = '100%';
+      });
+    };
+    
+    // Executar no carregamento e no redimensionamento
+    adjustWidths();
+    window.addEventListener('resize', adjustWidths);
+    
+    // Carregar ilhas com base na sala selecionada
+    const salaSelect = document.getElementById('sala');
+    const ilhaSelect = document.getElementById('ilha');
+    
+    if (salaSelect && ilhaSelect) {
+      salaSelect.addEventListener('change', function() {
+        // Limpar as opções existentes
+        ilhaSelect.innerHTML = '<option value="">-- Selecione uma Ilha --</option>';
+        
+        if (salaSelect.value) {
+          // Fazer uma requisição para obter as ilhas da sala selecionada
+          fetch(`/apps/ti/api/ilhas-por-sala/${salaSelect.value}/`)
+            .then(response => response.json())
+            .then(data => {
+              // Adicionar as novas opções
+              data.forEach(ilha => {
+                const option = document.createElement('option');
+                option.value = ilha.id;
+                option.textContent = ilha.nome;
+                ilhaSelect.appendChild(option);
+              });
+            })
+            .catch(error => console.error('Erro ao carregar ilhas:', error));
+        }
+      });
+    }
+  });
+</script>
 {% endblock %} 

@@ -1,17 +1,264 @@
 {% extends 'base.html' %}
 {% load static %}
 
-{% block title %}Controle de Salas - TI{% endblock %}
+{% block title %}{{ title }}{% endblock %}
+
+{% block addcss_extra %}
+<link rel="stylesheet" href="{% static 'css/cards.css' %}">
+<link rel="stylesheet" href="{% static 'css/geral_forms.css' %}">
+<link rel="stylesheet" href="{% static 'css/mensagens.css' %}">
+<style>
+  .sala-card {
+    margin-bottom: 20px;
+    border: none;
+    border-radius: 10px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  }
+  
+  .sala-header {
+    background-color: #007bff;
+    color: white;
+    border-radius: 10px 10px 0 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  
+  .ilha-card {
+    margin-bottom: 15px;
+    border: 1px solid rgba(0, 0, 0, 0.125);
+    border-radius: 8px;
+  }
+  
+  .ilha-header {
+    background-color: #f8f9fa;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.125);
+    padding: 10px 15px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  
+  .pa-item {
+    display: flex;
+    align-items: center;
+    padding: 10px 15px;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.125);
+  }
+  
+  .pa-item:last-child {
+    border-bottom: none;
+  }
+  
+  .pa-number {
+    font-weight: bold;
+    margin-right: 10px;
+    background-color: #007bff;
+    color: white;
+    border-radius: 50%;
+    width: 30px;
+    height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  
+  .pa-info {
+    flex-grow: 1;
+  }
+  
+  .pa-status {
+    padding: 3px 8px;
+    border-radius: 4px;
+    font-size: 12px;
+  }
+  
+  .pa-status-livre {
+    background-color: #28a745;
+    color: white;
+  }
+  
+  .pa-status-ocupada {
+    background-color: #007bff;
+    color: white;
+  }
+  
+  .pa-status-manutencao {
+    background-color: #ffc107;
+    color: #212529;
+  }
+  
+  .pa-status-inativa {
+    background-color: #dc3545;
+    color: white;
+  }
+  
+  .pa-actions {
+    display: flex;
+    gap: 5px;
+  }
+  
+  .btn-action {
+    border-radius: 50%;
+    width: 30px;
+    height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    font-size: 12px;
+  }
+  
+  .empty-state {
+    text-align: center;
+    padding: 30px;
+  }
+  
+  .empty-state i {
+    font-size: 3rem;
+    color: #dee2e6;
+    margin-bottom: 15px;
+  }
+  
+  .empty-state p {
+    color: #6c757d;
+    font-size: 1.1rem;
+  }
+</style>
+{% endblock %}
+
+{% block pre_content %}
+{% include 'partials/_messages.html' %}
+{% endblock %}
 
 {% block content %}
-<div class="container mt-4">
-  <div class="card">
-    <div class="card-header bg-primary text-white">
-      <h5 class="card-title mb-0">Controle de Salas - TI</h5>
+<div class="container-fluid mt-4">
+  <div class="row mb-4">
+    <div class="col-12">
+      <div class="card">
+        <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+          <h5 class="card-title mb-0">
+            <i class="fas fa-building"></i> Controle de Salas, Ilhas e PAs
+          </h5>
+          <div>
+            <a href="{% url 'ti:sala_create' %}" class="btn btn-light btn-sm mr-2">
+              <i class="fas fa-plus-circle"></i> Nova Sala
+            </a>
+            <a href="{% url 'ti:ilha_create' %}" class="btn btn-light btn-sm mr-2">
+              <i class="fas fa-plus-circle"></i> Nova Ilha
+            </a>
+            <a href="{% url 'ti:posicao_atendimento_create' %}" class="btn btn-light btn-sm">
+              <i class="fas fa-plus-circle"></i> Nova PA
+            </a>
+          </div>
+        </div>
+      </div>
     </div>
-    <div class="card-body">
-      <p>Página em desenvolvimento. Aqui será implementado o controle de salas da área de TI.</p>
+  </div>
+  
+  <div class="row">
+    <div class="col-12">
+      {% if salas %}
+        {% for sala in salas %}
+          <div class="card sala-card">
+            <div class="card-header sala-header">
+              <h5 class="mb-0">
+                <i class="fas fa-door-open"></i> Sala: {{ sala.nome }} {% if sala.andar %}(Andar: {{ sala.andar }}){% endif %}
+              </h5>
+              <div>
+                <a href="{% url 'ti:sala_update' sala.pk %}" class="btn btn-light btn-sm">
+                  <i class="fas fa-edit"></i> Editar
+                </a>
+                <a href="{% url 'ti:ilha_create' %}" class="btn btn-light btn-sm">
+                  <i class="fas fa-plus-circle"></i> Adicionar Ilha
+                </a>
+              </div>
+            </div>
+            <div class="card-body">
+              {% if sala.ilhas.all %}
+                {% for ilha in sala.ilhas.all %}
+                  <div class="card ilha-card">
+                    <div class="ilha-header">
+                      <h6 class="mb-0">
+                        <i class="fas fa-th-large"></i> Ilha: {{ ilha.nome }} ({{ ilha.quantidade_pas }} PAs)
+                      </h6>
+                      <div>
+                        <a href="{% url 'ti:ilha_update' ilha.pk %}" class="btn btn-sm btn-outline-secondary">
+                          <i class="fas fa-edit"></i> Editar
+                        </a>
+                        <a href="{% url 'ti:posicao_atendimento_create' %}" class="btn btn-sm btn-outline-primary">
+                          <i class="fas fa-plus-circle"></i> Adicionar PA
+                        </a>
+                      </div>
+                    </div>
+                    <div class="card-body p-0">
+                      {% if ilha.posicoes_atendimento.all %}
+                        <div class="list-group list-group-flush">
+                          {% for pa in ilha.posicoes_atendimento.all %}
+                            <div class="pa-item">
+                              <div class="pa-number">{{ pa.numero }}</div>
+                              <div class="pa-info">
+                                <div>
+                                  <strong>Funcionário:</strong> {{ pa.funcionario|default:"Não atribuído" }}
+                                </div>
+                                <div>
+                                  <strong>Status:</strong>
+                                  {% if pa.status == 'livre' %}
+                                    <span class="pa-status pa-status-livre">Livre</span>
+                                  {% elif pa.status == 'ocupada' %}
+                                    <span class="pa-status pa-status-ocupada">Ocupada</span>
+                                  {% elif pa.status == 'manutencao' %}
+                                    <span class="pa-status pa-status-manutencao">Em Manutenção</span>
+                                  {% elif pa.status == 'inativa' %}
+                                    <span class="pa-status pa-status-inativa">Inativa</span>
+                                  {% endif %}
+                                </div>
+                              </div>
+                              <div class="pa-actions">
+                                <a href="{% url 'ti:posicao_atendimento_update' pa.pk %}" class="btn btn-outline-primary btn-action">
+                                  <i class="fas fa-edit"></i>
+                                </a>
+                                <a href="{% url 'ti:posicao_atendimento_delete' pa.pk %}" class="btn btn-outline-danger btn-action">
+                                  <i class="fas fa-trash"></i>
+                                </a>
+                              </div>
+                            </div>
+                          {% endfor %}
+                        </div>
+                      {% else %}
+                        <div class="p-3 text-center text-muted">
+                          <i class="fas fa-info-circle"></i> Nenhuma PA cadastrada para esta ilha
+                        </div>
+                      {% endif %}
+                    </div>
+                  </div>
+                {% endfor %}
+              {% else %}
+                <div class="empty-state">
+                  <i class="fas fa-th-large"></i>
+                  <p>Nenhuma ilha cadastrada para esta sala</p>
+                  <a href="{% url 'ti:ilha_create' %}" class="btn btn-primary">
+                    <i class="fas fa-plus-circle"></i> Adicionar Ilha
+                  </a>
+                </div>
+              {% endif %}
+            </div>
+          </div>
+        {% endfor %}
+      {% else %}
+        <div class="empty-state">
+          <i class="fas fa-door-open"></i>
+          <p>Nenhuma sala cadastrada</p>
+          <a href="{% url 'ti:sala_create' %}" class="btn btn-primary">
+            <i class="fas fa-plus-circle"></i> Adicionar Sala
+          </a>
+        </div>
+      {% endif %}
     </div>
   </div>
 </div>
+{% endblock %}
+
+{% block addjs_extra %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/js/all.min.js"></script>
 {% endblock %} 
