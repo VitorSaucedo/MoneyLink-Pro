@@ -205,6 +205,9 @@ def criar_funcionarios(dados_basicos, quantidade=50):
     sobrenomes = ["Silva", "Santos", "Oliveira", "Souza", "Pereira", "Lima", "Costa", 
                   "Ferreira", "Rodrigues", "Almeida", "Nascimento", "Carvalho", "Gomes"]
     
+    # Adicionando timestamp para garantir matrículas únicas
+    timestamp = int(datetime.now().timestamp())
+    
     for i in range(1, quantidade + 1):
         nome = random.choice(nomes)
         sobrenome = random.choice(sobrenomes)
@@ -219,6 +222,12 @@ def criar_funcionarios(dados_basicos, quantidade=50):
         dia = random.randint(1, 28)
         data_nascimento = date(ano, mes, dia)
         
+        # Ramal aleatório começando em 1000
+        ramal = str(1000 + i - 1)
+        
+        # Matrícula única usando timestamp
+        matricula = f"F{timestamp}{i:03d}"
+        
         funcionario = Funcionario.objects.create(
             nome_completo=nome_completo,
             cpf=cpf,
@@ -230,7 +239,8 @@ def criar_funcionarios(dados_basicos, quantidade=50):
             horario=dados_basicos["horario"],
             loja=dados_basicos["loja"],
             data_admissao=date.today() - timedelta(days=random.randint(30, 365)),
-            matricula=f"FUNC{i:03d}"
+            matricula=matricula,
+            ramal=ramal
         )
         funcionarios.append(funcionario)
     

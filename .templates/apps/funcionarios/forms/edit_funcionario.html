@@ -128,7 +128,7 @@ Editar Funcionário<span class="produto-text"></span>
             <hr>
             <h5 class="mb-3"><i class='bx bx-map-pin me-2'></i>Endereço e Contato</h5>
              <div class="mb-3">
-                <label for="edit_cep" class="form-label"><i class='bx bx-map me-2'></i>CEP</label>
+                <label for="edit_cep" class="form-label"><i class='bx bx-map-pin me-2'></i>CEP</label>
                 <input type="text" id="edit_cep" name="cep" class="form-control">
             </div>
              <div class="mb-3">
@@ -154,8 +154,13 @@ Editar Funcionário<span class="produto-text"></span>
                 <input type="text" id="edit_celular1" name="celular1" class="form-control">
             </div>
              <div class="mb-3">
-                <label for="edit_celular2" class="form-label"><i class='bx bx-phone me-2'></i>Celular Secundário</label>
-                <input type="text" id="edit_celular2" name="celular2" class="form-control">
+                <label for="edit_celular2" class="form-label"><i class='bx bx-phone-call me-2'></i>Celular 2</label>
+                <input type="text" id="edit_celular2" name="celular2" class="form-control" placeholder="(XX) XXXXX-XXXX">
+            </div>
+            <div class="mb-3">
+                <label for="edit_ramal" class="form-label"><i class='bx bx-phone me-2'></i>Ramal</label>
+                <input type="text" id="edit_ramal" name="ramal" class="form-control" maxlength="4" pattern="[0-9]{4}" title="O ramal deve ter 4 dígitos numéricos" placeholder="Exemplo: 1000">
+                <small class="text-muted">O ramal deve ter 4 dígitos e começar a partir do 1000</small>
             </div>
 
              <hr>

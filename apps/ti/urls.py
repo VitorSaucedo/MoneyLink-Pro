@@ -11,6 +11,7 @@ urlpatterns = [
     
     # URLs para API
     path('api/ilhas-por-sala/<int:sala_id>/', views.api_ilhas_por_sala, name='api_ilhas_por_sala'),
+    path('atualizar_status_pa/', views.atualizar_status_pa, name='atualizar_status_pa'),
     
     # URLs para Tipos de Periféricos
     path('tipos-perifericos/', views.tipo_periferico_list, name='tipo_periferico_list'),

@@ -280,6 +280,36 @@ def posicao_atendimento_delete(request, pk):
     }
     return render(request, 'apps/ti/confirm_delete.html', context)
 
+@login_required
+def atualizar_status_pa(request):
+    """
+    View para processar as requisições AJAX para atualizar o status das PAs
+    """
+    if request.method == 'POST' and request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+        pa_id = request.POST.get('pa_id')
+        novo_status = request.POST.get('status')
+        
+        # Validar o novo status
+        status_validos = ['livre', 'ocupada', 'manutencao', 'inativa']
+        if novo_status not in status_validos:
+            return JsonResponse({'success': False, 'error': 'Status inválido'})
+        
+        try:
+            # Buscar a PA
+            pa = PosicaoAtendimento.objects.get(pk=pa_id)
+            
+            # Atualizar o status
+            pa.status = novo_status
+            pa.save()
+            
+            return JsonResponse({'success': True})
+        except PosicaoAtendimento.DoesNotExist:
+            return JsonResponse({'success': False, 'error': 'PA não encontrada'})
+        except Exception as e:
+            return JsonResponse({'success': False, 'error': str(e)})
+    
+    return JsonResponse({'success': False, 'error': 'Método inválido'})
+
 # Views para Atribuição de Funcionários a PAs
 @login_required
 def atribuicao_funcionario_pa_list(request):

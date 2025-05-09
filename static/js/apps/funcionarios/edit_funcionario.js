@@ -352,6 +352,7 @@ $(document).ready(function() {
         $('#edit_estado').val(data.estado);
         $('#edit_celular1').val(data.celular1);
         $('#edit_celular2').val(data.celular2);
+        $('#edit_ramal').val(data.ramal);
         $('#edit_matricula').val(data.matricula);
         $('#edit_pis').val(data.pis);
         $('#edit_data_admissao').val(data.data_admissao); // Formato YYYY-MM-DD

@@ -124,7 +124,7 @@ class FuncionarioForm(forms.ModelForm): # Renomeado de FuncionarioFullForm para 
             # Pessoal
             'apelido', 'nome_completo', 'foto', 'cpf', 'data_nascimento', 'genero', 'estado_civil',
             # Contato
-            'celular1', 'celular2', 'cep', 'endereco', 'bairro', 'cidade', 'estado', 
+            'celular1', 'celular2', 'cep', 'endereco', 'bairro', 'cidade', 'estado', 'ramal',
             # Filiação / Origem
             'nome_mae', 'nome_pai', 'nacionalidade', 'naturalidade',
             # Profissional
@@ -159,6 +159,7 @@ class FuncionarioForm(forms.ModelForm): # Renomeado de FuncionarioFullForm para 
             'cpf': forms.TextInput(attrs={'class': 'form-control'}), # Adicionar máscara
             'celular1': forms.TextInput(attrs={'class': 'form-control'}), # Adicionar máscara
             'celular2': forms.TextInput(attrs={'class': 'form-control'}), # Adicionar máscara
+            'ramal': forms.TextInput(attrs={'class': 'form-control', 'maxlength': 4, 'pattern': '[0-9]{4}', 'title': 'O ramal deve ter 4 dígitos numéricos'}),
             'cep': forms.TextInput(attrs={'class': 'form-control'}), # Adicionar máscara/JS
             'endereco': forms.TextInput(attrs={'class': 'form-control'}),
             'bairro': forms.TextInput(attrs={'class': 'form-control'}),

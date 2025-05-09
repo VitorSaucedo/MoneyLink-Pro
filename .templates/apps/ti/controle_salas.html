@@ -24,6 +24,9 @@ TI - Controle de Salas, Ilhas e PAs
   {# Container para mensagens de feedback (gerenciado pelo JS) #}
   <div id="message-container"></div>
 
+  {# Token CSRF para requisições AJAX #}
+  {% csrf_token %}
+
   {% if salas %}
     <!-- Abas para as salas -->
     <div class="salas-container">
@@ -112,7 +115,10 @@ TI - Controle de Salas, Ilhas e PAs
                                         <div class="pa-funcionario">
                                           <strong>Funcionário:</strong> 
                                           {% if pa.funcionario %}
-                                            {{ pa.funcionario.nome }}
+                                            {{ pa.funcionario.nome_completo }}
+                                            {% if pa.funcionario.ramal %}
+                                            <span class="ramal-badge">Ramal: {{ pa.funcionario.ramal }}</span>
+                                            {% endif %}
                                           {% else %}
                                             <span class="text-muted">Não atribuído</span>
                                           {% endif %}
@@ -168,7 +174,10 @@ TI - Controle de Salas, Ilhas e PAs
                                         <div class="pa-funcionario">
                                           <strong>Funcionário:</strong> 
                                           {% if pa.funcionario %}
-                                            {{ pa.funcionario.nome }}
+                                            {{ pa.funcionario.nome_completo }}
+                                            {% if pa.funcionario.ramal %}
+                                            <span class="ramal-badge">Ramal: {{ pa.funcionario.ramal }}</span>
+                                            {% endif %}
                                           {% else %}
                                             <span class="text-muted">Não atribuído</span>
                                           {% endif %}
@@ -242,6 +251,7 @@ TI - Controle de Salas, Ilhas e PAs
 {% block addjs_extra %}
   {# jQuery é necessário #}
   <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="{% static 'js/apps/ti/controle_salas.js' %}"></script>
   
   <script>
@@ -309,4 +319,30 @@ TI - Controle de Salas, Ilhas e PAs
       $('body').addClass('tabs-initialized');
     });
   </script>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+  /* Estilos para PAs */
+  .pa-container {
+    margin: 15px 0;
+  }
+  
+  /* Estilo para o badge de ramal */
+  .ramal-badge {
+    display: inline-block;
+    background-color: #e9ecef;
+    color: #495057;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-size: 0.8em;
+    margin-left: 5px;
+    font-weight: bold;
+  }
+
+  .pa-grid-dual-column {
+    display: flex;
+    justify-content: space-between;
+  }
+</style>
 {% endblock %} 

@@ -20,25 +20,27 @@ Gerencia o inventário de equipamentos e periféricos de TI:
   - Controle de quantidade disponível
   - Registro de entrada e saída
   - Histórico de atribuições
-  - Alertas de estoque baixo
   - ...
 
 ### 2. Admin
 
 Área administrativa com formulários para:
 
-- Cadastro de periféricos
-- Atribuição de funcionários a PAs
-- Atribuição de periféricos a PAs
+- Cadastro de tipo de periféricos
+- Cadastro de salas
+- Cadastro de PAs
+- Cadastro de Ilhas
+- Cadastro de Ramal (associado ao user id)
+- Cadastro de computador
 - ...
 
 ### 3. Controle de Salas
 
-Gerenciamento de PAs (Posições de Atendimento):
+Gerenciamento de PAs:
 
-- Status de ocupação
-- Mapeamento de perifericos por PA
-- ...
+- Remoção de periféricos 
+- Troca de funcionários via ramal
+- Troca de status de ocupação
 
 ## Permissões
 

@@ -210,6 +210,7 @@ class Funcionario(models.Model):
     estado = models.CharField(max_length=2, blank=True, null=True, verbose_name="UF") # Ajustado max_length para sigla
     celular1 = models.CharField(max_length=20, blank=True, null=True, verbose_name="Celular Principal") # Ajustado max_length
     celular2 = models.CharField(max_length=20, blank=True, null=True, verbose_name="Celular Secundário") # Ajustado max_length
+    ramal = models.CharField(max_length=4, blank=True, null=True, verbose_name="Ramal")
 
     # Informações Familiares (Opcional)
     nome_mae = models.CharField(max_length=255, blank=True, null=True, verbose_name="Nome da Mãe") # Ajustado max_length
@@ -280,7 +281,8 @@ class Funcionario(models.Model):
         display = self.apelido if self.apelido else (self.nome_completo.split()[0] if self.nome_completo else 'Sem Nome')
         matricula_display = self.matricula or 'Sem Matrícula'
         empresa_nome = self.empresa.nome if self.empresa else 'Sem Empresa'
-        return f"{display} ({matricula_display}) - {empresa_nome}"
+        ramal_display = f" (Ramal: {self.ramal})" if self.ramal else ""
+        return f"{display} ({matricula_display}){ramal_display} - {empresa_nome}"
 
     class Meta:
         verbose_name = "Funcionário"

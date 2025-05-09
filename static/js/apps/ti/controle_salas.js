@@ -33,6 +33,188 @@ $(document).ready(function() {
     });
   }
   
+  // Adicionar evento de clique aos indicadores de status das PAs
+  document.querySelectorAll('.pa-status-indicator').forEach(statusIndicator => {
+    statusIndicator.addEventListener('click', function(e) {
+      e.preventDefault();
+      e.stopPropagation();
+      
+      console.log('Clique na bolinha de status detectado');
+      
+      const paCard = this.closest('.pa-card');
+      const paId = paCard.getAttribute('data-pa-id');
+      const currentStatus = this.classList[1].replace('status-', '');
+      
+      // Remover menus existentes
+      document.querySelectorAll('.status-dropdown-menu').forEach(menu => menu.remove());
+      
+      // Criar menu dropdown com estilos inline para garantir a aparência correta
+      const menuHtml = `
+        <div class="status-dropdown-menu" style="position: absolute; z-index: 1000; background-color: white; border: 1px solid #ddd; border-radius: 6px; box-shadow: 0 3px 10px rgba(0,0,0,0.2); padding: 8px 0; min-width: 160px;">
+          <div class="status-option" style="padding: 8px 12px; display: flex; align-items: center; cursor: pointer;" data-status="ocupada">
+            <span style="width: 12px; height: 12px; border-radius: 50%; display: inline-block; margin-right: 10px; background-color: #0d6efd;"></span>
+            <span style="font-size: 0.9rem; color: #333;">Ocupada</span>
+          </div>
+          <div class="status-option" style="padding: 8px 12px; display: flex; align-items: center; cursor: pointer;" data-status="manutencao">
+            <span style="width: 12px; height: 12px; border-radius: 50%; display: inline-block; margin-right: 10px; background-color: #ffc107;"></span>
+            <span style="font-size: 0.9rem; color: #333;">Manutenção</span>
+          </div>
+          <div class="status-option" style="padding: 8px 12px; display: flex; align-items: center; cursor: pointer;" data-status="inativa">
+            <span style="width: 12px; height: 12px; border-radius: 50%; display: inline-block; margin-right: 10px; background-color: #dc3545;"></span>
+            <span style="font-size: 0.9rem; color: #333;">Vazia</span>
+          </div>
+        </div>
+      `;
+      
+      // Adicionar menu ao DOM
+      document.body.insertAdjacentHTML('beforeend', menuHtml);
+      const menu = document.querySelector('.status-dropdown-menu');
+      
+      console.log('Menu criado:', menu);
+      
+      // Posicionar o menu próximo à bolinha
+      const rect = this.getBoundingClientRect();
+      menu.style.position = 'absolute';
+      menu.style.top = (rect.bottom + 5) + 'px';
+      menu.style.left = (rect.left - 70) + 'px';
+      
+      console.log('Posição do menu:', menu.style.top, menu.style.left);
+      
+      // Adicionar hover effect
+      const options = menu.querySelectorAll('.status-option');
+      options.forEach(option => {
+        option.addEventListener('mouseover', function() {
+          this.style.backgroundColor = '#f5f5f5';
+        });
+        option.addEventListener('mouseout', function() {
+          this.style.backgroundColor = 'white';
+        });
+      });
+      
+      // Adicionar eventos de clique às opções do menu
+      options.forEach(option => {
+        option.addEventListener('click', function() {
+          console.log('Opção de status clicada');
+          const novoStatus = this.getAttribute('data-status');
+          
+          // Remover o menu
+          menu.remove();
+          
+          // Atualizar status no servidor
+          atualizarStatusPA(paId, novoStatus, paCard);
+        });
+      });
+      
+      // Fechar o menu ao clicar fora dele
+      document.addEventListener('click', function closeMenu(evt) {
+        if (menu && !menu.contains(evt.target) && evt.target !== statusIndicator) {
+          console.log('Clique fora do menu - fechando');
+          menu.remove();
+          document.removeEventListener('click', closeMenu);
+        }
+      });
+    });
+  });
+  
+  // Função para atualizar o status da PA no servidor
+  function atualizarStatusPA(paId, novoStatus, paCard) {
+    $.ajax({
+      url: '/ti/atualizar_status_pa/',
+      method: 'POST',
+      headers: {
+        'X-Requested-With': 'XMLHttpRequest'
+      },
+      data: {
+        pa_id: paId,
+        status: novoStatus,
+        csrfmiddlewaretoken: $('[name=csrfmiddlewaretoken]').val()
+      },
+      success: function(response) {
+        if (response.success) {
+          // Atualizar elementos visuais
+          atualizarVisualizacaoStatusPA(paCard, novoStatus);
+          
+          // Mostrar mensagem de sucesso
+          mostrarMensagem('Status da PA atualizado com sucesso!', 'success');
+        } else {
+          mostrarMensagem('Erro ao atualizar status: ' + response.error, 'error');
+        }
+      },
+      error: function() {
+        mostrarMensagem('Erro ao comunicar com o servidor', 'error');
+      }
+    });
+  }
+  
+  // Função para atualizar a visualização do status da PA
+  function atualizarVisualizacaoStatusPA(paCard, novoStatus) {
+    // Atualizar o indicador de status
+    const statusIndicator = paCard.querySelector('.pa-status-indicator');
+    statusIndicator.classList.remove('status-livre', 'status-ocupada', 'status-manutencao', 'status-inativa');
+    statusIndicator.classList.add('status-' + novoStatus);
+    
+    // Atualizar o texto do title
+    let title;
+    switch(novoStatus) {
+      case 'livre':
+        title = 'Livre';
+        break;
+      case 'ocupada':
+        title = 'Ocupada';
+        break;
+      case 'manutencao':
+        title = 'Em Manutenção';
+        break;
+      case 'inativa':
+        title = 'Inativa';
+        break;
+    }
+    statusIndicator.setAttribute('title', title);
+    
+    // Atualizar o badge de status
+    const statusBadge = paCard.querySelector('.pa-status .badge');
+    statusBadge.classList.remove('bg-success', 'bg-primary', 'bg-warning', 'bg-danger', 'text-dark');
+    
+    switch(novoStatus) {
+      case 'livre':
+        statusBadge.classList.add('bg-success');
+        statusBadge.textContent = 'Livre';
+        break;
+      case 'ocupada':
+        statusBadge.classList.add('bg-primary');
+        statusBadge.textContent = 'Ocupada';
+        break;
+      case 'manutencao':
+        statusBadge.classList.add('bg-warning', 'text-dark');
+        statusBadge.textContent = 'Em Manutenção';
+        break;
+      case 'inativa':
+        statusBadge.classList.add('bg-danger');
+        statusBadge.textContent = 'Inativa';
+        break;
+    }
+  }
+  
+  // Função para mostrar mensagens de feedback
+  function mostrarMensagem(mensagem, tipo) {
+    const alertClass = tipo === 'success' ? 'alert-success' : 'alert-danger';
+    const icon = tipo === 'success' ? 'fas fa-check-circle' : 'fas fa-exclamation-circle';
+    
+    const messageHTML = `
+      <div class="alert ${alertClass} alert-dismissible fade show" role="alert">
+        <i class="${icon} me-2"></i> ${mensagem}
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+      </div>
+    `;
+    
+    $('#message-container').html(messageHTML);
+    
+    // Auto-remover após 5 segundos
+    setTimeout(() => {
+      $('.alert').alert('close');
+    }, 5000);
+  }
+  
   // Garantir que as abas de Bootstrap não controlem a exibição
   $('button[data-bs-toggle="tab"]').on('click', function(e) {
     e.preventDefault();

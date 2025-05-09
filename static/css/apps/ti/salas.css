@@ -364,6 +364,17 @@ ul.nav-tabs li.nav-item {
     display: inline-block;
     margin-left: 8px;
     box-shadow: 0 0 5px rgba(0, 0, 0, 0.1);
+    cursor: pointer;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.pa-status-indicator:hover {
+    transform: scale(1.2);
+    box-shadow: 0 0 8px rgba(0, 0, 0, 0.3);
+}
+
+.pa-status-indicator:active {
+    transform: scale(0.9);
 }
 
 .status-livre {
@@ -371,15 +382,15 @@ ul.nav-tabs li.nav-item {
 }
 
 .status-ocupada {
-    background-color: #0d6efd; /* Azul para ocupada */
+    background-color: #0d6efd; /* Azul para ocupada - conforme solicitado */
 }
 
 .status-manutencao {
-    background-color: #ffc107; /* Amarelo para manutenção */
+    background-color: #ffc107; /* Amarelo para manutenção - conforme solicitado */
 }
 
 .status-inativa {
-    background-color: var(--color-danger);
+    background-color: var(--color-danger); /* Vermelho para inativa/vazia - conforme solicitado */
 }
 
 .pa-content {
@@ -572,4 +583,55 @@ ul.nav-tabs li.nav-item {
     0% { opacity: 0.5; }
     50% { opacity: 1; }
     100% { opacity: 0.5; }
+}
+
+/* ==========================================
+   Menu Dropdown de Status das PAs
+   ========================================== */
+.status-dropdown-menu {
+    position: absolute;
+    z-index: 1000;
+    background-color: #fff;
+    border: 1px solid var(--color-gray);
+    border-radius: 6px;
+    box-shadow: 0 3px 10px rgba(0,0,0,0.2);
+    padding: 8px 0;
+    min-width: 160px;
+}
+
+.status-option {
+    padding: 8px 12px;
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+
+.status-option:hover {
+    background-color: #f5f5f5;
+}
+
+.status-color {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    display: inline-block;
+    margin-right: 10px;
+}
+
+.status-text {
+    font-size: 0.9rem;
+    color: var(--color-text-dark);
+}
+
+.status-option.ocupada .status-color {
+    background-color: #0d6efd; /* Azul */
+}
+
+.status-option.manutencao .status-color {
+    background-color: #ffc107; /* Amarelo */
+}
+
+.status-option.inativa .status-color {
+    background-color: #dc3545; /* Vermelho */
 }
