@@ -6,24 +6,7 @@
 {% block addcss_extra %}
 <link rel="stylesheet" href="{% static 'css/geral_forms.css' %}">
 <link rel="stylesheet" href="{% static 'css/mensagens.css' %}">
-<style>
-  .card-header-custom {
-    display: flex;
-    align-items: center;
-    padding: 15px 20px;
-  }
-  
-  .card-header-custom i {
-    margin-right: 10px;
-    font-size: 1.2rem;
-  }
-  
-  .help-text {
-    font-size: 0.8rem;
-    color: #6c757d;
-    margin-top: 5px;
-  }
-</style>
+<link rel="stylesheet" href="{% static 'css/apps/ti/posicao_atendimento_form.css' %}">
 {% endblock %}
 
 {% block pre_content %}
@@ -154,30 +137,5 @@
 
 {% block addjs_extra %}
 <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/js/all.min.js"></script>
-<script>
-  // Script para atualizar as opções quando a sala mudar
-  document.addEventListener('DOMContentLoaded', function() {
-    var salaSelect = document.getElementById('{{ form.sala.id_for_label }}');
-    var ilhaSelect = document.getElementById('{{ form.ilha.id_for_label }}');
-    
-    salaSelect.addEventListener('change', function() {
-      // Reset ilha select
-      ilhaSelect.innerHTML = '<option value="">---------</option>';
-      
-      if (salaSelect.value) {
-        // Fazer uma requisição AJAX para obter as ilhas da sala selecionada
-        fetch('/apps/ti/api/ilhas-por-sala/' + salaSelect.value + '/')
-          .then(response => response.json())
-          .then(data => {
-            data.forEach(ilha => {
-              var option = document.createElement('option');
-              option.value = ilha.id;
-              option.textContent = ilha.nome;
-              ilhaSelect.appendChild(option);
-            });
-          });
-      }
-    });
-  });
-</script>
+<script src="{% static 'js/apps/ti/posicao_atendimento_form.js' %}"></script>
 {% endblock %} 

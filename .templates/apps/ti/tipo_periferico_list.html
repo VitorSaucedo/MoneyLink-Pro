@@ -4,84 +4,9 @@
 {% block title %}{{ title }}{% endblock %}
 
 {% block addcss_extra %}
-<link rel="stylesheet" href="{% static 'css/cards.css' %}">
 <link rel="stylesheet" href="{% static 'css/geral_forms.css' %}">
 <link rel="stylesheet" href="{% static 'css/mensagens.css' %}">
-<style>
-  .table-responsive {
-    overflow-x: auto;
-  }
-  
-  .table thead th {
-    background-color: #f8f9fa;
-    font-weight: 600;
-    border-top: none;
-  }
-  
-  .table-striped tbody tr:nth-of-type(odd) {
-    background-color: rgba(0, 123, 255, 0.05);
-  }
-  
-  .table-hover tbody tr:hover {
-    background-color: rgba(0, 123, 255, 0.1);
-  }
-  
-  .btn-action {
-    border-radius: 20px;
-    padding: 5px 10px;
-    font-size: 12px;
-    margin-right: 5px;
-    transition: all 0.2s;
-  }
-  
-  .btn-action:hover {
-    transform: translateY(-2px);
-  }
-  
-  .card-header-custom {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 15px 20px;
-  }
-  
-  .card-header-title {
-    display: flex;
-    align-items: center;
-  }
-  
-  .card-header-title i {
-    margin-right: 10px;
-    font-size: 1.2rem;
-  }
-  
-  .card-header-actions .btn {
-    border-radius: 20px;
-    font-weight: 500;
-    display: flex;
-    align-items: center;
-  }
-  
-  .card-header-actions .btn i {
-    margin-right: 5px;
-  }
-  
-  .empty-state {
-    text-align: center;
-    padding: 30px;
-  }
-  
-  .empty-state i {
-    font-size: 3rem;
-    color: #dee2e6;
-    margin-bottom: 15px;
-  }
-  
-  .empty-state p {
-    color: #6c757d;
-    font-size: 1.1rem;
-  }
-</style>
+<link rel="stylesheet" href="{% static 'css/apps/ti/forms_common.css' %}">
 {% endblock %}
 
 {% block pre_content %}

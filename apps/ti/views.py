@@ -72,13 +72,31 @@ def admin(request):
 def controle_salas(request):
     salas = Sala.objects.all()
     ilhas = Ilha.objects.all()
-    posicoes = PosicaoAtendimento.objects.all()
+    
+    # Carrega todas as posições de atendimento com seus relacionamentos
+    posicoes = PosicaoAtendimento.objects.all().select_related('funcionario', 'ilha', 'sala')
+    
+    # Carrega os periféricos atribuídos a cada PA
+    perifericos_por_pa = {}
+    atribuicoes = AtribuicaoPerifericoPA.objects.filter(ativo=True).select_related('periferico', 'periferico__tipo', 'posicao_atendimento')
+    
+    for atribuicao in atribuicoes:
+        pa_id = atribuicao.posicao_atendimento.id
+        if pa_id not in perifericos_por_pa:
+            perifericos_por_pa[pa_id] = []
+        perifericos_por_pa[pa_id].append({
+            'tipo': atribuicao.periferico.tipo.nome,
+            'marca': atribuicao.periferico.marca,
+            'modelo': atribuicao.periferico.modelo,
+            'id': atribuicao.periferico.id
+        })
     
     context = {
         'title': 'Controle de Salas - TI',
         'salas': salas,
         'ilhas': ilhas,
         'posicoes': posicoes,
+        'perifericos_por_pa': perifericos_por_pa
     }
     return render(request, 'apps/ti/controle_salas.html', context)
 

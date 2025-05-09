@@ -137,7 +137,7 @@ def can_view_inss_button(user, button_type):
         is_vendedor_loja = is_vendedor_loja or cargo_base == 'VENDEDOR(A) LOJA'
         is_supervisor = is_supervisor or cargo_grupo.name == 'VENDEDOR(A) - SUPERVISOR GERAL'
     
-    # Define permiss��es por tipo de botão
+    # Define permissões por tipo de botão
     if button_type in ['agendamento', 'confirmacao', 'reagendamento']:
         return is_atendente
     
@@ -203,3 +203,13 @@ def can_view_moneyplus(user):
         return False
 
     return user.equipes.filter(status=True).exists()
+
+@register.filter
+def get_item(dictionary, key):
+    """
+    Filtro para acessar um item de um dicionário pela chave em templates
+    Exemplo de uso: {{ meu_dicionario|get_item:minha_chave }}
+    """
+    if not dictionary:
+        return None
+    return dictionary.get(key)

@@ -1,8 +1,16 @@
+/**
+ * salas.css - Estilos para a página de controle de salas, ilhas e PAs
+ */
+
 /* Estilos para a página de Controle de Salas, Ilhas e PAs */
 
 /* ==========================================
-   Variáveis de Cores e Sombreamentos 
+   CSS para a página de Controle de Salas
+   Baseado no estilo de controle_metas.css
+   Foco: Verde e Azul, com ênfase no Verde
    ========================================== */
+
+/* ---------- Variáveis de Cores e Sombreamentos ---------- */
 :root {
     --color-primary-dark: #142650; /* Azul escuro */
     --color-secondary: #70f611; /* Verde */
@@ -51,54 +59,48 @@ body {
 
 .titulo-pagina i {
     color: var(--color-secondary);
+    margin-right: 12px;
 }
 
 /* ==========================================
-   Estilos para os Cards
+   Estilos para a estrutura de abas de Salas e Ilhas
    ========================================== */
-.card {
+.salas-container,
+.ilhas-container {
     background-color: var(--color-white);
     border: 1px solid var(--color-gray);
     border-radius: 10px;
     box-shadow: var(--box-shadow-light);
     overflow: hidden;
-    display: flex;
-    flex-direction: column;
-    width: 100%;
     margin-bottom: 1.5rem;
     transition: transform 0.3s ease, box-shadow 0.3s ease;
-    position: relative;
 }
 
-.card:hover {
+.salas-container:hover,
+.ilhas-container:hover {
     transform: translateY(-4px);
     box-shadow: var(--box-shadow-card-hover);
 }
 
-.card .card-header {
+.salas-tabs,
+.ilhas-tabs {
     background: var(--gradient-card-header) !important;
     background-size: 400% 400% !important;
     animation: var(--gradient-animation) !important;
-    color: var(--color-white) !important;
-    font-weight: 600;
-    font-size: 1.1em;
-    padding: 1rem 1.25rem;
-    letter-spacing: 0.5px;
-    text-shadow: 0 1px 2px rgba(0,0,0,0.1);
+    padding: 0.5rem 1rem 0;
+    border-bottom: 1px solid var(--color-gray);
+    position: relative;
+    z-index: 1;
     display: flex;
-    align-items: center;
-    position: relative; /* Necessário para o z-index do ::before */
-    z-index: 1; /* Garante que o conteúdo fique acima do ::before */
+    flex-direction: row;
+    overflow-x: auto;
+    flex-wrap: nowrap;
+    width: 100%;
 }
 
-.card .card-header i {
-    margin-right: 0.75rem;
-    font-size: 1.3rem;
-    vertical-align: middle;
-}
-
-/* Efeito de brilho metálico */
-.card .card-header::before {
+/* Efeito de brilho metálico nas abas */
+.salas-tabs::before,
+.ilhas-tabs::before {
     content: '';
     position: absolute;
     top: -100%;
@@ -115,189 +117,253 @@ body {
     );
     transform: rotate(45deg);
     transition: all 0.7s ease;
-    z-index: -1; /* Fica atrás do conteúdo */
+    z-index: -1;
 }
 
-.card:hover .card-header::before {
+.salas-container:hover .salas-tabs::before,
+.ilhas-container:hover .ilhas-tabs::before {
     top: 100%;
     left: 100%;
 }
 
-.card .card-body {
-    padding: 1.25rem;
-    display: flex;
-    flex-direction: column;
-    gap: 1rem;
+.salas-content,
+.ilhas-content {
+    padding: 1rem;
+    position: relative;
+    overflow: hidden;
     background: linear-gradient(135deg, rgba(255, 255, 255, 1) 0%, rgba(245, 255, 245, 0.8) 100%);
+    min-height: 200px;
 }
 
-/* ==========================================
-   Estilos para as abas
-   ========================================== */
-.nav-tabs {
-    border-bottom: 1px solid var(--color-gray);
+/* Remover todos os marcadores de lista e ajustar layout das abas */
+ul.nav-tabs {
+    list-style: none !important;
+    list-style-type: none !important;
+    padding-left: 0 !important;
+    margin-left: 0 !important;
     display: flex;
-    flex-wrap: wrap;
+    flex-direction: row;
+    flex-wrap: nowrap;
+}
+
+ul.nav-tabs li.nav-item {
+    list-style: none !important;
+    list-style-type: none !important;
+    margin-left: 0 !important;
+}
+
+/* Conteúdo das abas - modificação para suporte a animações específicas */
+.tab-pane {
+    /* Por padrão, as abas não devem ser mostradas */
+    display: none;
+}
+
+.tab-pane.active {
+    /* Apenas as abas ativas devem ser exibidas */
+    display: block;
+}
+
+/* Durante a animação, vamos controlar manualmente a visibilidade */
+.tab-pane.animating {
+    display: block;
+}
+
+/* Resolvendo o problema do marcador de lista */
+.nav-tabs::before,
+.nav-tabs::after {
+    display: none !important;
+}
+
+.nav-item::before,
+.nav-item::after {
+    display: none !important;
+    content: none !important;
+}
+
+/* Ajustando o layout das abas */
+.salas-tabs .nav-link,
+.ilhas-tabs .nav-link {
+    margin-right: 4px !important;
+    padding: 8px 16px !important;
+    border-radius: 8px 8px 0 0 !important;
+    border: none !important;
+    text-decoration: none !important;
+}
+
+/* Estilos para abas (nav-links) */
+.nav-tabs {
+    border-bottom: none;
+    display: flex;
+    flex-direction: row;
+    list-style: none;
     padding-left: 0;
     margin-bottom: 0;
-    list-style: none;
+    width: 100%;
+}
+
+.nav-tabs .nav-item {
+    margin-bottom: 0;
+    list-style-type: none;
 }
 
 .nav-tabs .nav-link {
-    margin-bottom: -1px;
-    border: 1px solid transparent;
-    border-top-left-radius: 8px;
-    border-top-right-radius: 8px;
-    padding: 0.75rem 1.25rem;
-    cursor: pointer;
-    font-weight: 500;
-    transition: all 0.2s ease-in-out;
     display: flex;
     align-items: center;
-    color: var(--color-text-dark);
+    padding: 0.75rem 1rem;
+    color: var(--color-white);
+    transition: all 0.3s ease;
+    border: none;
+    font-weight: 500;
+    border-radius: 8px 8px 0 0;
+    margin-right: 0.3rem;
+    text-shadow: 0 1px 2px rgba(0,0,0,0.1);
+    list-style: none;
+    text-decoration: none;
+    background-color: rgba(255, 255, 255, 0.1);
 }
 
 .nav-tabs .nav-link i {
     margin-right: 8px;
-    color: var(--color-secondary);
     font-size: 1.1rem;
-}
-
-.nav-tabs .nav-link:hover {
-    background-color: rgba(112, 246, 17, 0.08);
-    border-color: var(--color-gray) var(--color-gray) transparent;
 }
 
 .nav-tabs .nav-link.active {
     color: var(--color-primary-dark);
-    background-color: var(--color-white);
-    border-color: var(--color-gray) var(--color-gray) var(--color-white);
     font-weight: 600;
+    background-color: var(--color-white);
     position: relative;
+    z-index: 2;
+    border-bottom: none;
 }
 
-.nav-tabs .nav-link.active::after {
-    content: '';
-    position: absolute;
-    bottom: -1px;
-    left: 0;
-    right: 0;
-    height: 3px;
-    background: var(--color-secondary);
+.nav-tabs .nav-link:hover:not(.active) {
+    background-color: rgba(255, 255, 255, 0.15);
+    color: var(--color-white);
+    border-color: transparent;
 }
 
-/* Conteúdo das abas */
+/* Estilos para o conteúdo das abas e animações de transição */
 .tab-content {
-    padding: 20px 0;
     position: relative;
     overflow: hidden;
-    min-height: 300px;
+    min-height: 300px; /* Altura mínima para evitar saltos */
+    transition: min-height 0.3s ease;
 }
 
+/* Estilos específicos para o wrapper de animação de slide */
+.tab-content .slider-wrapper {
+    display: flex;
+    width: 200%;
+    transition: transform 0.5s ease-in-out;
+}
+
+/* Estilos para os painéis de abas durante animação */
 .tab-pane {
-    display: none;
+    position: relative;
     width: 100%;
-    transition: transform 0.5s ease;
-    position: absolute;
-    top: 0;
-    left: 0;
+    transition: opacity 0.2s ease-in-out;
+    opacity: 1;
+    height: auto;
 }
 
-.tab-pane.active {
-    display: block;
-}
-
-/* Animações de slide */
-.slide-right-enter {
-    transform: translateX(100%);
-}
-
-.slide-right-enter-active {
-    transform: translateX(0);
-}
-
-.slide-right-exit {
-    transform: translateX(0);
-}
-
-.slide-right-exit-active {
-    transform: translateX(-100%);
-}
-
-.slide-left-enter {
-    transform: translateX(-100%);
-}
-
-.slide-left-enter-active {
-    transform: translateX(0);
-}
-
-.slide-left-exit {
-    transform: translateX(0);
-}
-
-.slide-left-exit-active {
-    transform: translateX(100%);
+/* Para garantir que a transição seja suave */
+.tab-pane.transitioning {
+    position: relative;
+    display: block !important;
+    opacity: 1;
 }
 
 /* ==========================================
-   Estilos para as PAs
+   Layout de PAs em duas colunas
    ========================================== */
-.pa-grid {
-    display: flex;
-    flex-direction: column;
-    flex-wrap: wrap;
-    height: 650px; /* Altura fixa para forçar o wrap em colunas */
-    max-width: 800px;
-    margin: 20px auto;
-    gap: 20px;
-    align-content: flex-start;
-    min-height: 200px; /* Altura mínima para evitar colapso */
+.pa-container {
+    padding: 1rem 0.5rem;
 }
 
+.pa-grid-dual-column {
+    display: flex;
+    gap: 20px;
+}
+
+.pa-column {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+/* Ordenação das PAs agora é controlada pelo JavaScript */
+/* Removendo regras CSS de ordenação para evitar conflitos */
+
+/* ==========================================
+   Estilos para cards de PAs
+   ========================================== */
 .pa-card {
-    background: var(--color-white);
+    background-color: var(--color-white);
+    border: 1px solid var(--color-gray);
     border-radius: 10px;
     box-shadow: var(--box-shadow-light);
-    padding: 15px;
-    transition: transform 0.3s ease, box-shadow 0.3s ease;
-    border-left: 4px solid var(--color-secondary);
-    width: calc(50% - 15px); /* 50% de largura menos gap */
-    margin-bottom: 20px;
-    min-height: 150px; /* Altura mínima para cada card */
+    overflow: hidden;
+    transition: all 0.3s ease;
 }
 
 .pa-card:hover {
-    transform: translateY(-5px);
+    transform: translateY(-4px);
     box-shadow: var(--box-shadow-card-hover);
 }
 
 .pa-header {
+    padding: 12px 15px;
+    background: var(--gradient-card-header);
+    background-size: 400% 400%;
+    animation: gradientBG 12s ease infinite;
+    color: var(--color-white);
     display: flex;
-    align-items: center;
     justify-content: space-between;
-    margin-bottom: 15px;
-    border-bottom: 1px solid var(--color-gray);
-    padding-bottom: 10px;
+    align-items: center;
+    border-radius: 10px 10px 0 0;
+    position: relative;
+    overflow: hidden;
+}
+
+.pa-header::before {
+    content: '';
+    position: absolute;
+    top: -100%;
+    left: -100%;
+    width: 50%;
+    height: 200%;
+    background: linear-gradient(
+        to right,
+        rgba(255, 255, 255, 0.05) 0%,
+        rgba(255, 255, 255, 0.2) 50%,
+        rgba(255, 255, 255, 0.05) 100%
+    );
+    transform: rotate(45deg);
+    transition: all 0.5s ease;
+    z-index: 1;
+}
+
+.pa-card:hover .pa-header::before {
+    top: 100%;
+    left: 100%;
 }
 
 .pa-title {
-    font-size: 1.1rem;
     font-weight: 600;
+    font-size: 1.1rem;
     display: flex;
     align-items: center;
-    color: var(--color-primary-dark);
-}
-
-.pa-title span {
-    margin-right: 10px;
+    gap: 10px;
 }
 
 .pa-status-indicator {
-    width: 15px;
-    height: 15px;
+    width: 12px;
+    height: 12px;
     border-radius: 50%;
     display: inline-block;
+    margin-left: 8px;
+    box-shadow: 0 0 5px rgba(0, 0, 0, 0.1);
 }
 
 .status-livre {
@@ -305,11 +371,11 @@ body {
 }
 
 .status-ocupada {
-    background-color: var(--color-primary-dark);
+    background-color: #0d6efd; /* Azul para ocupada */
 }
 
 .status-manutencao {
-    background-color: #ffc107; /* Amarelo */
+    background-color: #ffc107; /* Amarelo para manutenção */
 }
 
 .status-inativa {
@@ -317,174 +383,173 @@ body {
 }
 
 .pa-content {
-    margin-bottom: 15px;
+    padding: 15px;
+    background: linear-gradient(to bottom, rgba(255, 255, 255, 1) 0%, rgba(245, 250, 245, 0.8) 100%);
+    border-radius: 0 0 10px 10px;
 }
 
-.pa-content div {
-    margin-bottom: 8px;
-    color: var(--color-text-dark);
+.pa-funcionario {
+    margin-bottom: 10px;
+    padding: 8px 10px;
+    background-color: rgba(255, 255, 255, 0.8);
+    border-radius: 6px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
 }
 
-.pa-content strong {
-    font-weight: 500;
+.pa-funcionario strong {
     color: var(--color-primary-dark);
+    margin-right: 6px;
 }
 
 .pa-perifericos {
-    margin-top: 15px;
-    border-top: 1px solid var(--color-gray);
-    padding-top: 10px;
+    background-color: rgba(255, 255, 255, 0.8);
+    border-radius: 6px;
+    padding: 10px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
 }
 
 .pa-perifericos h6 {
-    font-size: 0.9rem;
-    margin-bottom: 10px;
     color: var(--color-primary-dark);
+    font-size: 0.95rem;
+    font-weight: 600;
+    margin-bottom: 10px;
     display: flex;
     align-items: center;
 }
 
 .pa-perifericos h6 i {
     margin-right: 5px;
-    color: var(--color-secondary);
 }
 
 .perifericos-list {
     display: flex;
     flex-wrap: wrap;
-    gap: 5px;
+    gap: 6px;
 }
 
 .periferico-tag {
-    background-color: rgba(112, 246, 17, 0.08);
-    border-radius: 8px;
-    padding: 3px 8px;
+    display: inline-block;
+    padding: 4px 8px;
+    background: linear-gradient(135deg, var(--color-primary-dark) 0%, #1a346b 100%);
+    color: white;
+    border-radius: 4px;
     font-size: 0.8rem;
-    color: var(--color-text-dark);
+    transition: all 0.3s ease;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.periferico-tag:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+    background: linear-gradient(135deg, var(--color-secondary) 0%, #4caf50 100%);
+    cursor: pointer;
 }
 
 /* ==========================================
-   Estilos para Badges
-   ========================================== */
-.badge {
-    padding: 0.25rem 0.5rem;
-    font-size: 0.75rem;
-    font-weight: 500;
-    border-radius: 8px;
-}
-
-.bg-success {
-    background-color: var(--color-success) !important;
-    color: var(--color-white);
-}
-
-.bg-primary {
-    background-color: var(--color-primary-dark) !important;
-    color: var(--color-white);
-}
-
-.bg-warning {
-    background-color: #ffc107 !important;
-    color: #212529;
-}
-
-.bg-danger {
-    background-color: var(--color-danger) !important;
-    color: var(--color-white);
-}
-
-.text-muted {
-    color: var(--color-text-light) !important;
-}
-
-/* ==========================================
-   Estado vazio
+   Estado Vazio (Empty State)
    ========================================== */
 .empty-state {
     text-align: center;
-    padding: 40px 20px;
-    background-color: rgba(112, 246, 17, 0.05);
+    padding: 30px 20px;
+    background-color: rgba(255, 255, 255, 0.7);
     border-radius: 10px;
-    margin-top: 20px;
-    border: 1px dashed var(--color-gray);
+    box-shadow: var(--box-shadow-light);
+    margin: 20px 0;
 }
 
 .empty-state i {
     font-size: 3rem;
-    color: var(--color-secondary);
-    margin-bottom: 20px;
-    opacity: 0.7;
+    color: var(--color-primary-dark);
+    margin-bottom: 15px;
+    opacity: 0.8;
 }
 
 .empty-state h5 {
-    font-weight: 500;
-    color: var(--color-primary-dark);
+    color: var(--color-text-dark);
+    font-weight: 600;
     margin-bottom: 10px;
 }
 
 .empty-state p {
-    color: var(--color-text-dark);
+    color: var(--color-text-light);
     margin-bottom: 20px;
 }
 
-/* ==========================================
-   Contêiner de mensagens
-   ========================================== */
-#message-container {
-    margin-bottom: 20px;
-}
-
-#message-container .alert {
-    border-radius: 8px;
-    display: flex;
-    align-items: center;
-    padding: 0.8rem 1.25rem;
+.empty-state .btn {
+    background-color: transparent;
+    color: var(--color-primary-dark);
+    border: 2px solid var(--color-primary-dark);
+    padding: 8px 16px;
+    border-radius: 6px;
     font-weight: 500;
-    box-shadow: var(--box-shadow-light);
-    border: none;
+    transition: all 0.3s ease;
 }
 
-#message-container .alert-success {
-    background: linear-gradient(135deg, #d1e7dd, var(--color-success));
-    color: #0a3622;
+.empty-state .btn:hover {
+    background-color: var(--color-primary-dark);
+    color: white;
 }
 
-#message-container .alert-danger {
-    background: linear-gradient(135deg, #f8d7da, var(--color-danger));
-    color: #58151c;
-}
-
-#message-container .alert i {
-    margin-right: 0.75rem;
-    font-size: 1.3rem;
+.empty-state .btn i {
+    font-size: 1rem;
+    margin-right: 5px;
+    color: inherit;
+    opacity: 1;
+    margin-bottom: 0;
 }
 
 /* ==========================================
-   Estilos responsivos
+   Responsividade
    ========================================== */
-@media (max-width: 768px) {
-    .nav-tabs .nav-link {
-        padding: 0.5rem 0.75rem;
-        font-size: 0.9rem;
+@media (max-width: 992px) {
+    .pa-grid-dual-column {
+        flex-direction: column;
     }
     
-    .pa-grid {
+    .container {
+        max-width: 100%;
+    }
+    
+    .titulo-pagina {
+        font-size: 1.5rem;
+    }
+    
+    .nav-tabs .nav-link {
+        padding: 0.5rem 0.8rem;
+        font-size: 0.9rem;
+    }
+}
+
+@media (max-width: 576px) {
+    .pa-grid-dual-column {
         flex-direction: column;
-        height: auto;
-        flex-wrap: nowrap;
     }
     
     .pa-card {
+        margin-bottom: 15px;
+    }
+    
+    .titulo-pagina {
+        font-size: 1.2rem;
         width: 100%;
+        text-align: center;
     }
-
-    .card .card-body {
-        padding: 1rem;
+    
+    .titulo-pagina i {
+        display: block;
+        margin: 0 auto 10px;
     }
-
-    .card .card-header {
-        font-size: 1em;
-        padding: 0.8rem 1rem;
+    
+    .nav-tabs {
+        flex-wrap: nowrap;
+        overflow-x: auto;
+        padding-bottom: 5px;
+    }
+    
+    .nav-tabs .nav-link {
+        white-space: nowrap;
+        padding: 0.5rem 0.6rem;
+        font-size: 0.85rem;
     }
 }
 
@@ -495,4 +560,16 @@ body {
     0% { background-position: 0% 50%; }
     50% { background-position: 100% 50%; }
     100% { background-position: 0% 50%; }
+}
+
+@keyframes gradientBGButton {
+    0% { background-position: 0% 0%; }
+    50% { background-position: 100% 100%; }
+    100% { background-position: 0% 0%; }
+}
+
+@keyframes brilho {
+    0% { opacity: 0.5; }
+    50% { opacity: 1; }
+    100% { opacity: 0.5; }
 }

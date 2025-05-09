@@ -1,5 +1,6 @@
 {% extends 'base-plus.html' %}
 {% load static %}
+{% load custom_tags %}
 
 {% block header_title %}
 TI - Controle de Salas, Ilhas e PAs
@@ -25,158 +26,203 @@ TI - Controle de Salas, Ilhas e PAs
 
   {% if salas %}
     <!-- Abas para as salas -->
-    <div class="card mb-4">
-      <div class="card-header">
-        <i class='bx bx-door-open me-2'></i> Salas Disponíveis
-      </div>
-      <div class="card-body">
-        <ul class="nav nav-tabs" id="salas-tab" role="tablist">
-          {% for sala in salas %}
-            <li class="nav-item" role="presentation">
-              <button class="nav-link {% if forloop.first %}active{% endif %}" 
-                      id="sala-{{ sala.id }}-tab" 
-                      data-bs-toggle="tab" 
-                      data-sala-id="{{ sala.id }}"
-                      data-bs-target="#sala-{{ sala.id }}" 
-                      type="button" 
-                      role="tab" 
-                      aria-controls="sala-{{ sala.id }}" 
-                      aria-selected="{% if forloop.first %}true{% else %}false{% endif %}">
-                <i class='bx bx-door-open'></i> {{ sala.nome }}
-              </button>
-            </li>
-          {% endfor %}
-        </ul>
-        
-        <!-- Conteúdo das abas das salas -->
-        <div class="tab-content" id="salas-tab-content">
-          {% for sala in salas %}
-            <div class="tab-pane fade {% if forloop.first %}show active{% endif %}" 
-                 id="sala-{{ sala.id }}" 
-                 role="tabpanel" 
-                 aria-labelledby="sala-{{ sala.id }}-tab">
-              
-              {% if sala.ilhas.all %}
-                <!-- Abas para as ilhas -->
-                <div class="card mt-3">
-                  <div class="card-header">
-                    <i class='bx bx-grid-alt me-2'></i> Ilhas da Sala {{ sala.nome }}
-                  </div>
-                  <div class="card-body">
-                    <ul class="nav nav-tabs nav-ilhas" id="ilhas-sala-{{ sala.id }}-tab" role="tablist">
-                      {% for ilha in sala.ilhas.all %}
-                        <li class="nav-item" role="presentation">
-                          <button class="nav-link {% if forloop.first %}active{% endif %}" 
-                                  id="ilha-{{ ilha.id }}-tab" 
-                                  data-bs-toggle="tab" 
-                                  data-ilha-id="{{ ilha.id }}"
-                                  data-bs-target="#ilha-{{ ilha.id }}" 
-                                  type="button" 
-                                  role="tab" 
-                                  aria-controls="ilha-{{ ilha.id }}" 
-                                  aria-selected="{% if forloop.first %}true{% else %}false{% endif %}">
-                            <i class='bx bx-grid'></i> {{ ilha.nome }}
-                          </button>
-                        </li>
-                      {% endfor %}
-                    </ul>
-                    
-                    <!-- Conteúdo das abas das ilhas -->
-                    <div class="tab-content" id="ilhas-sala-{{ sala.id }}-content">
-                      {% for ilha in sala.ilhas.all %}
-                        <div class="tab-pane fade {% if forloop.first %}show active{% endif %}" 
-                             id="ilha-{{ ilha.id }}" 
-                             role="tabpanel" 
-                             aria-labelledby="ilha-{{ ilha.id }}-tab">
-                          
-                          {% if ilha.posicoes_atendimento.all %}
-                            <!-- Grid de cards de PAs -->
-                            <div class="pa-grid">
-                              {% with pas=ilha.posicoes_atendimento.all|dictsortreversed:"numero" %}
-                                {% for pa in pas %}
-                                  <div class="pa-card">
-                                    <div class="pa-header">
-                                      <div class="pa-title">
-                                        <span>PA {{ pa.numero }}</span>
-                                        <div class="pa-status-indicator status-{{ pa.status }}" 
-                                           title="{% if pa.status == 'livre' %}Livre{% elif pa.status == 'ocupada' %}Ocupada{% elif pa.status == 'manutencao' %}Em Manutenção{% elif pa.status == 'inativa' %}Inativa{% endif %}">
+    <div class="salas-container">
+      <ul class="nav nav-tabs salas-tabs" id="salas-tab" role="tablist">
+        {% for sala in salas %}
+          <li class="nav-item" role="presentation" style="list-style-type: none;">
+            <button class="nav-link {% if forloop.first %}active{% endif %}" 
+                    id="sala-{{ sala.id }}-tab" 
+                    data-sala-id="{{ sala.id }}"
+                    type="button" 
+                    role="tab" 
+                    aria-controls="sala-{{ sala.id }}" 
+                    aria-selected="{% if forloop.first %}true{% else %}false{% endif %}">
+              <i class='bx bx-door-open'></i> {{ sala.nome }}
+            </button>
+          </li>
+        {% endfor %}
+      </ul>
+      
+      <!-- Conteúdo das abas das salas -->
+      <div class="tab-content salas-content" id="salas-tab-content">
+        {% for sala in salas %}
+          <div class="tab-pane fade {% if forloop.first %}show active{% endif %}" 
+               id="sala-{{ sala.id }}" 
+               role="tabpanel" 
+               aria-labelledby="sala-{{ sala.id }}-tab">
+            
+            {% if sala.ilhas.all %}
+              <!-- Abas para as ilhas desta sala específica -->
+              <div class="ilhas-container mt-4">
+                <ul class="nav nav-tabs ilhas-tabs" id="ilhas-sala-{{ sala.id }}-tab" role="tablist">
+                  {% for ilha in sala.ilhas.all %}
+                    <li class="nav-item" role="presentation" style="list-style-type: none;">
+                      <button class="nav-link {% if forloop.first %}active{% endif %}" 
+                              id="ilha-{{ ilha.id }}-tab" 
+                              data-ilha-id="{{ ilha.id }}"
+                              type="button" 
+                              role="tab" 
+                              aria-controls="ilha-{{ ilha.id }}-sala-{{ sala.id }}" 
+                              aria-selected="{% if forloop.first %}true{% else %}false{% endif %}">
+                        <i class='bx bx-grid'></i> {{ ilha.nome }}
+                      </button>
+                    </li>
+                  {% endfor %}
+                </ul>
+                
+                <!-- Conteúdo das abas das ilhas desta sala específica -->
+                <div class="tab-content ilhas-content" id="ilhas-sala-{{ sala.id }}-content">
+                  {% for ilha in sala.ilhas.all %}
+                    <div class="tab-pane fade {% if forloop.first %}show active{% endif %}" 
+                         id="ilha-{{ ilha.id }}-sala-{{ sala.id }}" 
+                         role="tabpanel" 
+                         aria-labelledby="ilha-{{ ilha.id }}-tab">
+                      
+                      {% if ilha.posicoes_atendimento.all %}
+                        <!-- Layout de PAs em duas colunas ordenado conforme o modelo -->
+                        <div class="pa-container mt-4">
+                          <div class="pa-grid-dual-column">
+                            <!-- Coluna da esquerda - PAs ímpares de cima para baixo -->
+                            <div class="pa-column pa-column-left">
+                              {% with pas_list=ilha.posicoes_atendimento.all|dictsort:"numero" %}
+                                {% for pa in pas_list %}
+                                  {% if forloop.counter|divisibleby:2 != 0 %}
+                                    <div class="pa-card" data-pa-id="{{ pa.id }}">
+                                      <div class="pa-header">
+                                        <div class="pa-title">
+                                          <span>PA {{ pa.numero }}</span>
+                                          <div class="pa-status-indicator status-{{ pa.status }}" 
+                                             title="{% if pa.status == 'livre' %}Livre{% elif pa.status == 'ocupada' %}Ocupada{% elif pa.status == 'manutencao' %}Em Manutenção{% elif pa.status == 'inativa' %}Inativa{% endif %}">
+                                          </div>
+                                        </div>
+                                        <div class="pa-status">
+                                          {% if pa.status == 'livre' %}
+                                            <span class="badge bg-success">Livre</span>
+                                          {% elif pa.status == 'ocupada' %}
+                                            <span class="badge bg-primary">Ocupada</span>
+                                          {% elif pa.status == 'manutencao' %}
+                                            <span class="badge bg-warning text-dark">Em Manutenção</span>
+                                          {% elif pa.status == 'inativa' %}
+                                            <span class="badge bg-danger">Inativa</span>
+                                          {% endif %}
                                         </div>
                                       </div>
-                                      <div class="pa-status">
-                                        {% if pa.status == 'livre' %}
-                                          <span class="badge bg-success">Livre</span>
-                                        {% elif pa.status == 'ocupada' %}
-                                          <span class="badge bg-primary">Ocupada</span>
-                                        {% elif pa.status == 'manutencao' %}
-                                          <span class="badge bg-warning text-dark">Em Manutenção</span>
-                                        {% elif pa.status == 'inativa' %}
-                                          <span class="badge bg-danger">Inativa</span>
-                                        {% endif %}
-                                      </div>
-                                    </div>
-                                    
-                                    <div class="pa-content">
-                                      <div>
-                                        <strong>Funcionário:</strong> 
-                                        {% if pa.funcionario %}
-                                          {{ pa.funcionario.nome }}
-                                        {% else %}
-                                          <span class="text-muted">Não atribuído</span>
-                                        {% endif %}
-                                      </div>
                                       
-                                      <!-- Periféricos atribuídos a esta PA -->
-                                      <div class="pa-perifericos">
-                                        <h6><i class='bx bx-devices me-1'></i> Periféricos</h6>
-                                        <div class="perifericos-list">
-                                          {% with perifericos=pa.atribuicaoperifericopa_set.filter.all %}
-                                            {% if perifericos %}
-                                              {% for atr in perifericos %}
-                                                {% if atr.ativo %}
-                                                  <span class="periferico-tag">{{ atr.periferico.tipo.nome }} {{ atr.periferico.marca }}</span>
-                                                {% endif %}
+                                      <div class="pa-content">
+                                        <div class="pa-funcionario">
+                                          <strong>Funcionário:</strong> 
+                                          {% if pa.funcionario %}
+                                            {{ pa.funcionario.nome }}
+                                          {% else %}
+                                            <span class="text-muted">Não atribuído</span>
+                                          {% endif %}
+                                        </div>
+                                        
+                                        <!-- Periféricos atribuídos a esta PA -->
+                                        <div class="pa-perifericos">
+                                          <h6><i class='bx bx-devices me-1'></i> Periféricos</h6>
+                                          <div class="perifericos-list">
+                                            {% if perifericos_por_pa|get_item:pa.id %}
+                                              {% for periferico in perifericos_por_pa|get_item:pa.id %}
+                                                <span class="periferico-tag">{{ periferico.tipo }} {{ periferico.marca }}</span>
                                               {% endfor %}
                                             {% else %}
                                               <span class="text-muted">Nenhum periférico atribuído</span>
                                             {% endif %}
-                                          {% endwith %}
+                                          </div>
                                         </div>
                                       </div>
                                     </div>
-                                  </div>
+                                  {% endif %}
                                 {% endfor %}
                               {% endwith %}
                             </div>
-                          {% else %}
-                            <!-- Estado vazio para PAs -->
-                            <div class="empty-state">
-                              <i class='bx bx-desktop'></i>
-                              <h5>Nenhuma PA cadastrada nesta ilha</h5>
-                              <p>Adicione posições de atendimento para visualizá-las aqui.</p>
-                              <a href="#" class="btn btn-outline-secondary">
-                                <i class='bx bx-plus-circle'></i> Adicionar PA
-                              </a>
+                            
+                            <!-- Coluna da direita - PAs pares de cima para baixo -->
+                            <div class="pa-column pa-column-right">
+                              {% with pas_list=ilha.posicoes_atendimento.all|dictsort:"numero" %}
+                                {% for pa in pas_list %}
+                                  {% if forloop.counter|divisibleby:2 == 0 %}
+                                    <div class="pa-card" data-pa-id="{{ pa.id }}">
+                                      <div class="pa-header">
+                                        <div class="pa-title">
+                                          <span>PA {{ pa.numero }}</span>
+                                          <div class="pa-status-indicator status-{{ pa.status }}" 
+                                             title="{% if pa.status == 'livre' %}Livre{% elif pa.status == 'ocupada' %}Ocupada{% elif pa.status == 'manutencao' %}Em Manutenção{% elif pa.status == 'inativa' %}Inativa{% endif %}">
+                                          </div>
+                                        </div>
+                                        <div class="pa-status">
+                                          {% if pa.status == 'livre' %}
+                                            <span class="badge bg-success">Livre</span>
+                                          {% elif pa.status == 'ocupada' %}
+                                            <span class="badge bg-primary">Ocupada</span>
+                                          {% elif pa.status == 'manutencao' %}
+                                            <span class="badge bg-warning text-dark">Em Manutenção</span>
+                                          {% elif pa.status == 'inativa' %}
+                                            <span class="badge bg-danger">Inativa</span>
+                                          {% endif %}
+                                        </div>
+                                      </div>
+                                      
+                                      <div class="pa-content">
+                                        <div class="pa-funcionario">
+                                          <strong>Funcionário:</strong> 
+                                          {% if pa.funcionario %}
+                                            {{ pa.funcionario.nome }}
+                                          {% else %}
+                                            <span class="text-muted">Não atribuído</span>
+                                          {% endif %}
+                                        </div>
+                                        
+                                        <!-- Periféricos atribuídos a esta PA -->
+                                        <div class="pa-perifericos">
+                                          <h6><i class='bx bx-devices me-1'></i> Periféricos</h6>
+                                          <div class="perifericos-list">
+                                            {% if perifericos_por_pa|get_item:pa.id %}
+                                              {% for periferico in perifericos_por_pa|get_item:pa.id %}
+                                                <span class="periferico-tag">{{ periferico.tipo }} {{ periferico.marca }}</span>
+                                              {% endfor %}
+                                            {% else %}
+                                              <span class="text-muted">Nenhum periférico atribuído</span>
+                                            {% endif %}
+                                          </div>
+                                        </div>
+                                      </div>
+                                    </div>
+                                  {% endif %}
+                                {% endfor %}
+                              {% endwith %}
                             </div>
-                          {% endif %}
+                          </div>
                         </div>
-                      {% endfor %}
+                      {% else %}
+                        <!-- Estado vazio para PAs -->
+                        <div class="empty-state mt-4">
+                          <i class='bx bx-desktop'></i>
+                          <h5>Nenhuma PA cadastrada nesta ilha</h5>
+                          <p>Adicione posições de atendimento para visualizá-las aqui.</p>
+                          <a href="{% url 'ti:posicao_atendimento_create' %}" class="btn btn-outline-secondary">
+                            <i class='bx bx-plus-circle'></i> Adicionar PA
+                          </a>
+                        </div>
+                      {% endif %}
                     </div>
-                  </div>
+                  {% endfor %}
                 </div>
-              {% else %}
-                <!-- Estado vazio para ilhas -->
-                <div class="empty-state">
-                  <i class='bx bx-grid-alt'></i>
-                  <h5>Nenhuma ilha cadastrada nesta sala</h5>
-                  <p>Adicione ilhas para organizar as posições de atendimento.</p>
-                  <a href="#" class="btn btn-outline-secondary">
-                    <i class='bx bx-plus-circle'></i> Adicionar Ilha
-                  </a>
-                </div>
-              {% endif %}
-            </div>
-          {% endfor %}
-        </div>
+              </div>
+            {% else %}
+              <!-- Estado vazio para ilhas -->
+              <div class="empty-state mt-4">
+                <i class='bx bx-grid-alt'></i>
+                <h5>Nenhuma ilha cadastrada nesta sala</h5>
+                <p>Adicione ilhas para organizar as posições de atendimento.</p>
+                <a href="{% url 'ti:ilha_create' %}" class="btn btn-outline-secondary">
+                  <i class='bx bx-plus-circle'></i> Adicionar Ilha
+                </a>
+              </div>
+            {% endif %}
+          </div>
+        {% endfor %}
       </div>
     </div>
   {% else %}
@@ -185,7 +231,7 @@ TI - Controle de Salas, Ilhas e PAs
       <i class='bx bx-door-open'></i>
       <h5>Nenhuma sala cadastrada</h5>
       <p>Adicione salas para começar a organizar seu ambiente.</p>
-      <a href="#" class="btn btn-outline-secondary">
+      <a href="{% url 'ti:sala_create' %}" class="btn btn-outline-secondary">
         <i class='bx bx-plus-circle'></i> Adicionar Sala
       </a>
     </div>
@@ -196,128 +242,71 @@ TI - Controle de Salas, Ilhas e PAs
 {% block addjs_extra %}
   {# jQuery é necessário #}
   <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <script src="{% static 'js/apps/ti/controle_salas.js' %}"></script>
+  
   <script>
+    // Script adicional para garantir que apenas o conteúdo ativo seja exibido
     $(document).ready(function() {
-      // Manipulação das abas de salas
-      const salasButtons = document.querySelectorAll('#salas-tab .nav-link');
-      let currentSalaId = salasButtons.length > 0 ? salasButtons[0].getAttribute('data-sala-id') : null;
+      // Esconder todos os painéis não ativos
+      $('.tab-pane').not('.active').hide();
       
-      salasButtons.forEach(button => {
-        button.addEventListener('click', function(e) {
-          const targetSalaId = this.getAttribute('data-sala-id');
-          const direction = parseInt(targetSalaId) > parseInt(currentSalaId) ? 'right' : 'left';
-          
-          // Animar transição
-          animateTabTransition('#salas-tab-content', '#sala-' + currentSalaId, '#sala-' + targetSalaId, direction);
-          
-          // Atualizar sala atual
-          currentSalaId = targetSalaId;
-          
-          // Atualizar estado ativo nas abas
-          salasButtons.forEach(btn => {
-            btn.classList.remove('active');
-            btn.setAttribute('aria-selected', 'false');
-          });
-          this.classList.add('active');
-          this.setAttribute('aria-selected', 'true');
-          
-          // Ajustar altura das grids de PAs
-          adjustPaGridsHeight();
-        });
+      // Remover pontos pretos das listas
+      $('.nav-tabs').css('list-style', 'none');
+      $('.nav-item').css('list-style', 'none');
+      
+      // Interromper comportamento padrão do Bootstrap Tabs
+      $('button[data-bs-toggle="tab"]').on('click', function(e) {
+        e.preventDefault();
+        return false;
       });
       
-      // Manipulação das abas de ilhas para cada sala
-      const salasContent = document.querySelectorAll('#salas-tab-content .tab-pane');
-      salasContent.forEach(salaContent => {
-        const salaId = salaContent.getAttribute('id').replace('sala-', '');
-        const ilhasButtons = salaContent.querySelectorAll('.nav-ilhas .nav-link');
-        let currentIlhaId = ilhasButtons.length > 0 ? ilhasButtons[0].getAttribute('data-ilha-id') : null;
-        
-        ilhasButtons.forEach(button => {
-          button.addEventListener('click', function(e) {
-            const targetIlhaId = this.getAttribute('data-ilha-id');
-            const direction = parseInt(targetIlhaId) > parseInt(currentIlhaId) ? 'right' : 'left';
+      // Ajustar tamanho do container para evitar saltos durante as transições
+      function ajustarAlturaTabContent() {
+        $('.tab-content').each(function() {
+          var alturaMaxima = 0;
+          $(this).find('.tab-pane').each(function() {
+            // Temporariamente tornar visível para medir altura real
+            var displayOriginal = $(this).css('display');
+            $(this).css('display', 'block');
+            $(this).css('visibility', 'hidden');
             
-            // Animar transição
-            animateTabTransition('#ilhas-sala-' + salaId + '-content', '#ilha-' + currentIlhaId, '#ilha-' + targetIlhaId, direction);
-            
-            // Atualizar ilha atual
-            currentIlhaId = targetIlhaId;
-            
-            // Atualizar estado ativo nas abas
-            ilhasButtons.forEach(btn => {
-              btn.classList.remove('active');
-              btn.setAttribute('aria-selected', 'false');
-            });
-            this.classList.add('active');
-            this.setAttribute('aria-selected', 'true');
-            
-            // Ajustar altura das grids de PAs
-            setTimeout(() => {
-              adjustPaGridsHeight();
-            }, 510); // Um pouco mais que a duração da animação
-          });
-        });
-      });
-      
-      // Função para ajustar a altura dos grids de PAs
-      function adjustPaGridsHeight() {
-        document.querySelectorAll('.pa-grid').forEach(grid => {
-          if (grid.closest('.tab-pane.active')) {
-            const cards = grid.querySelectorAll('.pa-card');
-            if (cards.length > 0) {
-              const cardHeight = cards[0].offsetHeight + 20; // altura + margem
-              const numRows = Math.ceil(cards.length / 2);
-              grid.style.height = (cardHeight * numRows) + 'px';
+            var altura = $(this).outerHeight(true);
+            if (altura > alturaMaxima) {
+              alturaMaxima = altura;
             }
+            
+            // Restaurar visibilidade original
+            $(this).css('display', displayOriginal);
+            $(this).css('visibility', 'visible');
+          });
+          
+          if (alturaMaxima > 0) {
+            $(this).css('min-height', alturaMaxima + 50 + 'px'); // Adicionar margem extra para segurança
           }
         });
       }
       
-      // Ajustar altura inicial das grids de PAs
-      setTimeout(adjustPaGridsHeight, 100);
+      // Executar ajuste inicial
+      setTimeout(ajustarAlturaTabContent, 100); // Pequeno delay para garantir que o DOM foi renderizado
       
-      // Ajustar altura quando a janela for redimensionada
-      window.addEventListener('resize', adjustPaGridsHeight);
+      // Ajustar ao redimensionar a janela
+      $(window).resize(function() {
+        ajustarAlturaTabContent();
+      });
       
-      // Função para animar transição entre abas
-      function animateTabTransition(containerSelector, currentSelector, targetSelector, direction) {
-        const container = document.querySelector(containerSelector);
-        const currentTab = document.querySelector(currentSelector);
-        const targetTab = document.querySelector(targetSelector);
-        
-        if (!container || !currentTab || !targetTab) return;
-        
-        // Configurar animação baseada na direção
-        const currentExitClass = direction === 'right' ? 'slide-right-exit-active' : 'slide-left-exit-active';
-        const targetEnterClass = direction === 'right' ? 'slide-right-enter' : 'slide-left-enter';
-        const targetEnterActiveClass = direction === 'right' ? 'slide-right-enter-active' : 'slide-left-enter-active';
-        
-        // Preparar elemento alvo
-        targetTab.style.display = 'block';
-        targetTab.classList.add(targetEnterClass);
-        
-        // Forçar repaint
-        void targetTab.offsetWidth;
-        
-        // Iniciar animação
-        currentTab.classList.add(currentExitClass);
-        targetTab.classList.add(targetEnterActiveClass);
-        targetTab.classList.remove(targetEnterClass);
-        
-        // Limpar após a animação
-        setTimeout(() => {
-          currentTab.style.display = 'none';
-          currentTab.classList.remove(currentExitClass);
-          currentTab.classList.remove('show', 'active');
-          
-          targetTab.classList.add('show', 'active');
-          targetTab.classList.remove(targetEnterActiveClass);
-          
-          // Ajustar altura das grids de PAs após a transição
-          adjustPaGridsHeight();
-        }, 500); // Duração da animação
-      }
+      // Força o recálculo quando um tab é clicado
+      $('.nav-tabs .nav-link').on('click', function() {
+        // Ajustar após um pequeno delay para permitir que a transição ocorra
+        setTimeout(ajustarAlturaTabContent, 600);
+      });
+      
+      // Reajustar quando a transição estiver completa
+      $(document).on('tabTransitionComplete', function() {
+        ajustarAlturaTabContent();
+      });
+      
+      // Adicionar classe para identificar que a página foi carregada e inicializada
+      $('body').addClass('tabs-initialized');
     });
   </script>
 {% endblock %} 
