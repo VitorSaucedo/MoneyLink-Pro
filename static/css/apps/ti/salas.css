@@ -32,7 +32,7 @@
     --gradient-primary-green: linear-gradient(135deg, var(--color-secondary) 0%, var(--color-primary-dark) 100%);
     --gradient-secondary-green: linear-gradient(135deg, var(--color-secondary) 0%, var(--color-tertiary) 50%, var(--color-secondary) 100%);
     --gradient-metallic-green-focus: linear-gradient(135deg, #ffffff 0%, var(--color-secondary) 30%, var(--color-tertiary) 50%, var(--color-secondary) 70%, #ffffff 100%);
-    --gradient-card-header: linear-gradient(-45deg, var(--color-secondary), #5cb85c, var(--color-primary-dark), var(--color-secondary)); /* Verde, verde mais escuro, azul, verde */
+    --gradient-card-header: linear-gradient(-45deg, var(--color-secondary), #5cb85c, var(--color-primary-dark), var(--color-secondary)); /* Restaurado: Original com azul */
 
     /* Animação do Gradiente */
     --gradient-animation: gradientBG 12s ease infinite;
@@ -46,6 +46,10 @@ body {
 }
 
 .container {
+    align-items: center;
+    display: flex;
+    flex-direction: column;
+    gap: 30px;
     max-width: 1200px;
 }
 
@@ -65,8 +69,7 @@ body {
 /* ==========================================
    Estilos para a estrutura de abas de Salas e Ilhas
    ========================================== */
-.salas-container,
-.ilhas-container {
+.salas-container {
     background-color: var(--color-white);
     border: 1px solid var(--color-gray);
     border-radius: 10px;
@@ -76,14 +79,28 @@ body {
     transition: transform 0.3s ease, box-shadow 0.3s ease;
 }
 
-.salas-container:hover,
-.ilhas-container:hover {
+/* Container de ilhas sem bordas laterais e superior */
+.ilhas-container {
+    background-color: #ffffff; /* Garante fundo branco */
+    border: none; /* Remove todas as bordas */
+    border-bottom: 1px solid var(--color-gray); /* Mantém apenas borda inferior */
+    border-radius: 0; /* Remove arredondamento */
+    box-shadow: none; /* Remove sombra */
+    overflow: hidden;
+    margin-bottom: 1.5rem;
+    transition: transform 0.3s ease;
+}
+
+.salas-container:hover {
     transform: translateY(-4px);
     box-shadow: var(--box-shadow-card-hover);
 }
 
-.salas-tabs,
-.ilhas-tabs {
+.ilhas-container:hover {
+    transform: translateY(-2px);
+}
+
+.salas-tabs {
     background: var(--gradient-card-header) !important;
     background-size: 400% 400% !important;
     animation: var(--gradient-animation) !important;
@@ -96,11 +113,26 @@ body {
     overflow-x: auto;
     flex-wrap: nowrap;
     width: 100%;
+    overflow: hidden;
 }
 
-/* Efeito de brilho metálico nas abas */
-.salas-tabs::before,
-.ilhas-tabs::before {
+/* Novo estilo para as abas de ilhas sem aparência de header */
+.ilhas-tabs {
+    background: #ffffff !important; /* Fundo branco */
+    padding: 0.5rem 1rem 0;
+    border: none; /* Remove todas as bordas */
+    border-bottom: 1px solid var(--color-gray); /* Mantém apenas borda inferior */
+    position: relative;
+    z-index: 1;
+    display: flex;
+    flex-direction: row;
+    overflow-x: auto;
+    flex-wrap: nowrap;
+    width: 100%;
+}
+
+/* Efeito de brilho metálico apenas nas abas de salas - Ajustado para ser igual ao .pa-header */
+.salas-tabs::before {
     content: '';
     position: absolute;
     top: -100%;
@@ -116,12 +148,12 @@ body {
       rgba(255,255,255,0) 100%
     );
     transform: rotate(45deg);
-    transition: all 0.7s ease;
+    transition: all 1.2s ease;
     z-index: -1;
 }
 
-.salas-container:hover .salas-tabs::before,
-.ilhas-container:hover .ilhas-tabs::before {
+/* Hover direto no .salas-tabs ativa o brilho */
+.salas-tabs:hover::before {
     top: 100%;
     left: 100%;
 }
@@ -135,6 +167,84 @@ body {
     min-height: 200px;
 }
 
+/* Estilo para botões dentro das abas de ilhas - Inativos iguais aos de Salas */
+.ilhas-tabs .nav-link {
+    margin-right: 4px !important;
+    padding: 8px 16px !important;
+    cursor: pointer;
+    border-radius: 8px 8px 0 0 !important;
+    border: 1px solid var(--color-gray) !important; /* Adiciona borda sutil */
+    border-bottom: none !important; /* Remove borda inferior */
+    text-decoration: none !important;
+    /* Estilo INATIVO: Fundo branco, texto escuro */
+    background-color: var(--color-white) !important;
+    color: var(--color-primary-dark) !important;
+    transition: all 0.3s ease;
+    font-weight: 500;
+    text-shadow: none; /* Remove sombra do texto */
+    position: relative;
+    overflow: hidden;
+}
+
+/* Ativo continua com fundo branco */
+.ilhas-tabs .nav-link.active {
+    color: var(--color-white) !important; /* Texto branco na ativa */
+    font-weight: 600;
+    /* Aplicando o gradiente e animação */
+    background: var(--gradient-card-header) !important;
+    background-size: 400% 400% !important;
+    animation: var(--gradient-animation) !important;
+    text-shadow: 0 1px 2px rgba(0,0,0,0.1);
+    position: relative;
+    z-index: 2;
+    border: none !important; /* Remove borda no ativo */
+    box-shadow: 0 -3px 8px rgba(0,0,0,0.05);
+}
+
+/* Hover para ativos - pode apenas manter o estilo ou adicionar leve brilho */
+/* .ilhas-tabs .nav-link:hover.active { */
+/*    filter: brightness(1.1); */
+/* } */
+
+/* Adicionado: Efeito de brilho para botões de ilhas ATIVOS */
+.ilhas-tabs .nav-link.active::before {
+    content: '';
+    position: absolute;
+    top: -100%;
+    left: -100%;
+    width: 200%;
+    height: 200%;
+    background: linear-gradient(
+      135deg,
+      rgba(255,255,255,0) 0%,
+      rgba(255,255,255,0.05) 40%,
+      rgba(255,255,255,0.3) 50%,
+      rgba(255,255,255,0.05) 60%,
+      rgba(255,255,255,0) 100%
+    );
+    transform: rotate(45deg);
+    transition: all 1.2s ease;
+    z-index: 0; /* Abaixo do conteúdo do botão mas acima do fundo */
+}
+
+/* Adicionado: Ativação do brilho no hover de botões de ilhas ATIVOS (Opcional) */
+/* .ilhas-tabs .nav-link.active:hover::before { */
+/*    top: 100%; */
+/*    left: 100%; */
+/* } */
+
+/* Ícones escuros para botões INATIVOS */
+.ilhas-tabs .nav-link i {
+    color: var(--color-primary-dark) !important; /* Ícone escuro */
+    margin-right: 8px;
+    font-size: 1.1rem;
+}
+
+/* Ícone branco apenas para o botão ATIVO */
+.ilhas-tabs .nav-link.active i {
+    color: var(--color-white) !important; /* Ícone branco no botão ativo */
+}
+
 /* Remover todos os marcadores de lista e ajustar layout das abas */
 ul.nav-tabs {
     list-style: none !important;
@@ -144,6 +254,12 @@ ul.nav-tabs {
     display: flex;
     flex-direction: row;
     flex-wrap: nowrap;
+    text-shadow: 0 1px 2px rgba(0,0,0,0.1);
+    list-style: none;
+    text-decoration: none;
+    /* background-color: rgba(255, 255, 255, 0.1); -- REMOVIDO, AGORA É BRANCO POR PADRÃO */
+    position: relative;
+    overflow: hidden;
 }
 
 ul.nav-tabs li.nav-item {
@@ -185,6 +301,7 @@ ul.nav-tabs li.nav-item {
 .ilhas-tabs .nav-link {
     margin-right: 4px !important;
     padding: 8px 16px !important;
+    cursor: pointer;
     border-radius: 8px 8px 0 0 !important;
     border: none !important;
     text-decoration: none !important;
@@ -210,36 +327,85 @@ ul.nav-tabs li.nav-item {
     display: flex;
     align-items: center;
     padding: 0.75rem 1rem;
-    color: var(--color-white);
+    /* Cor INATIVA: Escura */
+    color: var(--color-primary-dark) !important; 
     transition: all 0.3s ease;
-    border: none;
+    /* Borda INATIVA */
+    border: 1px solid var(--color-gray) !important;
+    border-bottom: none !important;
     font-weight: 500;
     border-radius: 8px 8px 0 0;
     margin-right: 0.3rem;
-    text-shadow: 0 1px 2px rgba(0,0,0,0.1);
+    text-shadow: none; /* Remover sombra do texto */
     list-style: none;
     text-decoration: none;
-    background-color: rgba(255, 255, 255, 0.1);
+    /* Fundo INATIVO: Branco */
+    background-color: var(--color-white) !important;
+    position: relative;
+    overflow: hidden;
 }
 
+/* Ícones INATIVOS */
 .nav-tabs .nav-link i {
     margin-right: 8px;
     font-size: 1.1rem;
+    border-color: transparent;
+    /* Cor do ícone INATIVO: Escura */
+    color: var(--color-primary-dark) !important;
 }
 
+/* Estilo ATIVO: Gradiente, texto branco, brilho */
 .nav-tabs .nav-link.active {
-    color: var(--color-primary-dark);
+    /* Cor ATIVA: Branca */
+    color: var(--color-white) !important; 
     font-weight: 600;
-    background-color: var(--color-white);
+    /* Fundo ATIVO: Gradiente */
+    background: var(--gradient-card-header) !important;
+    background-size: 400% 400% !important;
+    animation: var(--gradient-animation) !important;
+    text-shadow: 0 1px 2px rgba(0,0,0,0.1);
     position: relative;
     z-index: 2;
-    border-bottom: none;
+    /* Borda ATIVA: Removida */
+    border: none !important;
 }
 
+/* Ícone ATIVO: Branco */
+.nav-tabs .nav-link.active i {
+    color: var(--color-white) !important; /* Ícone branco */
+}
+
+/* Hover para INATIVOS */
 .nav-tabs .nav-link:hover:not(.active) {
-    background-color: rgba(255, 255, 255, 0.15);
-    color: var(--color-white);
-    border-color: transparent;
+    background-color: #f8f9fa !important; /* Cinza claro no hover */
+    color: var(--color-primary-dark) !important;
+    border-color: #ced4da !important;
+}
+
+/* Efeito de brilho para botões ATIVOS */
+.nav-tabs .nav-link.active::before {
+    content: '';
+    position: absolute;
+    top: -100%;
+    left: -100%;
+    width: 200%;
+    height: 200%;
+    background: linear-gradient(
+      135deg,
+      rgba(255,255,255,0) 0%,
+      rgba(255,255,255,0.05) 40%,
+      rgba(255,255,255,0.3) 50%,
+      rgba(255,255,255,0.05) 60%,
+      rgba(255,255,255,0) 100%
+    );
+    transform: rotate(45deg);
+    transition: all 1.2s ease;
+    z-index: 0; 
+}
+
+/* Remover brilho dos inativos (se existir de regras anteriores) */
+.nav-tabs .nav-link:not(.active)::before {
+    content: none;
 }
 
 /* Estilos para o conteúdo das abas e animações de transição */
@@ -305,6 +471,7 @@ ul.nav-tabs li.nav-item {
     box-shadow: var(--box-shadow-light);
     overflow: hidden;
     transition: all 0.3s ease;
+    position: relative;
 }
 
 .pa-card:hover {
@@ -313,37 +480,45 @@ ul.nav-tabs li.nav-item {
 }
 
 .pa-header {
-    padding: 12px 15px;
-    background: var(--gradient-card-header);
-    background-size: 400% 400%;
-    animation: gradientBG 12s ease infinite;
-    color: var(--color-white);
+    padding: 12px 15px; /* Revertido para padding original menor */
+    background: var(--gradient-card-header) !important; /* Igual administrativo.css (com !important) */
+    background-size: 400% 400% !important; /* Igual administrativo.css (com !important) */
+    animation: var(--gradient-animation) !important; /* Igual administrativo.css (com !important) */
+    color: var(--color-white) !important; /* Igual administrativo.css (com !important) */
+    font-weight: 600; /* Igual administrativo.css */
+    font-size: 1.1em; /* Igual administrativo.css */
+    letter-spacing: 0.5px; /* Igual administrativo.css */
+    text-shadow: 0 1px 2px rgba(0,0,0,0.1); /* Igual administrativo.css */
     display: flex;
-    justify-content: space-between;
-    align-items: center;
-    border-radius: 10px 10px 0 0;
-    position: relative;
-    overflow: hidden;
+    align-items: center; /* Igual administrativo.css */
+    justify-content: space-between; /* Adicionado de volta - para separar title e status-group */
+    position: relative; /* Igual administrativo.css */
+    overflow: hidden; /* Adicionado - Para conter o ::before */
+    z-index: 1; /* Igual administrativo.css */
 }
 
+/* Efeito de brilho idêntico ao administrativo.css */
 .pa-header::before {
     content: '';
     position: absolute;
     top: -100%;
     left: -100%;
-    width: 50%;
+    width: 200%; /* Ajustado de 50% para 200% para cobrir header */
     height: 200%;
     background: linear-gradient(
-        to right,
-        rgba(255, 255, 255, 0.05) 0%,
-        rgba(255, 255, 255, 0.2) 50%,
-        rgba(255, 255, 255, 0.05) 100%
+        135deg, /* Ajustado de to right para 135deg */
+        rgba(255, 255, 255, 0) 0%,
+        rgba(255, 255, 255, 0.05) 40%,
+        rgba(255, 255, 255, 0.3) 50%,
+        rgba(255, 255, 255, 0.05) 60%,
+        rgba(255, 255, 255, 0) 100%
     );
     transform: rotate(45deg);
-    transition: all 0.5s ease;
-    z-index: 1;
+    transition: all 1.2s ease;
+    z-index: -1; /* Atrás do conteúdo */
 }
 
+/* Hover no card pai ativa o brilho no header, igual administrativo.css */
 .pa-card:hover .pa-header::before {
     top: 100%;
     left: 100%;
@@ -354,7 +529,14 @@ ul.nav-tabs li.nav-item {
     font-size: 1.1rem;
     display: flex;
     align-items: center;
-    gap: 10px;
+    /* gap: 10px; */ /* Removido - não precisa mais de gap para a bolinha */
+}
+
+/* Adicionado: Grupo para status (indicador + texto) */
+.pa-status-group {
+    display: flex;
+    align-items: center;
+    gap: 8px; /* Espaço entre a bolinha e o texto do status */
 }
 
 .pa-status-indicator {
@@ -405,11 +587,131 @@ ul.nav-tabs li.nav-item {
     background-color: rgba(255, 255, 255, 0.8);
     border-radius: 6px;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+    /* display: flex; */ /* Reconfirmar se é necessário aqui ou só no filho */
+    /* justify-content: space-between; */ /* Removido daqui */
+    /* align-items: center; */ /* Mantido se necessário para alinhamento vertical da linha inteira */
+}
+
+/* Estilo para o container específico do nome e botão */
+.pa-funcionario > div:first-child { /* Seleciona a div interna que contém os spans */
+    width: 100%; /* Força a ocupar toda a largura disponível */
+    display: flex; /* Garante que é flex container */
+    justify-content: space-between; /* Mantém para separar nome e botão */
+    align-items: center; /* Mantém para alinhamento vertical */
 }
 
 .pa-funcionario strong {
     color: var(--color-primary-dark);
     margin-right: 6px;
+}
+
+/* Estilo para o badge/botão de ramal */
+.ramal-badge {
+  /* display: inline-block; */ /* Removido, pois btn já é inline-block */
+  background-color: var(--color-primary-dark); /* Fundo escuro */
+  color: var(--color-white) !important; /* Texto branco (importante para sobrescrever btn) */
+  padding: 3px 7px !important; /* Ajuste no padding */
+  border-radius: 4px !important;
+  font-size: 0.8em !important;
+  /* margin-left: 5px; */ /* Removido, usando ms-2 do bootstrap */
+  font-weight: bold !important;
+  /* vertical-align: middle; */ /* Removido, btn já alinha */
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  border: none !important; /* Remover borda padrão do botão */
+  cursor: pointer;
+  transition: background-color 0.2s ease, transform 0.1s ease;
+}
+
+.ramal-badge:hover {
+  background-color: #1a346b; /* Um pouco mais claro no hover */
+  transform: translateY(-1px);
+}
+
+.ramal-badge:active {
+  transform: translateY(0px);
+}
+
+/* Botão para atribuir funcionário */
+.assign-funcionario-btn {
+  font-size: 0.8em !important;
+  padding: 3px 7px !important;
+  vertical-align: middle;
+}
+
+.assign-funcionario-btn i {
+  vertical-align: text-bottom; /* Alinhar ícone */
+}
+
+/* Container e Dropdown de Funcionários */
+.funcionario-dropdown-menu {
+  /* position: absolute; - Removido, agora é fixed via JS */
+  z-index: 9999; /* Garantir que fique acima de tudo */
+  background-color: var(--color-white);
+  border: 1px solid var(--color-gray);
+  border-radius: 8px; /* Aumentado para um visual mais moderno */
+  box-shadow: 0 8px 24px rgba(0,0,0,0.2); /* Sombra mais pronunciada */
+  padding: 10px 0;
+  min-width: 300px;
+  max-height: 400px;
+  overflow-y: auto;
+  display: none; /* Escondido por padrão */
+  font-size: 1rem;
+}
+
+.funcionario-dropdown-item {
+  padding: 10px 15px; /* Aumentado de 8px para 10px vertical */
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+  white-space: nowrap;
+  display: flex;
+  justify-content: space-between; /* Alinhar nome e ramal */
+  align-items: center;
+  font-size: 0.95rem; /* Ligeiramente aumentado */
+  line-height: 1.5; /* Melhor espaçamento entre linhas */
+  border-bottom: 1px solid rgba(0,0,0,0.05); /* Separador sutil entre itens */
+}
+
+.funcionario-dropdown-item:last-child {
+  border-bottom: none; /* Remove a borda do último item */
+}
+
+.funcionario-dropdown-item:hover {
+  background-color: #f0f8ff; /* Azul mais claro no hover para melhor contraste */
+}
+
+.funcionario-dropdown-item .nome {
+  font-weight: 500; /* Deixar nome em destaque */
+  flex: 1; /* Tomar espaço disponível */
+  overflow: hidden;
+  text-overflow: ellipsis; /* Para nomes muito longos */
+  margin-right: 10px; /* Espaço do nome para ramal (se exibido separado) */
+}
+
+/* Estilo para ramal quando exibido junto ao nome */
+.ramal-inline {
+  font-size: 0.85em;
+  color: #0d6efd; /* Azul para destacar */
+  font-weight: 500;
+  margin-left: 5px;
+  white-space: nowrap;
+}
+
+.funcionario-dropdown-item .ramal {
+  font-size: 0.85em;
+  color: #6c757d; /* Cinza */
+  white-space: nowrap; /* Evitar quebra */
+}
+
+.funcionario-dropdown-item.no-ramal .ramal {
+  font-style: italic;
+}
+
+/* Destacar o item "Nenhum (Desatribuir)" */
+.funcionario-dropdown-item.desatribuir-item {
+  background-color: #f8f9fa;
+  font-weight: 600;
+  color: #dc3545; /* Vermelho para indicar remoção */
+  border-bottom: 1px solid rgba(0,0,0,0.08);
 }
 
 .pa-perifericos {
@@ -634,4 +936,285 @@ ul.nav-tabs li.nav-item {
 
 .status-option.inativa .status-color {
     background-color: #dc3545; /* Vermelho */
+}
+
+/* ==========================================
+   Estilos para o Modal de Confirmação
+   ========================================== */
+.modal-backdrop {
+    position: fixed;
+    top: 0;
+    left: 0;
+    z-index: 1040; /* Abaixo do modal, acima do resto */
+    width: 100vw;
+    height: 100vh;
+    background-color: rgba(0, 0, 0, 0.5);
+    display: none; /* Escondido por padrão */
+}
+
+.modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    z-index: 1050; /* Acima do backdrop */
+    display: none; /* Escondido por padrão */
+    width: 100%;
+    height: 100%;
+    overflow-x: hidden;
+    overflow-y: auto;
+    outline: 0;
+    /* Centralização */
+    display: flex; /* Usa flex para centralizar o .modal-dialog */
+    align-items: center; /* Centraliza verticalmente */
+    justify-content: center; /* Centraliza horizontalmente */
+}
+
+/* Classe para mostrar o modal e o backdrop */
+.modal.show,
+.modal-backdrop.show {
+    display: flex; /* Ou block para o backdrop se preferir */
+}
+
+.modal-dialog {
+    position: relative;
+    width: auto;
+    margin: 0.5rem; /* Pequena margem */
+    pointer-events: none;
+    max-width: 500px; /* Largura máxima padrão */
+}
+
+.modal.show .modal-dialog {
+    pointer-events: auto; /* Habilita eventos no modal visível */
+}
+
+.modal-content {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    pointer-events: auto;
+    background-color: var(--color-white);
+    background-clip: padding-box;
+    border: 1px solid rgba(0, 0, 0, 0.2);
+    border-radius: 10px; /* Igual aos cards */
+    outline: 0;
+    box-shadow: var(--box-shadow-medium);
+}
+
+.modal-header {
+    display: flex;
+    flex-shrink: 0;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1rem 1.25rem;
+    border-bottom: 1px solid var(--color-gray);
+    border-top-left-radius: calc(10px - 1px); /* Ajuste para borda */
+    border-top-right-radius: calc(10px - 1px);
+    /* Aplicando o gradiente e animação do card-header */
+    background: var(--gradient-card-header) !important;
+    background-size: 400% 400% !important;
+    animation: var(--gradient-animation) !important;
+    color: var(--color-white) !important; /* Cor do texto para contraste */
+    text-shadow: 0 1px 2px rgba(0,0,0,0.1);
+    position: relative; /* Para o efeito de brilho */
+    z-index: 1;
+}
+
+/* Efeito de brilho similar ao card-header */
+.modal-header::before {
+    content: '';
+    position: absolute;
+    top: -100%;
+    left: -100%;
+    width: 200%;
+    height: 200%;
+    background: linear-gradient(
+      135deg,
+      rgba(255,255,255,0) 0%,
+      rgba(255,255,255,0.05) 40%,
+      rgba(255,255,255,0.3) 50%,
+      rgba(255,255,255,0.05) 60%,
+      rgba(255,255,255,0) 100%
+    );
+    transform: rotate(45deg);
+    transition: all 1.2s ease;
+    z-index: -1;
+}
+
+.modal:hover .modal-header::before {
+    top: 100%;
+    left: 100%;
+}
+
+.modal-header .btn-close {
+    padding: 0.5rem;
+    margin: -0.5rem -0.5rem -0.5rem auto;
+    background: transparent;
+    border: 0;
+    opacity: 0.8; /* Aumenta opacidade para branco */
+    transition: opacity 0.2s ease;
+    filter: brightness(0) invert(1); /* Inverte cor para branco */
+}
+.modal-header .btn-close:hover {
+    opacity: 1;
+}
+
+.modal-title {
+    margin-bottom: 0;
+    line-height: 1.5;
+    font-weight: 600;
+    font-size: 1.1rem;
+    display: flex;
+    align-items: center;
+    color: var(--color-white); /* Garante cor do título */
+}
+
+.modal-title i {
+    color: var(--color-white); /* Cor do ícone no header */
+}
+
+.modal-body {
+    position: relative;
+    flex: 1 1 auto;
+    padding: 1.25rem;
+    color: var(--color-text-dark);
+    border-bottom-right-radius: calc(10px - 1px);
+    border-bottom-left-radius: calc(10px - 1px);
+}
+
+.modal-footer {
+    display: flex;
+    flex-wrap: wrap;
+    flex-shrink: 0;
+    align-items: center;
+    justify-content: flex-end; /* Alinha botões à direita */
+    padding: 0.75rem 1.25rem;
+    background-color: #f8f9fa;
+    border-top: 1px solid var(--color-gray);
+    border-bottom-right-radius: calc(10px - 1px);
+    border-bottom-left-radius: calc(10px - 1px);
+}
+
+.modal-footer > * {
+    margin: 0.25rem; /* Espaçamento entre botões */
+}
+
+/* Botões no modal */
+.modal-footer .btn {
+    border-radius: 8px;
+    padding: 0.6rem 1.2rem;
+    font-weight: 600; /* Mais forte */
+    transition: all 0.3s ease;
+    border: none; /* Remove borda padrão */
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    cursor: pointer; /* Adicionado cursor pointer */
+}
+
+.modal-footer .btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+}
+
+.modal-footer .btn:active {
+    transform: translateY(0px);
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+}
+
+.modal-footer .btn-secondary {
+    background-color: #6c757d;
+    /* border-color: #6c757d; */ /* Removido */
+    color: white;
+}
+.modal-footer .btn-secondary:hover {
+    background-color: #5a6268;
+    /* border-color: #545b62; */ /* Removido */
+}
+
+/* Botão principal (Confirmar) com estilo verde */
+.modal-footer .btn-danger { /* Mantendo a classe, mas sobrescrevendo estilo */
+    background: var(--gradient-secondary-green) !important;
+    background-size: 300% 300% !important;
+    animation: gradientBGButton 10s ease infinite !important;
+    color: var(--color-primary-dark) !important;
+    /* border-color: var(--color-success); */ /* Removido */
+}
+.modal-footer .btn-danger:hover {
+    /* background-color: #157347; */ /* Usar transform/shadow */
+    /* border-color: #146c43; */ /* Removido */
+}
+
+/* Ajuste de Responsividade para Modal */
+@media (max-width: 576px) {
+    .modal-dialog {
+        margin: 0.5rem;
+        width: calc(100% - 1rem); /* Usa quase toda largura */
+        max-width: none;
+    }
+    .modal-footer {
+        justify-content: center; /* Centraliza botões em telas pequenas */
+    }
+}
+
+/* Estilos movidos do HTML */
+.pa-container {
+  margin: 15px 0;
+}
+
+.pa-grid-dual-column {
+  display: flex;
+  justify-content: space-between;
+}
+
+/* Estilo para informações adicionais do funcionário */
+.funcionario-info {
+  font-size: 0.8rem !important;
+  margin-top: 5px;
+  padding-top: 5px;
+  border-top: 1px dashed rgba(0,0,0,0.1);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.funcionario-cargo,
+.funcionario-departamento {
+  display: inline-flex;
+  align-items: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+}
+
+.funcionario-cargo i,
+.funcionario-departamento i {
+  font-size: 0.9rem;
+  opacity: 0.7;
+}
+
+/* Adicionado: Efeito de brilho para botões de SALAS inativos */
+.salas-tabs .nav-link:not(.active)::before {
+    content: '';
+    position: absolute;
+    top: -100%;
+    left: -100%;
+    width: 200%;
+    height: 200%;
+    background: linear-gradient(
+      135deg,
+      rgba(255,255,255,0) 0%,
+      rgba(255,255,255,0.05) 40%,
+      rgba(255,255,255,0.3) 50%,
+      rgba(255,255,255,0.05) 60%,
+      rgba(255,255,255,0) 100%
+    );
+    transform: rotate(45deg);
+    transition: all 1.2s ease;
+    z-index: 0; /* Abaixo do conteúdo do botão mas acima do fundo */
+}
+
+/* Adicionado: Ativação do brilho no hover de botões de SALAS inativos */
+.salas-tabs .nav-link:not(.active):hover::before {
+    top: 100%;
+    left: 100%;
 }

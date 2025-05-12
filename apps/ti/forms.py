@@ -90,11 +90,23 @@ class AtribuicaoFuncionarioPAForm(forms.ModelForm):
 class AtribuicaoPerifericoPAForm(forms.ModelForm):
     class Meta:
         model = AtribuicaoPerifericoPA
-        fields = ['periferico', 'posicao_atendimento', 'data_atribuicao', 'data_remocao', 'ativo']
+        fields = ['periferico', 'posicao_atendimento', 'data_atribuicao']
         widgets = {
             'periferico': forms.Select(attrs={'class': 'form-control'}),
             'posicao_atendimento': forms.Select(attrs={'class': 'form-control'}),
             'data_atribuicao': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
-            'data_remocao': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
-            'ativo': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
-        } 
+        }
+        
+    def save(self, commit=True):
+        instance = super().save(commit=False)
+        instance.ativo = True
+        instance.data_remocao = None
+        
+        if commit:
+            periferico = instance.periferico
+            periferico.status = 'em_uso'
+            periferico.save()
+            
+            instance.save()
+            
+        return instance 

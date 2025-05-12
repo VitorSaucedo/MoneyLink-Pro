@@ -12,6 +12,8 @@ urlpatterns = [
     # URLs para API
     path('api/ilhas-por-sala/<int:sala_id>/', views.api_ilhas_por_sala, name='api_ilhas_por_sala'),
     path('atualizar_status_pa/', views.atualizar_status_pa, name='atualizar_status_pa'),
+    path('remover_periferico_pa/', views.remover_periferico_pa, name='remover_periferico_pa'),
+    path('api/controle-salas-dados/', views.api_controle_salas, name='api_controle_salas'),
     
     # URLs para Tipos de Periféricos
     path('tipos-perifericos/', views.tipo_periferico_list, name='tipo_periferico_list'),
@@ -54,4 +56,8 @@ urlpatterns = [
     path('atribuicoes-perifericos/cadastrar/', views.atribuicao_periferico_pa_create, name='atribuicao_periferico_pa_create'),
     path('atribuicoes-perifericos/editar/<int:pk>/', views.atribuicao_periferico_pa_update, name='atribuicao_periferico_pa_update'),
     path('atribuicoes-perifericos/excluir/<int:pk>/', views.atribuicao_periferico_pa_delete, name='atribuicao_periferico_pa_delete'),
+
+    # URLs da API para controle de PAs
+    path('api/funcionarios/', views.get_funcionarios_json, name='api_get_funcionarios'),
+    path('api/atribuir_funcionario_pa/', views.atribuir_funcionario_pa, name='api_atribuir_funcionario_pa'),
 ] 

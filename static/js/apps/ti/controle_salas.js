@@ -6,6 +6,14 @@
  */
 
 $(document).ready(function() {
+  // console.log('Document ready e controle_salas.js carregado.'); // Log de inicialização
+
+  // Teste: Listener genérico de clique no documento
+  // $(document).on('click', function(event) {
+  //  console.log('Clique detectado no documento:', event.target);
+  // });
+  // Fim do Teste
+
   // Armazenar IDs ativos
   let currentSalaId = null;
   let currentIlhaIds = {};
@@ -39,7 +47,7 @@ $(document).ready(function() {
       e.preventDefault();
       e.stopPropagation();
       
-      console.log('Clique na bolinha de status detectado');
+      // console.log('Clique na bolinha de status detectado');
       
       const paCard = this.closest('.pa-card');
       const paId = paCard.getAttribute('data-pa-id');
@@ -70,7 +78,7 @@ $(document).ready(function() {
       document.body.insertAdjacentHTML('beforeend', menuHtml);
       const menu = document.querySelector('.status-dropdown-menu');
       
-      console.log('Menu criado:', menu);
+      // console.log('Menu criado:', menu);
       
       // Posicionar o menu próximo à bolinha
       const rect = this.getBoundingClientRect();
@@ -78,7 +86,7 @@ $(document).ready(function() {
       menu.style.top = (rect.bottom + 5) + 'px';
       menu.style.left = (rect.left - 70) + 'px';
       
-      console.log('Posição do menu:', menu.style.top, menu.style.left);
+      // console.log('Posição do menu:', menu.style.top, menu.style.left);
       
       // Adicionar hover effect
       const options = menu.querySelectorAll('.status-option');
@@ -94,7 +102,7 @@ $(document).ready(function() {
       // Adicionar eventos de clique às opções do menu
       options.forEach(option => {
         option.addEventListener('click', function() {
-          console.log('Opção de status clicada');
+          // console.log('Opção de status clicada');
           const novoStatus = this.getAttribute('data-status');
           
           // Remover o menu
@@ -108,7 +116,7 @@ $(document).ready(function() {
       // Fechar o menu ao clicar fora dele
       document.addEventListener('click', function closeMenu(evt) {
         if (menu && !menu.contains(evt.target) && evt.target !== statusIndicator) {
-          console.log('Clique fora do menu - fechando');
+          // console.log('Clique fora do menu - fechando');
           menu.remove();
           document.removeEventListener('click', closeMenu);
         }
@@ -339,11 +347,11 @@ $(document).ready(function() {
     const targetPane = document.querySelector(targetSelector);
     
     if (!container || !currentPane || !targetPane) {
-      console.error('Elementos não encontrados para animação:', {
-        container: containerSelector,
-        currentPane: currentSelector,
-        targetPane: targetSelector
-      });
+      // console.error('Elementos não encontrados para animação:', {
+      //   container: containerSelector,
+      //   currentPane: currentSelector,
+      //   targetPane: targetSelector
+      // });
       return;
     }
     
@@ -554,4 +562,392 @@ $(document).ready(function() {
   document.addEventListener('DOMContentLoaded', function() {
     organizarLayoutPAs();
   });
+  
+  // --- Adicionado para remoção de periféricos --- 
+  const modalBackdrop = $('#confirm-remove-periferico-backdrop');
+  const modal = $('#confirm-remove-periferico-modal');
+  const modalPerifericoNome = $('#modal-periferico-nome');
+  const modalConfirmBtn = $('#modal-confirm-remove-btn');
+  const modalCancelBtn = $('#modal-cancel-btn');
+  const modalCloseBtn = $('#modal-close-btn');
+
+  let dadosPerifericoParaRemover = null; // Para armazenar temporariamente os dados
+
+  function abrirModalConfirmacao(perifericoId, paId, perifericoNome, perifericoElement) {
+    dadosPerifericoParaRemover = { perifericoId, paId, perifericoElement };
+    modalPerifericoNome.text(perifericoNome);
+    modalBackdrop.addClass('show').fadeIn(200);
+    modal.addClass('show').fadeIn(200);
+    $('body').addClass('modal-open'); // Para desabilitar scroll da página se necessário
+  }
+
+  function fecharModalConfirmacao() {
+    modalBackdrop.fadeOut(200, function() { $(this).removeClass('show'); });
+    modal.fadeOut(200, function() { $(this).removeClass('show'); });
+    $('body').removeClass('modal-open');
+    dadosPerifericoParaRemover = null; // Limpar dados
+  }
+
+  $(document).on('click', '.periferico-tag', function(event) {
+    const perifericoTag = $(this);
+    const perifericoId = perifericoTag.data('periferico-id');
+    const paCard = perifericoTag.closest('.pa-card');
+    const paId = paCard.data('pa-id');
+    const perifericoNome = perifericoTag.text();
+
+    if (!perifericoId || !paId) {
+      console.error('Não foi possível obter o ID do periférico ou da PA.');
+      mostrarMensagem('Erro ao identificar o periférico ou a PA.', 'error');
+      return;
+    }
+
+    abrirModalConfirmacao(perifericoId, paId, perifericoNome, perifericoTag);
+  });
+
+  modalConfirmBtn.on('click', function() {
+    if (dadosPerifericoParaRemover) {
+      removerPerifericoDaPA(
+        dadosPerifericoParaRemover.perifericoId, 
+        dadosPerifericoParaRemover.paId, 
+        dadosPerifericoParaRemover.perifericoElement
+      );
+      fecharModalConfirmacao();
+    }
+  });
+
+  modalCancelBtn.on('click', fecharModalConfirmacao);
+  modalCloseBtn.on('click', fecharModalConfirmacao);
+  modalBackdrop.on('click', function(event) {
+    // Fechar se clicar diretamente no backdrop (não nos filhos)
+    if (event.target === this) {
+        fecharModalConfirmacao();
+    }
+  });
+
+  // Função para enviar a requisição de remoção do periférico
+  function removerPerifericoDaPA(perifericoId, paId, perifericoElement) {
+    $.ajax({
+      url: '/ti/remover_periferico_pa/', // Certifique-se que esta URL está correta
+      method: 'POST',
+      headers: {
+        'X-Requested-With': 'XMLHttpRequest',
+        'X-CSRFToken': $('[name=csrfmiddlewaretoken]').val() // Garante o envio do token CSRF
+      },
+      data: JSON.stringify({ // Enviar dados como JSON
+        periferico_id: perifericoId,
+        pa_id: paId
+      }),
+      contentType: 'application/json; charset=utf-8',
+      dataType: 'json',
+      success: function(response) {
+        if (response.success) {
+          // Remover o elemento do periférico do DOM
+          perifericoElement.fadeOut(300, function() { 
+            $(this).remove(); 
+            // Verificar se a lista de periféricos ficou vazia
+            const perifericosList = paCard.find('.perifericos-list');
+            if (perifericosList.children('.periferico-tag').length === 0) {
+              perifericosList.html('<span class="text-muted">Nenhum periférico atribuído</span>');
+            }
+          });
+          mostrarMensagem(response.message || 'Periférico removido com sucesso!', 'success');
+        } else {
+          mostrarMensagem('Erro ao remover periférico: ' + response.error, 'error');
+        }
+      },
+      error: function(jqXHR, textStatus, errorThrown) {
+        console.error('Erro AJAX:', textStatus, errorThrown, jqXHR.responseText);
+        let errorMsg = 'Erro ao comunicar com o servidor.';
+        if (jqXHR.responseJSON && jqXHR.responseJSON.error) {
+          errorMsg = jqXHR.responseJSON.error;
+        }
+        mostrarMensagem(errorMsg, 'error');
+      }
+    });
+  }
+  // --- Fim da adição --- 
+
+  // --- Lógica para Dropdown e Atribuição de Funcionários ---
+  const funcionariosApiUrl = '/ti/api/funcionarios/'; // Certifique-se que esta URL está correta
+  const atribuirFuncionarioApiUrl = '/ti/api/atribuir_funcionario_pa/'; // Certifique-se que esta URL está correta
+  let funcionariosCache = null; // Cache simples para a lista de funcionários
+  let activeDropdown = null; // Rastreia o dropdown ativo
+
+  // Função para buscar funcionários (com cache)
+  async function fetchFuncionarios() {
+    if (funcionariosCache) {
+      return funcionariosCache;
+    }
+    try {
+      const response = await $.ajax({
+        url: funcionariosApiUrl,
+        method: 'GET',
+        dataType: 'json'
+      });
+      if (response.funcionarios) {
+        funcionariosCache = response.funcionarios;
+        // Adicionar opção "Nenhum (Desatribuir)" no início
+        // Verifica se a opção já não existe para evitar duplicação em re-fetches (embora cache deva prevenir)
+        if (!funcionariosCache.find(f => f.id === 0)) {
+          funcionariosCache.unshift({ id: 0, nome: "Nenhum (Desatribuir)", ramal: "" });
+        }
+        return funcionariosCache;
+      } else {
+        throw new Error(response.error || 'Erro desconhecido ao buscar funcionários.'); // Usar um erro mais específico
+      }
+    } catch (error) {
+      console.error("Erro detalhado ao buscar funcionários:", error);
+      let errorMsg = 'Erro desconhecido.';
+      if (error.responseJSON && error.responseJSON.error) {
+        // Erro vindo da nossa API Django
+        errorMsg = error.responseJSON.error;
+      } else if (error.statusText) {
+        // Erro AJAX genérico (jqXHR object)
+        errorMsg = `${error.statusText} (Status: ${error.status || 'N/A'})`;
+      } else if (error.message) {
+        // Erro JavaScript padrão
+        errorMsg = error.message;
+      } else if (typeof error === 'string'){
+        // Se o erro for uma string
+        errorMsg = error;
+      }
+      mostrarMensagem(`Erro ao buscar funcionários: ${errorMsg}`, 'error');
+      return null;
+    }
+  }
+
+  // Função para criar o HTML do dropdown
+  function criarDropdownHTML(funcionarios, paId) {
+    let itemsHTML = '';
+    if (!funcionarios) return '<div class="funcionario-dropdown-menu p-2 text-danger">Erro ao carregar.</div>';
+
+    funcionarios.forEach(func => {
+      // Modificado para exibir o ramal próximo ao nome
+      let nomeRamal = func.id === 0 ? 
+        `<span class="nome">${func.nome}</span>` : 
+        `<span class="nome">${func.nome} ${func.ramal ? `<span class="ramal-inline">(Ramal: ${func.ramal})</span>` : ''}</span>`;
+      
+      const itemClass = func.id === 0 ? 'desatribuir-item' : '';
+      itemsHTML += `
+        <div class="funcionario-dropdown-item ${itemClass}" data-funcionario-id="${func.id}" data-pa-id="${paId}">
+          ${nomeRamal}
+          ${func.id !== 0 && !func.ramal ? '<span class="ramal no-ramal">(Sem Ramal)</span>' : ''}
+        </div>
+      `;
+    });
+
+    return `<div class="funcionario-dropdown-menu" id="dropdown-pa-${paId}">${itemsHTML}</div>`;
+  }
+
+  // Função para mostrar/esconder e posicionar o dropdown
+  async function toggleDropdownFuncionarios(button) {
+    const paId = $(button).data('pa-id');
+    const existingDropdown = $(`#dropdown-pa-${paId}`);
+
+    // Fechar dropdown ativo se existir e não for o atual
+    if (activeDropdown && activeDropdown.attr('id') !== `dropdown-pa-${paId}`) {
+        activeDropdown.fadeOut(100, function() { $(this).remove(); });
+        activeDropdown = null;
+    }
+
+    if (existingDropdown.length > 0) {
+      // Se existe, apenas remove (fecha)
+      existingDropdown.fadeOut(100, function() { $(this).remove(); });
+      activeDropdown = null;
+    } else {
+      // Se não existe, busca dados, cria e mostra
+      // Criar um loader flutuante próximo ao botão que clicamos
+      const buttonRect = button.getBoundingClientRect();
+      const loaderHTML = `<div id="dropdown-loader-${paId}" style="position: fixed; z-index: 9999; left: ${buttonRect.right + 10}px; top: ${buttonRect.top}px;">
+                            <div class="spinner-border spinner-border-sm text-primary" role="status">
+                              <span class="visually-hidden">Loading...</span>
+                            </div>
+                          </div>`;
+      $('body').append(loaderHTML);
+      
+      const funcionarios = await fetchFuncionarios();
+      $(`#dropdown-loader-${paId}`).remove(); // Remove o loader
+      
+      if (funcionarios) {
+        const dropdownHTML = criarDropdownHTML(funcionarios, paId);
+        
+        // Anexar dropdown ao body em vez de dentro do card
+        $('body').append(dropdownHTML);
+        
+        const newDropdown = $(`#dropdown-pa-${paId}`);
+        activeDropdown = newDropdown;
+
+        // Posicionar baseado na posição absoluta do botão na viewport
+        const buttonRect = button.getBoundingClientRect();
+        const viewportWidth = window.innerWidth;
+        
+        // Verificar se o dropdown ficará fora da janela à direita
+        let leftPos = buttonRect.left;
+        const dropdownWidth = newDropdown.outerWidth() || 300; // Uso estimado se ainda não calculado
+        if (leftPos + dropdownWidth > viewportWidth - 20) {
+          // Se vai sair da tela, posiciona à esquerda do botão
+          leftPos = buttonRect.right - dropdownWidth;
+        }
+        
+        newDropdown.css({
+            position: 'fixed', // Posição fixa em relação à viewport
+            top: (buttonRect.bottom + 5) + 'px',
+            left: leftPos + 'px',
+            display: 'none', // Começa escondido para o fadeIn
+            zIndex: 9999 // Garante que fica acima de tudo
+        });
+
+        newDropdown.fadeIn(150);
+
+        // Adicionar listener para seleção
+        newDropdown.find('.funcionario-dropdown-item').on('click', function() {
+          const selectedFuncId = $(this).data('funcionario-id');
+          atribuirFuncionarioAPa(paId, selectedFuncId, $(`.pa-card[data-pa-id="${paId}"]`));
+          if (activeDropdown) {
+             activeDropdown.fadeOut(100, function() { $(this).remove(); });
+             activeDropdown = null;
+          }
+        });
+      } else {
+          // Caso fetchFuncionarios falhe, mostrar mensagem de erro
+          const errorHtml = `<div id="error-message-${paId}" style="position: fixed; z-index: 9999; left: ${buttonRect.right + 10}px; top: ${buttonRect.top}px; background: white; padding: 5px 10px; border-radius: 4px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); color: red;">
+                              Falha ao carregar funcionários
+                            </div>`;
+          $('body').append(errorHtml);
+          
+          // Remover após alguns segundos
+          setTimeout(() => {
+            $(`#error-message-${paId}`).fadeOut(300, function() { $(this).remove(); });
+          }, 3000);
+      }
+    }
+  }
+
+  // Função para atribuir funcionário via AJAX
+  function atribuirFuncionarioAPa(paId, funcionarioId, paCardElement) {
+    $.ajax({
+      url: atribuirFuncionarioApiUrl,
+      method: 'POST',
+      headers: {
+        'X-Requested-With': 'XMLHttpRequest',
+        'X-CSRFToken': $('[name=csrfmiddlewaretoken]').val()
+      },
+      data: JSON.stringify({
+        pa_id: paId,
+        funcionario_id: funcionarioId
+      }),
+      contentType: 'application/json; charset=utf-8',
+      dataType: 'json',
+      success: function(response) {
+        if (response.success) {
+          // Atualizar a interface da PA principal
+          atualizarVisualizacaoFuncionarioPA(paCardElement, response.funcionario, response.novo_status);
+          
+          // Atualizar outras PAs afetadas (se funcionário foi removido de outras PAs)
+          if (response.pas_afetadas && response.pas_afetadas.length > 0) {
+            response.pas_afetadas.forEach(paAfetada => {
+              // Encontrar o card da PA afetada
+              const paAfetadaCard = $(`.pa-card[data-pa-id="${paAfetada.id}"]`);
+              if (paAfetadaCard.length) {
+                // Atualizar a interface da PA afetada (com funcionário = null)
+                atualizarVisualizacaoFuncionarioPA(paAfetadaCard, null, paAfetada.status);
+              }
+            });
+            
+            // Mensagem específica mencionando a remoção de outras PAs
+            if (response.funcionario) {
+              // Construir a descrição da PA afetada
+              let paAfetadaDesc = '';
+              if (response.pas_afetadas.length > 0) {
+                const paAfetada = response.pas_afetadas[0]; // Pega a primeira afetada para a mensagem
+                paAfetadaDesc = ` Foi removido da PA ${paAfetada.numero} (Sala: ${paAfetada.sala}, Ilha: ${paAfetada.ilha}).`;
+              } else {
+                paAfetadaDesc = ''; // Nenhuma outra PA afetada
+              }
+              // Usar o número da PA alvo (response.pa_numero)
+              mostrarMensagem(`Funcionário ${response.funcionario.nome} atribuído à PA ${response.pa_numero}.${paAfetadaDesc}`, 'success');
+            } else {
+              // Mensagem para desatribuição (funcionário removido)
+              mostrarMensagem(`Funcionário removido da PA ${response.pa_numero}.`, 'success');
+            }
+          } else {
+            // Mensagem padrão (caso não haja funcionário ou PAs afetadas - fallback)
+            mostrarMensagem(response.message || `Funcionário atribuído à PA ${response.pa_numero} com sucesso!`, 'success');
+          }
+        } else {
+          mostrarMensagem('Erro ao atribuir funcionário: ' + (response.error || 'Erro desconhecido'), 'error');
+        }
+      },
+      error: function(jqXHR, textStatus, errorThrown) {
+        console.error('Erro AJAX ao atribuir funcionário:', textStatus, errorThrown, jqXHR.responseText);
+        let errorMsg = 'Erro ao comunicar com o servidor para atribuição.';
+        if (jqXHR.responseJSON && jqXHR.responseJSON.error) {
+          errorMsg = jqXHR.responseJSON.error;
+        }
+        mostrarMensagem(errorMsg, 'error');
+      }
+    });
+  }
+
+  // Função para atualizar a UI do PA Card após atribuição/desatribuição
+  function atualizarVisualizacaoFuncionarioPA(paCard, funcionarioData, novoStatus) {
+    const paFuncionarioDiv = paCard.find('.pa-funcionario > div:first-child'); // O div que contém o nome/botão
+    const paId = paCard.data('pa-id');
+
+    // Limpar completamente o conteúdo da div
+    paFuncionarioDiv.empty();
+    
+    // Sempre adicionar o label "Funcionário:" primeiro
+    paFuncionarioDiv.append('<strong>Funcionário:</strong> ');
+
+    if (funcionarioData) {
+      // Adicionar nome do funcionário
+      paFuncionarioDiv.append(`<span class="funcionario-nome">${funcionarioData.nome}</span>`);
+      
+      // Adicionar o botão de ramal
+      let buttonHTML;
+      if (funcionarioData.ramal) {
+          buttonHTML = `
+            <button type="button" class="btn btn-sm ramal-badge ms-2" data-pa-id="${paId}" data-action="change">
+              Ramal: ${funcionarioData.ramal} <i class='bx bxs-down-arrow bx-xs ms-1'></i>
+            </button>`;
+      } else {
+          buttonHTML = `
+            <button type="button" class="btn btn-sm ramal-badge ms-2" data-pa-id="${paId}" data-action="change">
+              Sem Ramal <i class='bx bxs-down-arrow bx-xs ms-1'></i>
+            </button>`;
+      }
+      paFuncionarioDiv.append(buttonHTML);
+    } else {
+      // PA sem funcionário - adicionar "Não atribuído"
+      paFuncionarioDiv.append('<span class="text-muted">Não atribuído</span>');
+      
+      // Adicionar botão de atribuir
+      const assignButtonHTML = `
+        <button type="button" class="btn btn-sm btn-outline-primary ms-2 assign-funcionario-btn" data-pa-id="${paId}" data-action="assign">
+          <i class='bx bx-user-plus me-1'></i> Atribuir
+        </button>`;
+      paFuncionarioDiv.append(assignButtonHTML);
+    }
+
+    // Atualizar o status visual da PA (bolinha e badge)
+    atualizarVisualizacaoStatusPA(paCard[0], novoStatus);
+  }
+
+  // Event Listener para os botões de ramal e atribuir (delegação de evento)
+  $(document).on('click', '.ramal-badge, .assign-funcionario-btn', function(e) {
+      e.preventDefault();
+      e.stopPropagation(); // Impede que feche imediatamente se clicar no botão
+      toggleDropdownFuncionarios(this);
+  });
+
+  // Event Listener para fechar dropdown ao clicar fora
+  $(document).on('click', function(event) {
+    if (activeDropdown && !$(event.target).closest('.funcionario-dropdown-menu').length && !$(event.target).closest('.ramal-badge, .assign-funcionario-btn').length) {
+      activeDropdown.fadeOut(100, function() { $(this).remove(); });
+      activeDropdown = null;
+    }
+  });
+
+  // --- Fim da Lógica para Dropdown e Atribuição ---
 }); 

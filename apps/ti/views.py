@@ -21,6 +21,10 @@ from .forms import (
     IlhaForm
 )
 from apps.funcionarios.models import Funcionario
+import json
+from django.utils import timezone
+from django.views.decorators.http import require_POST
+from django.views.decorators.http import require_GET
 
 # Create your views here.
 
@@ -555,3 +559,268 @@ def ilha_delete(request, pk):
 def api_ilhas_por_sala(request, sala_id):
     ilhas = Ilha.objects.filter(sala_id=sala_id).values('id', 'nome')
     return JsonResponse(list(ilhas), safe=False)
+
+@login_required
+@require_POST # Garante que a view só aceite POST
+def remover_periferico_pa(request):
+    if not request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+        return JsonResponse({'success': False, 'error': 'Requisição inválida.'}, status=400)
+
+    try:
+        if request.content_type == 'application/json':
+            data = json.loads(request.body)
+            periferico_id = data.get('periferico_id')
+            pa_id = data.get('pa_id')
+        else:
+            return JsonResponse({'success': False, 'error': 'Requisição inválida. Esperado JSON.'}, status=400)
+
+        if not periferico_id or not pa_id:
+            return JsonResponse({'success': False, 'error': 'IDs do periférico e da PA são obrigatórios.'}, status=400)
+
+        # Encontrar a atribuição ATIVA do periférico para esta PA
+        atribuicao = get_object_or_404(
+            AtribuicaoPerifericoPA,
+            periferico_id=periferico_id,
+            posicao_atendimento_id=pa_id,
+            ativo=True # Garante que estamos removendo a atribuição ativa
+        )
+
+        # Marcar a atribuição como inativa em vez de deletar
+        atribuicao.ativo = False
+        atribuicao.data_remocao = timezone.now() # Opcional: registrar data de remoção
+        atribuicao.save()
+        
+        # Opcional: Atualizar o status do periférico se necessário
+        # periferico = atribuicao.periferico
+        # periferico.status = 'disponivel' # Ou outro status apropriado
+        # periferico.save()
+
+        return JsonResponse({'success': True, 'message': 'Periférico removido da PA com sucesso.'})
+
+    except AtribuicaoPerifericoPA.DoesNotExist:
+        return JsonResponse({'success': False, 'error': 'Atribuição ativa não encontrada para este periférico e PA.'}, status=404)
+    except json.JSONDecodeError:
+        return JsonResponse({'success': False, 'error': 'Corpo da requisição JSON inválido.'}, status=400)
+    except Exception as e:
+        # Logar o erro em um ambiente de produção
+        # logger.error(f"Erro ao remover periférico da PA: {e}")
+        return JsonResponse({'success': False, 'error': f'Erro interno do servidor: {str(e)}'}, status=500)
+
+@login_required
+def render_controlesalas(request):
+    return render(request, 'apps/ti/controle_salas.html')
+
+@login_required
+@require_GET # Adicionado para aceitar apenas GET
+def api_controle_salas(request):
+    """
+    API para fornecer dados do controle de salas de forma otimizada.
+    """
+    try:
+        # Otimização das queries
+        salas = Sala.objects.prefetch_related(
+            'ilha_set', # Ilhas da sala
+            'ilha_set__posicaoatendimento_set', # PAs da ilha
+            'ilha_set__posicaoatendimento_set__atribuicaofuncionariopa_set', # Atribuição Func a PA
+            'ilha_set__posicaoatendimento_set__atribuicaofuncionariopa_set__funcionario', # Funcionário da Atribuição
+            'ilha_set__posicaoatendimento_set__atribuicaoperifericopa_set', # Atribuição Perif a PA
+            'ilha_set__posicaoatendimento_set__atribuicaoperifericopa_set__periferico', # Periférico da Atribuição
+            'ilha_set__posicaoatendimento_set__atribuicaoperifericopa_set__periferico__tipo' # Tipo do Periférico
+        ).all()
+
+        salas_data = []
+        for sala in salas:
+            ilhas_data = []
+            for ilha in sala.ilha_set.all():
+                pas_data = []
+                for pa in ilha.posicaoatendimento_set.all():
+                    # Encontrar funcionário ativo (se houver)
+                    funcionario_ativo = None
+                    # Itera sobre as atribuições pré-carregadas
+                    for atr_func in pa.atribuicaofuncionariopa_set.all():
+                        if atr_func.ativo: # Considera apenas a ativa
+                            funcionario_ativo = {
+                                'id': atr_func.funcionario.id,
+                                'nome_completo': atr_func.funcionario.nome_completo,
+                                'ramal': atr_func.funcionario.ramal
+                            }
+                            break # Assume apenas um funcionário ativo por PA
+                    
+                    # Encontrar periféricos ativos
+                    perifericos_ativos = []
+                    # Itera sobre as atribuições pré-carregadas
+                    for atr_perif in pa.atribuicaoperifericopa_set.all():
+                        if atr_perif.ativo: # Considera apenas as ativas
+                            perifericos_ativos.append({
+                                'id': atr_perif.periferico.id,
+                                'tipo': atr_perif.periferico.tipo.nome,
+                                'marca': atr_perif.periferico.marca,
+                                'modelo': atr_perif.periferico.modelo
+                            })
+
+                    pas_data.append({
+                        'id': pa.id,
+                        'numero': pa.numero,
+                        'status': pa.status,
+                        'funcionario': funcionario_ativo, # Pode ser None
+                        'perifericos': perifericos_ativos
+                    })
+                
+                ilhas_data.append({
+                    'id': ilha.id,
+                    'nome': ilha.nome,
+                    'posicoes_atendimento': pas_data
+                })
+            
+            salas_data.append({
+                'id': sala.id,
+                'nome': sala.nome,
+                'ilhas': ilhas_data
+            })
+        
+        return JsonResponse({
+            'success': True,
+            'salas': salas_data
+        })
+    except Exception as e:
+        # Considerar loggar o erro: import logging; logger = logging.getLogger(__name__); logger.error(...) 
+        return JsonResponse({
+            'success': False,
+            'error': f'Erro ao carregar dados das salas: {str(e)}'
+        }, status=500)
+
+@require_GET
+@login_required # Opcional, mas recomendado
+def get_funcionarios_json(request):
+    """
+    Retorna uma lista de funcionários ativos em formato JSON
+    para popular o dropdown.
+    """
+    try:
+        # Filtrar funcionários ativos e ordenar por nome
+        funcionarios = Funcionario.objects.filter(status=True).order_by('nome_completo')
+        
+        # Preparar dados para JSON
+        funcionarios_data = [
+            {
+                'id': f.id,
+                'nome': f.nome_completo,
+                'ramal': f.ramal or '' # Tratar ramal nulo
+            }
+            for f in funcionarios
+        ]
+        
+        return JsonResponse({'funcionarios': funcionarios_data})
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)
+
+@require_POST
+@login_required # Opcional, mas recomendado
+def atribuir_funcionario_pa(request):
+    """
+    Atribui um funcionário a uma PA ou desatribui (se funcionario_id for None/0).
+    Espera um JSON no corpo da requisição com pa_id e funcionario_id.
+    
+    Funcionalidades:
+    1. Remove o funcionário atual da PA e substitui pelo novo
+    2. Se o novo funcionário já estiver em outra PA, ele é removido de lá
+    3. Retorna todos os dados do funcionário relacionados
+    """
+    try:
+        data = json.loads(request.body)
+        pa_id = data.get('pa_id')
+        funcionario_id = data.get('funcionario_id') # Pode ser None ou 0 para desatribuir
+
+        if not pa_id:
+            return JsonResponse({'error': 'ID da PA não fornecido.'}, status=400)
+
+        pa_alvo = get_object_or_404(PosicaoAtendimento, pk=pa_id)
+        novo_funcionario = None
+        novo_status = 'livre' # Status padrão se desatribuir
+        pa_afetadas = [] # Lista de PAs afetadas para retornar ao frontend
+
+        # 1. Verificar se o funcionário já está atribuído a outra PA e desvinculá-lo
+        if funcionario_id and int(funcionario_id) != 0:
+            # Obter o funcionário
+            novo_funcionario = get_object_or_404(Funcionario, pk=funcionario_id)
+            
+            # Verificar se este funcionário já está atribuído a outra PA
+            # Otimizado: Buscar PAs com ilha e sala relacionadas
+            pas_com_este_funcionario = PosicaoAtendimento.objects.filter(
+                funcionario=novo_funcionario
+            ).exclude(id=pa_id).select_related('ilha', 'sala')
+            
+            # Se estiver, desvinculá-lo da(s) outra(s) PA(s)
+            for pa_anterior in pas_com_este_funcionario:
+                # Guardar informações da PA anterior para retornar ao frontend
+                pa_afetadas.append({
+                    'id': pa_anterior.id,
+                    'numero': pa_anterior.numero,
+                    'status': 'livre', # Será atualizado para livre
+                    'ilha': pa_anterior.ilha.nome if pa_anterior.ilha else 'N/A',
+                    'sala': pa_anterior.sala.nome if pa_anterior.sala else 'N/A'
+                })
+                
+                # Atualizar a PA anterior
+                pa_anterior.funcionario = None
+                pa_anterior.status = 'livre'
+                pa_anterior.save()
+                
+            # Definir status para a nova PA
+            novo_status = 'ocupada'
+        else:
+            funcionario_id = None # Garantir que seja None para a resposta
+        
+        # 2. Atualizar a PA alvo
+        # Guardar informação do funcionário antigo se houver (para referência)
+        funcionario_antigo = None
+        if pa_alvo.funcionario:
+            funcionario_antigo = {
+                'id': pa_alvo.funcionario.id,
+                'nome': pa_alvo.funcionario.nome_completo,
+                'ramal': pa_alvo.funcionario.ramal
+            }
+        
+        # Atualizar a PA alvo com o novo funcionário (ou None)
+        pa_alvo.funcionario = novo_funcionario
+        pa_alvo.status = novo_status
+        pa_alvo.save()
+        
+        # Preparar os dados do funcionário para a resposta
+        funcionario_data = None
+        if novo_funcionario:
+            funcionario_data = {
+                'id': novo_funcionario.id,
+                'nome': novo_funcionario.nome_completo,
+                'ramal': novo_funcionario.ramal,
+                # Adicionar mais campos conforme necessário
+                'cargo': novo_funcionario.cargo.nome if novo_funcionario.cargo else None,
+                'departamento': novo_funcionario.departamento.nome if novo_funcionario.departamento else None,
+                'empresa': novo_funcionario.empresa.nome if novo_funcionario.empresa else None,
+                'loja': novo_funcionario.loja.nome if novo_funcionario.loja else None
+            }
+        
+        # 3. Preparar dados de resposta
+        response_data = {
+            'success': True,
+            'message': 'PA atualizada com sucesso.',
+            'pa_id': pa_alvo.id,
+            'pa_numero': pa_alvo.numero,
+            'novo_status': pa_alvo.status,
+            'funcionario': funcionario_data,
+            'funcionario_antigo': funcionario_antigo,
+            'pas_afetadas': pa_afetadas # Lista de outras PAs que foram atualizadas
+        }
+        return JsonResponse(response_data)
+
+    except PosicaoAtendimento.DoesNotExist:
+        return JsonResponse({'error': 'PA não encontrada.'}, status=404)
+    except Funcionario.DoesNotExist:
+        return JsonResponse({'error': 'Funcionário não encontrado.'}, status=404)
+    except json.JSONDecodeError:
+        return JsonResponse({'error': 'Dados JSON inválidos.'}, status=400)
+    except Exception as e:
+        # Logar o erro real no servidor seria ideal aqui
+        return JsonResponse({'error': f'Erro interno do servidor: {str(e)}'}, status=500)
+
+

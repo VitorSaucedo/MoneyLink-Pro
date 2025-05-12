@@ -94,34 +94,70 @@ TI - Controle de Salas, Ilhas e PAs
                                       <div class="pa-header">
                                         <div class="pa-title">
                                           <span>PA {{ pa.numero }}</span>
-                                          <div class="pa-status-indicator status-{{ pa.status }}" 
-                                             title="{% if pa.status == 'livre' %}Livre{% elif pa.status == 'ocupada' %}Ocupada{% elif pa.status == 'manutencao' %}Em Manutenção{% elif pa.status == 'inativa' %}Inativa{% endif %}">
-                                          </div>
                                         </div>
-                                        <div class="pa-status">
-                                          {% if pa.status == 'livre' %}
-                                            <span class="badge bg-success">Livre</span>
-                                          {% elif pa.status == 'ocupada' %}
-                                            <span class="badge bg-primary">Ocupada</span>
-                                          {% elif pa.status == 'manutencao' %}
-                                            <span class="badge bg-warning text-dark">Em Manutenção</span>
-                                          {% elif pa.status == 'inativa' %}
-                                            <span class="badge bg-danger">Inativa</span>
-                                          {% endif %}
+                                        <div class="pa-status-group"> 
+                                          <div class="pa-status-indicator status-{{ pa.status }}" 
+                                             title="{% if pa.status == 'livre' %}Livre{% elif pa.status == 'ocupada' %}Ocupada{% elif pa.status == 'manutencao' %}Em Manutenção{% elif pa.status == 'inativa' %}Vazia{% endif %}">
+                                          </div>
+                                          <div class="pa-status">
+                                            {% if pa.status == 'livre' %}
+                                              <span class="badge bg-success">Livre</span>
+                                            {% elif pa.status == 'ocupada' %}
+                                              <span class="badge bg-primary">Ocupada</span>
+                                            {% elif pa.status == 'manutencao' %}
+                                              <span class="badge bg-warning text-dark">Em Manutenção</span>
+                                            {% elif pa.status == 'inativa' %}
+                                              <span class="badge bg-danger">Vazia</span>
+                                            {% endif %}
+                                          </div>
                                         </div>
                                       </div>
                                       
                                       <div class="pa-content">
-                                        <div class="pa-funcionario">
-                                          <strong>Funcionário:</strong> 
-                                          {% if pa.funcionario %}
-                                            {{ pa.funcionario.nome_completo }}
-                                            {% if pa.funcionario.ramal %}
-                                            <span class="ramal-badge">Ramal: {{ pa.funcionario.ramal }}</span>
+                                        <div class="pa-funcionario d-flex justify-content-between align-items-center">
+                                          <div class="d-flex justify-content-between align-items-center flex-grow-1"> {# Flex container para nome e botão #}
+                                            <span> {# Grupo Nome #}
+                                              <strong>Funcionário:</strong> 
+                                              {% if pa.funcionario %}
+                                                <span class="funcionario-nome ms-1">{{ pa.funcionario.nome_completo }}</span>
+                                              {% else %}
+                                                <span class="text-muted ms-1">Não atribuído</span>
+                                              {% endif %}
+                                            </span>
+                                            <span> {# Grupo Botão #}
+                                              {% if pa.funcionario %}
+                                                {% if pa.funcionario.ramal %}
+                                                  <button type="button" class="btn btn-sm ramal-badge" data-pa-id="{{ pa.id }}" data-action="change"> {# Removido ms-2 #}
+                                                    Ramal: {{ pa.funcionario.ramal }} <i class='bx bxs-down-arrow bx-xs ms-1'></i>
+                                                  </button>
+                                                {% else %}
+                                                  {# Caso funcionário não tenha ramal, ainda permitir troca #}
+                                                  <button type="button" class="btn btn-sm ramal-badge" data-pa-id="{{ pa.id }}" data-action="change"> {# Removido ms-2 #}
+                                                    Sem Ramal <i class='bx bxs-down-arrow bx-xs ms-1'></i>
+                                                  </button>
+                                                {% endif %}
+                                              {% else %}
+                                                <button type="button" class="btn btn-sm btn-outline-primary assign-funcionario-btn" data-pa-id="{{ pa.id }}" data-action="assign"> {# Removido ms-2 #}
+                                                  <i class='bx bx-user-plus me-1'></i> Atribuir
+                                                </button>
+                                              {% endif %}
+                                            </span>
+                                          </div>
+                                          {# Adicionado: Bloco para Cargo e Setor - CORRIGIDO #}
+                                          {% if pa.funcionario %} {# Primeiro checa se existe funcionário #}
+                                            {% if pa.funcionario.cargo or pa.funcionario.departamento %} {# Depois checa cargo OU depto #}
+                                              <div class="funcionario-info small text-muted mt-1">
+                                                {% if pa.funcionario.cargo %}
+                                                  <span class="funcionario-cargo me-2"><i class='bx bx-id-card me-1'></i>{{ pa.funcionario.cargo.nome }}</span>
+                                                {% endif %}
+                                                {% if pa.funcionario.departamento %}
+                                                  <span class="funcionario-departamento"><i class='bx bx-buildings me-1'></i>{{ pa.funcionario.departamento.nome }}</span>
+                                                {% endif %}
+                                              </div>
                                             {% endif %}
-                                          {% else %}
-                                            <span class="text-muted">Não atribuído</span>
                                           {% endif %}
+                                          {# Placeholder para o dropdown - será posicionado via JS #}
+                                          <div class="funcionario-dropdown-container position-relative"></div> 
                                         </div>
                                         
                                         <!-- Periféricos atribuídos a esta PA -->
@@ -130,7 +166,7 @@ TI - Controle de Salas, Ilhas e PAs
                                           <div class="perifericos-list">
                                             {% if perifericos_por_pa|get_item:pa.id %}
                                               {% for periferico in perifericos_por_pa|get_item:pa.id %}
-                                                <span class="periferico-tag">{{ periferico.tipo }} {{ periferico.marca }}</span>
+                                                <span class="periferico-tag" data-periferico-id="{{ periferico.id }}">{{ periferico.tipo }} {{ periferico.marca }}</span>
                                               {% endfor %}
                                             {% else %}
                                               <span class="text-muted">Nenhum periférico atribuído</span>
@@ -153,34 +189,70 @@ TI - Controle de Salas, Ilhas e PAs
                                       <div class="pa-header">
                                         <div class="pa-title">
                                           <span>PA {{ pa.numero }}</span>
-                                          <div class="pa-status-indicator status-{{ pa.status }}" 
-                                             title="{% if pa.status == 'livre' %}Livre{% elif pa.status == 'ocupada' %}Ocupada{% elif pa.status == 'manutencao' %}Em Manutenção{% elif pa.status == 'inativa' %}Inativa{% endif %}">
-                                          </div>
                                         </div>
-                                        <div class="pa-status">
-                                          {% if pa.status == 'livre' %}
-                                            <span class="badge bg-success">Livre</span>
-                                          {% elif pa.status == 'ocupada' %}
-                                            <span class="badge bg-primary">Ocupada</span>
-                                          {% elif pa.status == 'manutencao' %}
-                                            <span class="badge bg-warning text-dark">Em Manutenção</span>
-                                          {% elif pa.status == 'inativa' %}
-                                            <span class="badge bg-danger">Inativa</span>
-                                          {% endif %}
+                                        <div class="pa-status-group"> 
+                                          <div class="pa-status-indicator status-{{ pa.status }}" 
+                                             title="{% if pa.status == 'livre' %}Livre{% elif pa.status == 'ocupada' %}Ocupada{% elif pa.status == 'manutencao' %}Em Manutenção{% elif pa.status == 'inativa' %}Vazia{% endif %}">
+                                          </div>
+                                          <div class="pa-status">
+                                            {% if pa.status == 'livre' %}
+                                              <span class="badge bg-success">Livre</span>
+                                            {% elif pa.status == 'ocupada' %}
+                                              <span class="badge bg-primary">Ocupada</span>
+                                            {% elif pa.status == 'manutencao' %}
+                                              <span class="badge bg-warning text-dark">Em Manutenção</span>
+                                            {% elif pa.status == 'inativa' %}
+                                              <span class="badge bg-danger">Vazia</span>
+                                            {% endif %}
+                                          </div>
                                         </div>
                                       </div>
                                       
                                       <div class="pa-content">
-                                        <div class="pa-funcionario">
-                                          <strong>Funcionário:</strong> 
-                                          {% if pa.funcionario %}
-                                            {{ pa.funcionario.nome_completo }}
-                                            {% if pa.funcionario.ramal %}
-                                            <span class="ramal-badge">Ramal: {{ pa.funcionario.ramal }}</span>
+                                        <div class="pa-funcionario d-flex justify-content-between align-items-center">
+                                          <div class="d-flex justify-content-between align-items-center flex-grow-1"> {# Flex container para nome e botão #}
+                                            <span> {# Grupo Nome #}
+                                              <strong>Funcionário:</strong> 
+                                              {% if pa.funcionario %}
+                                                <span class="funcionario-nome ms-1">{{ pa.funcionario.nome_completo }}</span>
+                                              {% else %}
+                                                <span class="text-muted ms-1">Não atribuído</span>
+                                              {% endif %}
+                                            </span>
+                                            <span> {# Grupo Botão #}
+                                              {% if pa.funcionario %}
+                                                {% if pa.funcionario.ramal %}
+                                                  <button type="button" class="btn btn-sm ramal-badge" data-pa-id="{{ pa.id }}" data-action="change"> {# Removido ms-2 #}
+                                                    Ramal: {{ pa.funcionario.ramal }} <i class='bx bxs-down-arrow bx-xs ms-1'></i>
+                                                  </button>
+                                                {% else %}
+                                                  {# Caso funcionário não tenha ramal, ainda permitir troca #}
+                                                  <button type="button" class="btn btn-sm ramal-badge" data-pa-id="{{ pa.id }}" data-action="change"> {# Removido ms-2 #}
+                                                    Sem Ramal <i class='bx bxs-down-arrow bx-xs ms-1'></i>
+                                                  </button>
+                                                {% endif %}
+                                              {% else %}
+                                                <button type="button" class="btn btn-sm btn-outline-primary assign-funcionario-btn" data-pa-id="{{ pa.id }}" data-action="assign"> {# Removido ms-2 #}
+                                                  <i class='bx bx-user-plus me-1'></i> Atribuir
+                                                </button>
+                                              {% endif %}
+                                            </span>
+                                          </div>
+                                          {# Adicionado: Bloco para Cargo e Setor - CORRIGIDO #}
+                                          {% if pa.funcionario %} {# Primeiro checa se existe funcionário #}
+                                            {% if pa.funcionario.cargo or pa.funcionario.departamento %} {# Depois checa cargo OU depto #}
+                                              <div class="funcionario-info small text-muted mt-1">
+                                                {% if pa.funcionario.cargo %}
+                                                  <span class="funcionario-cargo me-2"><i class='bx bx-id-card me-1'></i>{{ pa.funcionario.cargo.nome }}</span>
+                                                {% endif %}
+                                                {% if pa.funcionario.departamento %}
+                                                  <span class="funcionario-departamento"><i class='bx bx-buildings me-1'></i>{{ pa.funcionario.departamento.nome }}</span>
+                                                {% endif %}
+                                              </div>
                                             {% endif %}
-                                          {% else %}
-                                            <span class="text-muted">Não atribuído</span>
                                           {% endif %}
+                                          {# Placeholder para o dropdown - será posicionado via JS #}
+                                          <div class="funcionario-dropdown-container position-relative"></div> 
                                         </div>
                                         
                                         <!-- Periféricos atribuídos a esta PA -->
@@ -189,7 +261,7 @@ TI - Controle de Salas, Ilhas e PAs
                                           <div class="perifericos-list">
                                             {% if perifericos_por_pa|get_item:pa.id %}
                                               {% for periferico in perifericos_por_pa|get_item:pa.id %}
-                                                <span class="periferico-tag">{{ periferico.tipo }} {{ periferico.marca }}</span>
+                                                <span class="periferico-tag" data-periferico-id="{{ periferico.id }}">{{ periferico.tipo }} {{ periferico.marca }}</span>
                                               {% endfor %}
                                             {% else %}
                                               <span class="text-muted">Nenhum periférico atribuído</span>
@@ -246,6 +318,30 @@ TI - Controle de Salas, Ilhas e PAs
     </div>
   {% endif %}
 </div>
+
+{# --- Modal de Confirmação de Remoção de Periférico --- #}
+<div class="modal-backdrop" id="confirm-remove-periferico-backdrop" style="display: none;"></div>
+<div class="modal" id="confirm-remove-periferico-modal" tabindex="-1" style="display: none;">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title"><i class='bx bx-trash text-danger me-2'></i> Confirmar Remoção</h5>
+        <button type="button" class="btn-close" aria-label="Close" id="modal-close-btn"></button>
+      </div>
+      <div class="modal-body">
+        <p>Tem certeza que deseja remover o periférico <strong id="modal-periferico-nome"></strong> desta PA?</p>
+        <p class="text-muted small">Esta ação não pode ser desfeita diretamente por aqui.</p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" id="modal-cancel-btn">Cancelar</button>
+        {# Adicionaremos o ID do periférico e PA aqui via JS se necessário #}
+        <button type="button" class="btn btn-danger" id="modal-confirm-remove-btn">Confirmar Remoção</button>
+      </div>
+    </div>
+  </div>
+</div>
+{# --- Fim do Modal --- #}
+
 {% endblock %}
 
 {% block addjs_extra %}
@@ -319,30 +415,4 @@ TI - Controle de Salas, Ilhas e PAs
       $('body').addClass('tabs-initialized');
     });
   </script>
-{% endblock %}
-
-{% block extra_css %}
-<style>
-  /* Estilos para PAs */
-  .pa-container {
-    margin: 15px 0;
-  }
-  
-  /* Estilo para o badge de ramal */
-  .ramal-badge {
-    display: inline-block;
-    background-color: #e9ecef;
-    color: #495057;
-    padding: 2px 6px;
-    border-radius: 4px;
-    font-size: 0.8em;
-    margin-left: 5px;
-    font-weight: bold;
-  }
-
-  .pa-grid-dual-column {
-    display: flex;
-    justify-content: space-between;
-  }
-</style>
 {% endblock %} 
