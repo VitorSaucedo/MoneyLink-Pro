@@ -25,14 +25,108 @@ import json
 from django.utils import timezone
 from django.views.decorators.http import require_POST
 from django.views.decorators.http import require_GET
+from django.core.paginator import Paginator
 
 # Create your views here.
 
 @login_required
 def controle_estoque(request):
+    """
+    View para exibir o controle de estoque de periféricos por sala e ilha.
+    Mostra uma tabela com a contagem de periféricos de cada tipo em cada sala/ilha.
+    """
+    # Obter todas as salas
+    salas = Sala.objects.all().prefetch_related('ilhas')
+    
+    # Obter todos os tipos de periféricos
+    tipos_perifericos = TipoPeriferico.objects.all()
+    
+    # Inicializar dicionário para contagem de periféricos por sala/ilha/tipo
+    perifericos_por_sala_ilha = {}
+    total_geral = 0
+    
+    # Popular o dicionário com os dados
+    for sala in salas:
+        perifericos_por_sala_ilha[sala.id] = {}
+        
+        for ilha in sala.ilhas.all():
+            perifericos_por_sala_ilha[sala.id][ilha.id] = {}
+            
+            # Inicializar contador para cada tipo de periférico nesta ilha
+            for tipo in tipos_perifericos:
+                perifericos_por_sala_ilha[sala.id][ilha.id][tipo.id] = 0
+            
+            # Obter todas as PAs desta ilha
+            posicoes_atendimento_ilha = PosicaoAtendimento.objects.filter(ilha=ilha) # Renomeada para evitar conflito
+            
+            # Para cada PA, contar os periféricos por tipo
+            for pa in posicoes_atendimento_ilha: # Uso da variável renomeada
+                # Obter os periféricos atribuídos a esta PA
+                atribuicoes_pa_ativa = AtribuicaoPerifericoPA.objects.filter( # Renomeada para evitar conflito
+                    posicao_atendimento=pa,
+                    data_remocao__isnull=True  # Somente atribuições ativas
+                ).select_related('periferico__tipo')
+                
+                for atribuicao in atribuicoes_pa_ativa: # Uso da variável renomeada
+                    tipo_id = atribuicao.periferico.tipo.id
+                    perifericos_por_sala_ilha[sala.id][ilha.id][tipo_id] += 1
+                    total_geral += 1
+
+    # Buscar histórico de movimentações
+    historico_movimentacoes = []
+    atribuicoes_todas = AtribuicaoPerifericoPA.objects.select_related(
+        'periferico__tipo', 
+        'posicao_atendimento__ilha__sala' # Inclui ilha e sala para evitar N+1 queries
+    ).order_by('-data_atribuicao') # Ordena por data de atribuição inicialmente
+
+    for atribuicao in atribuicoes_todas:
+        local = f"{atribuicao.posicao_atendimento.sala.nome if atribuicao.posicao_atendimento.sala else 'N/A'}, {atribuicao.posicao_atendimento.ilha.nome if atribuicao.posicao_atendimento.ilha else 'N/A'} - PA {atribuicao.posicao_atendimento.numero}"
+        
+        # Evento de Adição
+        if atribuicao.data_atribuicao: # Garante que a data existe
+            historico_movimentacoes.append({
+                'data': atribuicao.data_atribuicao, # Mantém a data original para exibição, se necessário
+                'tipo_evento': 'Adicionado em',
+                'periferico': f"{atribuicao.periferico.tipo.nome} {atribuicao.periferico.marca} {atribuicao.periferico.modelo}",
+                'local': local,
+                'timestamp': atribuicao.data_atribuicao # Usa diretamente o DateTimeField
+            })
+        
+        # Evento de Remoção, se aplicável
+        if atribuicao.data_remocao:
+            historico_movimentacoes.append({
+                'data': atribuicao.data_remocao, # Mantém a data original para exibição, se necessário
+                'tipo_evento': 'Removido de',
+                'periferico': f"{atribuicao.periferico.tipo.nome} {atribuicao.periferico.marca} {atribuicao.periferico.modelo}",
+                'local': local,
+                'timestamp': atribuicao.data_remocao # Usa diretamente o DateTimeField
+            })
+
+    # Ordenar o histórico combinado por data (timestamp), mais recentes primeiro
+    # Filtrar itens sem timestamp (caso data_atribuicao ou data_remocao seja None, o que não deveria acontecer para datas obrigatórias)
+    historico_movimentacoes = [item for item in historico_movimentacoes if item['timestamp']]
+    historico_movimentacoes.sort(key=lambda x: x['timestamp'], reverse=True)
+
+    # Obter a data da última atualização real
+    data_ultima_atualizacao_real = None
+    if historico_movimentacoes:
+        data_ultima_atualizacao_real = historico_movimentacoes[0]['timestamp']
+
+    # Configurar paginação para o histórico
+    paginator = Paginator(historico_movimentacoes, 10) # 10 itens por página
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+
+    # Contexto para o template
     context = {
-        'title': 'Controle de Estoque - TI'
+        'salas': salas,
+        'tipos_perifericos': tipos_perifericos,
+        'perifericos_por_sala_ilha': perifericos_por_sala_ilha,
+        'total_geral': total_geral,
+        'historico_page_obj': page_obj, # Passa o objeto da página para o template
+        'data_ultima_atualizacao_real': data_ultima_atualizacao_real, # Adiciona a data ao contexto
     }
+    
     return render(request, 'apps/ti/controle_estoque.html', context)
 
 @login_required
@@ -54,13 +148,8 @@ def admin(request):
     }
     
     if request.method == 'POST':
-        if 'funcionario' in request.POST and 'posicao_atendimento' in request.POST and 'data_inicio' in request.POST:
-            # Processamento do formulário de atribuição de funcionário
-            form = AtribuicaoFuncionarioPAForm(request.POST)
-            if form.is_valid():
-                form.save()
-                messages.success(request, 'Atribuição de funcionário cadastrada com sucesso!')
-                return redirect('ti:admin')
+        # O processamento do formulário de atribuição de funcionário foi REMOVIDO daqui.
+        # Essa lógica agora é centralizada na API chamada pelo Controle de Salas.
         
         if 'periferico' in request.POST and 'posicao_atendimento' in request.POST and 'data_atribuicao' in request.POST:
             # Processamento do formulário de atribuição de periférico
@@ -376,30 +465,87 @@ def atribuicao_funcionario_pa_delete(request, pk):
 
 # Views para Atribuição de Periféricos a PAs
 @login_required
-def atribuicao_periferico_pa_list(request):
-    atribuicoes = AtribuicaoPerifericoPA.objects.all()
+def atribuicao_periferico(request):
+    # Instancia o formulário para cadastrar novo periférico (sempre, para GET)
+    form_periferico = PerifericoForm()
+    
+    if request.method == 'POST':
+        # Checa qual formulário foi submetido usando o nome do botão
+        if 'submit_periferico' in request.POST:
+            # Esta parte é para o form_periferico, não nos preocupamos com o form_atribuicao_pa aqui
+            # A lógica de processamento do form_periferico já deve existir ou ser tratada por periferico_create
+            pass # Assumindo que o POST de form_periferico é tratado em periferico_create ou aqui
+        
+        elif 'submit_atribuicao_pa' in request.POST:
+            form_atribuicao_pa = AtribuicaoPerifericoPAForm(request.POST)
+            if form_atribuicao_pa.is_valid():
+                form_atribuicao_pa.save()
+                messages.success(request, 'Atribuição de periférico a PA cadastrada com sucesso!')
+                return redirect('ti:atribuicao_periferico') 
+            # Se o form_atribuicao_pa não for válido, ele será passado para o contexto com erros
+            # e seu campo 'periferico' será filtrado abaixo.
+    else:
+        # Para requisições GET, instancia um formulário de atribuição vazio
+        form_atribuicao_pa = AtribuicaoPerifericoPAForm()
+    
+    # Modificar o queryset para o campo 'periferico' do formulário de atribuição PA
+    # Isso se aplica tanto para GET (novo formulário) quanto para POST inválido do form_atribuicao_pa
+    # (quando ele é re-renderizado com erros)
+    # Se o form_atribuicao_pa não foi definido no POST (ou seja, era o form_periferico que foi submetido),
+    # precisamos instanciá-lo aqui para o contexto.
+    if 'form_atribuicao_pa' not in locals():
+        form_atribuicao_pa = AtribuicaoPerifericoPAForm()
+
+    form_atribuicao_pa.fields['periferico'].queryset = Periferico.objects.filter(status='disponivel').order_by('tipo__nome', 'marca', 'modelo')
+    
+    # Contexto para os selects dos formulários (manter os existentes se ainda forem usados)
+    tipos_perifericos = TipoPeriferico.objects.all()
+    # perifericos_disponiveis é agora tratado pelo queryset do form
+    posicoes_atendimento = PosicaoAtendimento.objects.all() # Por enquanto, todas as PAs
+    
     context = {
-        'title': 'Atribuições de Periféricos a PAs',
-        'atribuicoes': atribuicoes,
+        'title': 'Gestão de Periféricos e Atribuições',
+        'form_periferico': form_periferico, 
+        'form_atribuicao_pa': form_atribuicao_pa,
+        'tipos_perifericos_list': tipos_perifericos,
+        # 'perifericos_list': perifericos_disponiveis, # Não é mais necessário passar separado se o form usa o queryset
+        'posicoes_atendimento_list': posicoes_atendimento # Será modificado por JS
     }
-    return render(request, 'apps/ti/atribuicao_periferico_pa_list.html', context)
+    return render(request, 'apps/ti/atribuicao_periferico.html', context)
 
 @login_required
 def atribuicao_periferico_pa_create(request):
+    # Esta view pode não ser mais necessária para o POST do formulário de atribuição,
+    # mas pode ser mantida se houver outros usos ou para GET (embora o form agora esteja na 'list' view).
+    # Por ora, vamos manter a lógica original, mas o POST dela não será mais atingido pelo form principal.
     if request.method == 'POST':
         form = AtribuicaoPerifericoPAForm(request.POST)
         if form.is_valid():
             form.save()
             messages.success(request, 'Atribuição de periférico a PA cadastrada com sucesso!')
-            return redirect('ti:atribuicao_periferico_pa_list')
+            # Idealmente, redirecionaria para a nova página unificada
+            return redirect('ti:atribuicao_periferico') 
+        else:
+            # Tratamento de erro se este POST for atingido e inválido (improvável com a nova estrutura)
+            # Re-renderizar a página principal com o formulário inválido
+            # Precisamos reconstruir o contexto da página principal aqui
+            form_periferico = PerifericoForm()
+            tipos_perifericos = TipoPeriferico.objects.all()
+            perifericos_disponiveis = Periferico.objects.filter(status='disponivel')
+            posicoes_atendimento = PosicaoAtendimento.objects.all()
+            context = {
+                'title': 'Gestão de Periféricos e Atribuições',
+                'form_periferico': form_periferico,
+                'form_atribuicao_pa': form, # form é o AtribuicaoPerifericoPAForm com erros
+                'tipos_perifericos_list': tipos_perifericos,
+                'perifericos_list': perifericos_disponiveis,
+                'posicoes_atendimento_list': posicoes_atendimento
+            }
+            messages.error(request, 'Erro ao tentar atribuir periférico. Verifique os campos.')
+            return render(request, 'apps/ti/atribuicao_periferico.html', context)
     else:
-        form = AtribuicaoPerifericoPAForm()
-    
-    context = {
-        'title': 'Atribuir Periférico a PA',
-        'form': form,
-    }
-    return render(request, 'apps/ti/atribuicao_periferico_pa_form.html', context)
+        # Se for GET, apenas redireciona para a página principal onde o formulário agora reside
+        return redirect('ti:atribuicao_periferico')
 
 @login_required
 def atribuicao_periferico_pa_update(request, pk):
@@ -409,7 +555,7 @@ def atribuicao_periferico_pa_update(request, pk):
         if form.is_valid():
             form.save()
             messages.success(request, 'Atribuição de periférico a PA atualizada com sucesso!')
-            return redirect('ti:atribuicao_periferico_pa_list')
+            return redirect('ti:atribuicao_periferico')
     else:
         form = AtribuicaoPerifericoPAForm(instance=atribuicao)
     
@@ -426,7 +572,7 @@ def atribuicao_periferico_pa_delete(request, pk):
     if request.method == 'POST':
         atribuicao.delete()
         messages.success(request, 'Atribuição de periférico a PA excluída com sucesso!')
-        return redirect('ti:atribuicao_periferico_pa_list')
+        return redirect('ti:atribuicao_periferico')
     
     context = {
         'title': 'Confirmar Exclusão',
@@ -587,13 +733,20 @@ def remover_periferico_pa(request):
 
         # Marcar a atribuição como inativa em vez de deletar
         atribuicao.ativo = False
-        atribuicao.data_remocao = timezone.now() # Opcional: registrar data de remoção
+        atribuicao.data_remocao = timezone.now()
         atribuicao.save()
         
-        # Opcional: Atualizar o status do periférico se necessário
-        # periferico = atribuicao.periferico
-        # periferico.status = 'disponivel' # Ou outro status apropriado
-        # periferico.save()
+        # Atualizar o status do periférico para disponível
+        periferico = atribuicao.periferico
+        # Verificar se o periférico não está ativo em nenhuma outra PA antes de mudar status para 'disponivel'
+        outras_atribuicoes_ativas = AtribuicaoPerifericoPA.objects.filter(
+            periferico=periferico,
+            ativo=True
+        ).exclude(pk=atribuicao.pk).exists()
+        
+        if not outras_atribuicoes_ativas:
+            periferico.status = 'disponivel'
+            periferico.save()
 
         return JsonResponse({'success': True, 'message': 'Periférico removido da PA com sucesso.'})
 
@@ -722,9 +875,13 @@ def atribuir_funcionario_pa(request):
     Espera um JSON no corpo da requisição com pa_id e funcionario_id.
     
     Funcionalidades:
-    1. Remove o funcionário atual da PA e substitui pelo novo
-    2. Se o novo funcionário já estiver em outra PA, ele é removido de lá
-    3. Retorna todos os dados do funcionário relacionados
+    1. Remove o funcionário atual da PA e substitui pelo novo (em PosicaoAtendimento.funcionario)
+    2. Se o novo funcionário já estiver em outra PA, ele é removido de lá (em PosicaoAtendimento.funcionario)
+    3. Gerencia o histórico em AtribuicaoFuncionarioPA:
+        a. Finaliza atribuições antigas para a PA alvo.
+        b. Finaliza atribuições antigas para o funcionário em outras PAs.
+        c. Cria uma nova atribuição ativa para o funcionário na PA alvo.
+    4. Retorna todos os dados do funcionário relacionados
     """
     try:
         data = json.loads(request.body)
@@ -736,80 +893,97 @@ def atribuir_funcionario_pa(request):
 
         pa_alvo = get_object_or_404(PosicaoAtendimento, pk=pa_id)
         novo_funcionario = None
-        novo_status = 'livre' # Status padrão se desatribuir
-        pa_afetadas = [] # Lista de PAs afetadas para retornar ao frontend
+        novo_status_pa = 'livre' # Status padrão se desatribuir
+        pas_afetadas_info = [] # Lista de PAs afetadas para retornar ao frontend
+        hoje = timezone.now() # Definir uma vez para consistência
 
-        # 1. Verificar se o funcionário já está atribuído a outra PA e desvinculá-lo
+        # 1. Lidar com o NOVO FUNCIONÁRIO (se um está sendo atribuído)
         if funcionario_id and int(funcionario_id) != 0:
-            # Obter o funcionário
             novo_funcionario = get_object_or_404(Funcionario, pk=funcionario_id)
-            
-            # Verificar se este funcionário já está atribuído a outra PA
-            # Otimizado: Buscar PAs com ilha e sala relacionadas
-            pas_com_este_funcionario = PosicaoAtendimento.objects.filter(
+            novo_status_pa = 'ocupada'
+
+            # 1a. Verificar se este NOVO FUNCIONÁRIO já está atribuído a OUTRA PA
+            # e desvinculá-lo de lá (tanto de PosicaoAtendimento quanto de AtribuicaoFuncionarioPA)
+            outras_pas_do_novo_funcionario = PosicaoAtendimento.objects.filter(
                 funcionario=novo_funcionario
-            ).exclude(id=pa_id).select_related('ilha', 'sala')
-            
-            # Se estiver, desvinculá-lo da(s) outra(s) PA(s)
-            for pa_anterior in pas_com_este_funcionario:
-                # Guardar informações da PA anterior para retornar ao frontend
-                pa_afetadas.append({
-                    'id': pa_anterior.id,
-                    'numero': pa_anterior.numero,
-                    'status': 'livre', # Será atualizado para livre
-                    'ilha': pa_anterior.ilha.nome if pa_anterior.ilha else 'N/A',
-                    'sala': pa_anterior.sala.nome if pa_anterior.sala else 'N/A'
+            ).exclude(id=pa_alvo.id).select_related('ilha', 'sala')
+
+            for pa_anterior_do_novo_func in outras_pas_do_novo_funcionario:
+                pas_afetadas_info.append({
+                    'id': pa_anterior_do_novo_func.id,
+                    'numero': pa_anterior_do_novo_func.numero,
+                    'status': 'livre',
+                    'ilha': pa_anterior_do_novo_func.ilha.nome if pa_anterior_do_novo_func.ilha else 'N/A',
+                    'sala': pa_anterior_do_novo_func.sala.nome if pa_anterior_do_novo_func.sala else 'N/A'
                 })
                 
-                # Atualizar a PA anterior
-                pa_anterior.funcionario = None
-                pa_anterior.status = 'livre'
-                pa_anterior.save()
+                # Finalizar AtribuicaoFuncionarioPA na PA anterior do NOVO funcionário
+                AtribuicaoFuncionarioPA.objects.filter(
+                    posicao_atendimento=pa_anterior_do_novo_func,
+                    funcionario=novo_funcionario,
+                    ativo=True
+                ).update(ativo=False, data_fim=hoje)
                 
-            # Definir status para a nova PA
-            novo_status = 'ocupada'
-        else:
-            funcionario_id = None # Garantir que seja None para a resposta
-        
-        # 2. Atualizar a PA alvo
-        # Guardar informação do funcionário antigo se houver (para referência)
-        funcionario_antigo = None
-        if pa_alvo.funcionario:
-            funcionario_antigo = {
+                # Atualizar PosicaoAtendimento da PA anterior
+                pa_anterior_do_novo_func.funcionario = None
+                pa_anterior_do_novo_func.status = 'livre'
+                pa_anterior_do_novo_func.save()
+        else: # Caso de desatribuição (funcionario_id é None ou 0)
+            funcionario_id = None # Garantir que seja None para a resposta JSON e lógica subsequente
+
+        # 2. Lidar com o FUNCIONÁRIO ANTIGO da PA ALVO (se havia um)
+        funcionario_antigo_da_pa_alvo_info = None
+        if pa_alvo.funcionario: # Se a PA alvo tinha um funcionário ANTES da mudança
+            funcionario_antigo_da_pa_alvo_info = {
                 'id': pa_alvo.funcionario.id,
                 'nome': pa_alvo.funcionario.nome_completo,
                 'ramal': pa_alvo.funcionario.ramal
             }
-        
-        # Atualizar a PA alvo com o novo funcionário (ou None)
-        pa_alvo.funcionario = novo_funcionario
-        pa_alvo.status = novo_status
+            # Finalizar AtribuicaoFuncionarioPA do FUNCIONÁRIO ANTIGO na PA ALVO
+            # Isso acontece mesmo que o novo funcionário seja o mesmo (reafirmação da atribuição) ou se for desatribuição
+            AtribuicaoFuncionarioPA.objects.filter(
+                posicao_atendimento=pa_alvo,
+                funcionario=pa_alvo.funcionario,
+                ativo=True
+            ).update(ativo=False, data_fim=hoje)
+
+        # 3. Atualizar a PA ALVO (PosicaoAtendimento)
+        pa_alvo.funcionario = novo_funcionario # Pode ser None
+        pa_alvo.status = novo_status_pa
         pa_alvo.save()
-        
-        # Preparar os dados do funcionário para a resposta
-        funcionario_data = None
+
+        # 4. Criar NOVA AtribuicaoFuncionarioPA para o NOVO FUNCIONÁRIO na PA ALVO (se houver novo funcionário)
         if novo_funcionario:
-            funcionario_data = {
+            AtribuicaoFuncionarioPA.objects.create(
+                funcionario=novo_funcionario,
+                posicao_atendimento=pa_alvo,
+                data_inicio=hoje,
+                ativo=True
+            )
+        
+        # 5. Preparar os dados do funcionário para a resposta
+        novo_funcionario_info = None
+        if novo_funcionario:
+            novo_funcionario_info = {
                 'id': novo_funcionario.id,
                 'nome': novo_funcionario.nome_completo,
                 'ramal': novo_funcionario.ramal,
-                # Adicionar mais campos conforme necessário
                 'cargo': novo_funcionario.cargo.nome if novo_funcionario.cargo else None,
                 'departamento': novo_funcionario.departamento.nome if novo_funcionario.departamento else None,
                 'empresa': novo_funcionario.empresa.nome if novo_funcionario.empresa else None,
                 'loja': novo_funcionario.loja.nome if novo_funcionario.loja else None
             }
         
-        # 3. Preparar dados de resposta
+        # 6. Preparar dados de resposta
         response_data = {
             'success': True,
-            'message': 'PA atualizada com sucesso.',
+            'message': 'PA atualizada e histórico de atribuição gerenciado com sucesso.',
             'pa_id': pa_alvo.id,
             'pa_numero': pa_alvo.numero,
-            'novo_status': pa_alvo.status,
-            'funcionario': funcionario_data,
-            'funcionario_antigo': funcionario_antigo,
-            'pas_afetadas': pa_afetadas # Lista de outras PAs que foram atualizadas
+            'novo_status': pa_alvo.status, # Status atualizado da PA alvo
+            'funcionario': novo_funcionario_info, # Dados do novo funcionário atribuído
+            'funcionario_antigo': funcionario_antigo_da_pa_alvo_info, # Dados do funcionário que saiu da PA alvo
+            'pas_afetadas': pas_afetadas_info # Lista de outras PAs que foram atualizadas
         }
         return JsonResponse(response_data)
 
@@ -822,5 +996,43 @@ def atribuir_funcionario_pa(request):
     except Exception as e:
         # Logar o erro real no servidor seria ideal aqui
         return JsonResponse({'error': f'Erro interno do servidor: {str(e)}'}, status=500)
+
+@require_GET
+@login_required
+def api_pas_para_atribuicao_periferico(request, periferico_id):
+    """
+    Retorna uma lista de PAs que NÂO possuem um periférico do MESMO TIPO 
+    que o periférico_id fornecido já atribuído ativamente.
+    """
+    try:
+        periferico_selecionado = get_object_or_404(Periferico, pk=periferico_id)
+        tipo_do_periferico_selecionado_id = periferico_selecionado.tipo.id
+
+        # IDs das PAs que JÁ TÊM um periférico deste tipo atribuído ativamente
+        pas_com_este_tipo_ids = AtribuicaoPerifericoPA.objects.filter(
+            periferico__tipo_id=tipo_do_periferico_selecionado_id,
+            ativo=True
+        ).values_list('posicao_atendimento_id', flat=True).distinct()
+
+        # Buscar todas as PAs que NÃO ESTÃO na lista acima
+        # Ordenar por sala, ilha e número para consistência
+        pas_disponiveis = PosicaoAtendimento.objects.exclude(
+            id__in=list(pas_com_este_tipo_ids)
+        ).select_related('ilha', 'sala').order_by('sala__nome', 'ilha__nome', 'numero')
+
+        pas_data = [
+            {
+                'id': pa.id,
+                # Para o texto da opção, podemos usar o __str__ do modelo ou montar um customizado
+                'nome': f"{pa.sala.nome if pa.sala else 'S/ Sala'} - {pa.ilha.nome if pa.ilha else 'S/ Ilha'} - PA {pa.numero}"
+            }
+            for pa in pas_disponiveis
+        ]
+        
+        return JsonResponse({'posicoes_atendimento': pas_data})
+    except Periferico.DoesNotExist:
+        return JsonResponse({'error': 'Periférico não encontrado.'}, status=404)
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)
 
 

@@ -1,4 +1,5 @@
 from django import forms
+from django.utils import timezone
 from .models import (
     TipoPeriferico, 
     Periferico, 
@@ -94,13 +95,16 @@ class AtribuicaoPerifericoPAForm(forms.ModelForm):
         widgets = {
             'periferico': forms.Select(attrs={'class': 'form-control'}),
             'posicao_atendimento': forms.Select(attrs={'class': 'form-control'}),
-            'data_atribuicao': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
+            'data_atribuicao': forms.DateTimeInput(attrs={'class': 'form-control', 'type': 'datetime-local'}),
         }
         
     def save(self, commit=True):
         instance = super().save(commit=False)
+        
+        if not self.instance.pk:
+            instance.data_atribuicao = timezone.now()
+            
         instance.ativo = True
-        instance.data_remocao = None
         
         if commit:
             periferico = instance.periferico

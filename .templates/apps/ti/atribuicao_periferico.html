@@ -26,13 +26,6 @@
           <form method="post" action="{% url 'ti:periferico_create' %}">
             {% csrf_token %}
             
-            {# Renderiza os campos do formulário PerifericoForm aqui.
-               Para usar o mesmo estilo do admin.html, vamos replicar os campos explicitamente
-               ou usar um include de um template de formulário genérico se disponível/criado.
-               Por ora, vamos assumir que form_periferico é passado no contexto e
-               seus campos são acessados como em admin.html.
-            #}
-
             <div class="mb-3">
               <label for="{{ form_periferico.tipo.id_for_label }}" class="form-label">
                 <i class='bx bx-category-alt me-2'></i>{{ form_periferico.tipo.label }} *
@@ -117,7 +110,7 @@
               {% endif %}
             </div>
             
-            <button type="submit" class="btn btn-primary w-100">
+            <button type="submit" name="submit_periferico" class="btn btn-primary w-100">
               <i class='bx bx-save me-2'></i> Salvar Periférico
             </button>
           </form>
@@ -132,18 +125,14 @@
           <i class='bx bx-plug me-2'></i> Cadastrar Periférico a PA
         </div>
         <div class="card-body">
-          <form method="post" action="{% url 'ti:atribuicao_periferico_pa_create' %}">
+          <form method="post" action="{% url 'ti:atribuicao_periferico' %}" name="formAtribuicaoPa">
             {% csrf_token %}
-
-            {# Renderiza os campos do formulário AtribuicaoPerifericoPAForm aqui.
-               Similar ao form_periferico, assumindo form_atribuicao_pa no contexto.
-            #}
 
             <div class="mb-3">
               <label for="{{ form_atribuicao_pa.periferico.id_for_label }}" class="form-label">
                 <i class='bx bx-devices me-2'></i>{{ form_atribuicao_pa.periferico.label }} *
               </label>
-              {{ form_atribuicao_pa.periferico }}
+              {{ form_atribuicao_pa.periferico }} {# ID deste select será usado no JS #}
               {% if form_atribuicao_pa.periferico.errors %}
                 <div class="text-danger mt-1">
                   {% for error in form_atribuicao_pa.periferico.errors %}
@@ -157,7 +146,7 @@
               <label for="{{ form_atribuicao_pa.posicao_atendimento.id_for_label }}" class="form-label">
                 <i class='bx bx-desktop me-2'></i>{{ form_atribuicao_pa.posicao_atendimento.label }} *
               </label>
-              {{ form_atribuicao_pa.posicao_atendimento }}
+              {{ form_atribuicao_pa.posicao_atendimento }} {# ID deste select será usado no JS #}
               {% if form_atribuicao_pa.posicao_atendimento.errors %}
                 <div class="text-danger mt-1">
                   {% for error in form_atribuicao_pa.posicao_atendimento.errors %}
@@ -181,20 +170,6 @@
               {% endif %}
             </div>
             
-            <div class="mb-3"> {# Campo Data Remoção - opcional #}
-              <label for="{{ form_atribuicao_pa.data_remocao.id_for_label }}" class="form-label">
-                <i class='bx bx-calendar-minus me-2'></i>{{ form_atribuicao_pa.data_remocao.label }}
-              </label>
-              {{ form_atribuicao_pa.data_remocao }}
-              {% if form_atribuicao_pa.data_remocao.errors %}
-                <div class="text-danger mt-1">
-                  {% for error in form_atribuicao_pa.data_remocao.errors %}
-                    <small><i class='bx bx-error-circle me-1'></i>{{ error }}</small><br>
-                  {% endfor %}
-                </div>
-              {% endif %}
-            </div>
-
             <div class="mb-3 form-check"> {# Campo Ativo - checkbox #}
               {{ form_atribuicao_pa.ativo }}
               <label for="{{ form_atribuicao_pa.ativo.id_for_label }}" class="form-check-label ms-1">
@@ -209,11 +184,9 @@
               {% endif %}
             </div>
 
-            <div class="d-grid">
-              <button type="submit" class="btn btn-primary">
-                <i class='bx bx-save me-2'></i>Cadastrar Atribuição
-              </button>
-            </div>
+            <button type="submit" name="submit_atribuicao_pa" class="btn btn-primary w-100">
+              <i class='bx bx-save me-2'></i>Cadastrar Atribuição
+            </button>
           </form>
         </div>
       </div>
@@ -224,5 +197,64 @@
 
 {% block addjs_extra %}
 <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/js/all.min.js"></script>
-{# Adicionar JS específico se necessário, por exemplo, para datepickers ou selects dinâmicos #}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const perifericoSelect = document.querySelector('form[name="formAtribuicaoPa"] [name="periferico"]');
+    const paSelect = document.querySelector('form[name="formAtribuicaoPa"] [name="posicao_atendimento"]');
+
+    if (perifericoSelect && paSelect) {
+        perifericoSelect.addEventListener('change', function() {
+            const perifericoId = this.value;
+            // Limpar opções atuais de PA, exceto a primeira (placeholder)
+            while (paSelect.options.length > 1) {
+                paSelect.remove(1);
+            }
+            // Definir a primeira opção como placeholder e selecionada por padrão
+            paSelect.options[0].textContent = '-- Carregando PAs... --';
+            paSelect.options[0].selected = true;
+            paSelect.disabled = true;
+
+            if (perifericoId) {
+                const baseUrl = "{% url 'ti:api_pas_para_atribuicao_periferico' 0 %}".slice(0, -2); // Remove o '0/' do final
+                fetch(`${baseUrl}${perifericoId}/`)
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error(`HTTP error! status: ${response.status}`);
+                        }
+                        return response.json();
+                    })
+                    .then(data => {
+                        paSelect.options[0].textContent = '-- Selecione uma PA --'; // Restaurar placeholder
+                        if (data.posicoes_atendimento && data.posicoes_atendimento.length > 0) {
+                            data.posicoes_atendimento.forEach(pa => {
+                                const option = new Option(pa.nome, pa.id);
+                                paSelect.add(option);
+                            });
+                        } else {
+                            paSelect.options[0].textContent = '-- Nenhuma PA compatível encontrada --';
+                        }
+                        paSelect.disabled = false;
+                    })
+                    .catch(error => {
+                        console.error('Erro ao carregar PAs:', error);
+                        paSelect.options[0].textContent = '-- Erro ao carregar PAs --';
+                        paSelect.disabled = false;
+                    });
+            } else {
+                paSelect.options[0].textContent = '-- Selecione um periférico primeiro --';
+                paSelect.disabled = true; // Mantém desabilitado se nenhum periférico for selecionado
+            }
+        });
+
+        // Disparar o evento change no carregamento da página se um periférico já estiver selecionado
+        // (útil se o formulário for re-renderizado com valores antigos após um POST inválido)
+        if (perifericoSelect.value) {
+            perifericoSelect.dispatchEvent(new Event('change'));
+        }
+    } else {
+        if (!perifericoSelect) console.error('Select de periférico não encontrado.');
+        if (!paSelect) console.error('Select de PA não encontrado.');
+    }
+});
+</script>
 {% endblock %} 

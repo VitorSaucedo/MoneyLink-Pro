@@ -213,3 +213,128 @@ def get_item(dictionary, key):
     if not dictionary:
         return None
     return dictionary.get(key)
+
+@register.filter
+def get_count(dictionary, key):
+    """
+    Retorna o valor de um dicionário para a chave especificada ou o próprio dicionário 
+    se a chave não existir (para uso com múltiplos níveis de dicionários aninhados).
+    Útil para acessar dicionários aninhados em templates.
+    """
+    if dictionary is None:
+        return 0
+    return dictionary.get(key, 0) if isinstance(dictionary, dict) else dictionary
+
+@register.filter
+def sum_values(dictionary):
+    """
+    Soma todos os valores em um dicionário.
+    Útil para calcular totais em templates.
+    """
+    if not dictionary or not isinstance(dictionary, dict):
+        return 0
+    return sum(dictionary.values())
+
+@register.simple_tag
+def get_pagination_range(current_page, total_pages, adjacents=2):
+    """
+    Gera uma lista de números de página para uma paginação "inteligente".
+    Exemplo: [1, -1, 4, 5, 6, 7, 8, -1, 20] (onde -1 representa '...')
+    adjacents: Quantos números de página mostrar de cada lado da página atual.
+    """
+    if total_pages <= 0 or current_page <= 0 or current_page > total_pages:
+        return []
+
+    # Quantas páginas mostrar no total, incluindo a atual e as adjacentes
+    # (current) + (adjacents * 2) + (first) + (last) + (2 * ellipsis)
+    # No máximo: 1 ... p-2 p-1 p p+1 p+2 ... N
+    # Isso significa 7 números + 2 elipses no máximo
+    MAX_PAGES_DISPLAYED_AROUND_CURRENT = 1 + (adjacents * 2) # current + 2*adjacents
+
+    page_range = []
+
+    # Caso 1: Total de páginas é pequeno, mostrar todas as páginas
+    # (ex: 1 2 3 4 5 6 7)
+    if total_pages <= MAX_PAGES_DISPLAYED_AROUND_CURRENT + 2: # +2 para a primeira e última página quando não há elipses
+        page_range = list(range(1, total_pages + 1))
+    else:
+        # Caso 2: Total de páginas é grande, precisamos de "..."
+        page_range.append(1) # Sempre mostrar a primeira página
+
+        # "..." depois da primeira página?
+        # Se a página atual está longe o suficiente da primeira página
+        # (current_page - adjacents) > 1 (primeira página) + 1 (para o "...")
+        if current_page - adjacents > 2:
+            page_range.append(-1) # -1 representa "..."
+
+        # Páginas ao redor da página atual
+        start_page = max(2, current_page - adjacents)
+        end_page = min(total_pages - 1, current_page + adjacents)
+        
+        # Ajustar start_page e end_page para garantir que tenhamos o número certo de páginas
+        # Se current_page está perto do início
+        if current_page - adjacents <= 2:
+            end_page = min(total_pages -1, MAX_PAGES_DISPLAYED_AROUND_CURRENT)
+        # Se current_page está perto do fim
+        elif current_page + adjacents >= total_pages -1:
+            start_page = max(2, total_pages - MAX_PAGES_DISPLAYED_AROUND_CURRENT + 1)
+
+        for i in range(start_page, end_page + 1):
+            page_range.append(i)
+
+        # "..." antes da última página?
+        # Se a página atual está longe o suficiente da última página
+        # (current_page + adjacents) < total_pages - 1 (para o "...")
+        if current_page + adjacents < total_pages - 1:
+            page_range.append(-1)
+
+        if total_pages > 1: # Só adiciona a última página se for diferente da primeira
+            page_range.append(total_pages) # Sempre mostrar a última página
+
+    # Remover duplicatas e garantir que -1 não fique ao lado de um número sequencial desnecessariamente
+    # Ex: [1, -1, 2, 3, 4] deve ser [1, 2, 3, 4]
+    # Ex: [1, 2, -1, 3, 4] não deve acontecer com a lógica acima, mas como precaução.
+    final_range = []
+    last_num = 0
+    for num in page_range:
+        if num == -1:
+            if last_num != -1: # Evita "..." duplicados
+                final_range.append(num)
+        elif final_range and final_range[-1] == -1 and num == last_num + 1:
+            # Se temos "... N" e N é last_num+1, removemos "..." e adicionamos N
+            # Mas apenas se N-1 não estava já no range.
+            # Isso é um pouco complexo de generalizar aqui, a lógica principal acima deve evitar a maioria dos casos.
+            # Simplificação: se o num atual é sequencial ao número antes do -1, remove o -1.
+            if len(final_range) > 1 and final_range[-2] == num -2 : # verifica se antes do -1 existia num-2
+                 final_range.pop() # remove o -1
+            final_range.append(num)
+        elif last_num == -1 and num == 2 and 1 in final_range:
+            # caso especial [1, -1, 2]
+            if final_range == [1, -1]:
+                final_range.pop()
+            if num not in final_range: final_range.append(num)
+        elif final_range and final_range[-1] == total_pages -1 and num == total_pages and -1 in final_range:
+            # caso especial [..., N-1, N]
+            idx_ellipsis = -1
+            try:
+                idx_ellipsis = final_range.index(-1)
+                if final_range[idx_ellipsis+1] == total_pages - (MAX_PAGES_DISPLAYED_AROUND_CURRENT - (adjacents +1)):
+                    pass # Não faz nada, pois o ... está correto
+            except ValueError:
+                 pass # Sem ellipsis, ok
+            if num not in final_range: final_range.append(num)
+        else:
+            if num not in final_range: # Evita duplicatas de números (ex: 1 já adicionado, depois range começa em 1)
+                final_range.append(num)
+        last_num = num
+    
+    # Garante que se o range é [1, N], e N > 1, não haja duplicatas
+    if len(final_range) == 2 and final_range[0] == 1 and final_range[1] == total_pages and total_pages > 1:
+        pass # Ex: [1, 2] está ok.
+    elif len(set(final_range)) < len(final_range):
+        # Refaz sem a lógica de limpeza complexa se a limpeza introduziu problemas
+        # Esta parte da limpeza é complexa e pode ser removida se causar problemas,
+        # a lógica principal de construção do page_range é mais importante.
+        pass
+
+    return final_range

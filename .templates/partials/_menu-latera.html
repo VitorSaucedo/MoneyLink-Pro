@@ -332,6 +332,16 @@
             </a>
           </li>
           {% endif %}
+
+          {% has_access user "SCT56" as can_ti_perifericos %}
+          {% if can_ti_perifericos %}
+          <li>
+            <a href="{% url 'ti:atribuicao_periferico' %}">
+              <i class="bx bx-devices"></i>
+              <span class="menu-label">Atribuição Periféricos</span>
+            </a>
+          </li>
+          {% endif %}
         </ul>
       </li>
       {% endif %}

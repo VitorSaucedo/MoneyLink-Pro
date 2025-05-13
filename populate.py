@@ -3,6 +3,7 @@ import sys
 import django
 import random
 from datetime import datetime, date, timedelta
+from django.utils import timezone
 
 # Configurar o ambiente Django
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "setup.settings")
@@ -287,7 +288,7 @@ def atribuir_a_pas(pas, funcionarios, perifericos):
                     atribuicao_periferico = AtribuicaoPerifericoPA.objects.create(
                         periferico=periferico,
                         posicao_atendimento=pa,
-                        data_atribuicao=date.today(),
+                        data_atribuicao=timezone.now(),
                         ativo=True
                     )
     

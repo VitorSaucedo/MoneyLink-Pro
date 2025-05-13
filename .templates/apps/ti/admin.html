@@ -23,33 +23,6 @@ Admin TI - Cadastros<span class="produto-text"></span>
   <div class="row">
     <!-- Coluna 1 -->
     <div class="col-md-6">
-      <!-- Card Tipo de Periférico -->
-      <div class="card mb-4" id="card-tipo-periferico">
-        <div class="card-header">
-          <i class='bx bx-tag me-2'></i> Cadastrar Novo Tipo de Periférico
-        </div>
-        <div class="card-body">
-          <form method="post" action="{% url 'ti:tipo_periferico_create' %}">
-            {% csrf_token %}
-            <div class="mb-3 full-width">
-              <label for="nome_tipo" class="form-label">
-                <i class='bx bx-label me-2'></i>Nome do Tipo *
-              </label>
-              <input type="text" id="nome_tipo" name="nome" class="form-control" required>
-            </div>
-            <div class="mb-3 full-width">
-              <label for="descricao_tipo" class="form-label">
-                <i class='bx bx-align-left me-2'></i>Descrição
-              </label>
-              <textarea id="descricao_tipo" name="descricao" class="form-control" rows="3"></textarea>
-            </div>
-            <button type="submit" class="btn btn-primary w-100">
-              <i class='bx bx-save me-2'></i> Salvar Tipo de Periférico
-            </button>
-          </form>
-        </div>
-      </div>
-      
       <!-- Card Sala -->
       <div class="card mb-4" id="card-sala">
         <div class="card-header">
@@ -77,184 +50,6 @@ Admin TI - Cadastros<span class="produto-text"></span>
         </div>
       </div>
 
-      <!-- Card PA -->
-      <div class="card mb-4" id="card-posicao-atendimento">
-        <div class="card-header">
-          <i class='bx bx-desktop me-2'></i> Cadastrar nova PA
-        </div>
-        <div class="card-body">
-          <form method="post" action="{% url 'ti:posicao_atendimento_create' %}">
-            {% csrf_token %}
-            <div class="mb-3">
-              <label for="sala" class="form-label">
-                <i class='bx bx-door-open me-2'></i>Sala *
-              </label>
-              <select id="sala" name="sala" class="form-select" required>
-                <option value="">-- Selecione uma Sala --</option>
-                {% for sala in salas_list %}
-                  <option value="{{ sala.id }}">{{ sala.nome }}</option>
-                {% endfor %}
-              </select>
-            </div>
-            <div class="mb-3">
-              <label for="ilha" class="form-label">
-                <i class='bx bx-grid-alt me-2'></i>Ilha *
-              </label>
-              <select id="ilha" name="ilha" class="form-select" required>
-                <option value="">-- Selecione uma Ilha --</option>
-              </select>
-            </div>
-            <div class="mb-3">
-              <label for="numero" class="form-label">
-                <i class='bx bx-hash me-2'></i>Número da PA
-              </label>
-              <input type="text" id="numero" name="numero" class="form-control">
-              <small class="text-muted">Deixe em branco para numeração automática baseada na ilha.</small>
-            </div>
-            <div class="mb-3">
-              <label for="funcionario" class="form-label">
-                <i class='bx bx-user me-2'></i>Funcionário
-              </label>
-              <select id="funcionario" name="funcionario" class="form-select">
-                <option value="">-- Nenhum Funcionário --</option>
-                {% for func in funcionarios_list %}
-                  <option value="{{ func.id }}">{{ func.nome }}</option>
-                {% endfor %}
-              </select>
-            </div>
-            <div class="mb-3">
-              <label for="status_pa" class="form-label">
-                <i class='bx bx-info-circle me-2'></i>Status *
-              </label>
-              <select id="status_pa" name="status" class="form-select" required>
-                <option value="livre">Livre</option>
-                <option value="ocupada">Ocupada</option>
-                <option value="manutencao">Em Manutenção</option>
-                <option value="inativa">Inativa</option>
-              </select>
-            </div>
-            <div class="mb-3">
-              <label for="observacoes_pa" class="form-label">
-                <i class='bx bx-comment-detail me-2'></i>Observações
-              </label>
-              <textarea id="observacoes_pa" name="observacoes" class="form-control" rows="3"></textarea>
-            </div>
-            <button type="submit" class="btn btn-primary w-100">
-              <i class='bx bx-save me-2'></i> Salvar PA
-            </button>
-          </form>
-        </div>
-      </div>
-
-      <!-- Card Atribuição de Funcionário a PA -->
-      <div class="card mb-4">
-        <div class="card-header">
-          <i class='bx bx-user-plus me-2'></i> Cadastrar Funcionário a PA
-        </div>
-        <div class="card-body">
-          <form method="post" action="{% url 'ti:atribuicao_funcionario_pa_create' %}">
-            {% csrf_token %}
-            <div class="mb-3">
-              <label for="funcionario" class="form-label">
-                <i class='bx bx-user me-2'></i>Funcionário *
-              </label>
-              <select id="funcionario" name="funcionario" class="form-select" required>
-                <option value="">-- Selecione um Funcionário --</option>
-                {% for funcionario in funcionarios_list %}
-                  <option value="{{ funcionario.id }}">{{ funcionario.nome }}</option>
-                {% endfor %}
-              </select>
-            </div>
-            <div class="mb-3">
-              <label for="posicao_atendimento" class="form-label">
-                <i class='bx bx-desktop me-2'></i>PA *
-              </label>
-              <select id="posicao_atendimento" name="posicao_atendimento" class="form-select" required>
-                <option value="">-- Selecione uma PA --</option>
-                {% for pa in posicoes_atendimento_list %}
-                  <option value="{{ pa.id }}">{{ pa }}</option>
-                {% endfor %}
-              </select>
-            </div>
-            <div class="mb-3">
-              <label for="data_inicio" class="form-label">
-                <i class='bx bx-calendar me-2'></i>Data de Início *
-              </label>
-              <input type="date" id="data_inicio" name="data_inicio" class="form-control" required>
-            </div>
-            <div class="d-grid">
-              <button type="submit" class="btn btn-primary">
-                <i class='bx bx-save me-2'></i>Cadastrar
-              </button>
-            </div>
-          </form>
-        </div>
-      </div>
-    </div>
-
-    <!-- Coluna 2 -->
-    <div class="col-md-6">
-      <!-- Card Periférico -->
-      <div class="card mb-4" id="card-periferico">
-        <div class="card-header">
-          <i class='bx bx-devices me-2'></i> Cadastrar Novo Periférico
-        </div>
-        <div class="card-body">
-          <form method="post" action="{% url 'ti:periferico_create' %}">
-            {% csrf_token %}
-            <div class="mb-3">
-              <label for="tipo" class="form-label">
-                <i class='bx bx-category-alt me-2'></i>Tipo de Periférico *
-              </label>
-              <select id="tipo" name="tipo" class="form-select" required>
-                <option value="">-- Selecione um Tipo --</option>
-                {% for tipo in tipos_perifericos_list %}
-                  <option value="{{ tipo.id }}">{{ tipo.nome }}</option>
-                {% endfor %}
-              </select>
-            </div>
-            <div class="mb-3">
-              <label for="marca" class="form-label">
-                <i class='bx bx-building me-2'></i>Marca *
-              </label>
-              <input type="text" id="marca" name="marca" class="form-control" required>
-            </div>
-            <div class="mb-3">
-              <label for="modelo" class="form-label">
-                <i class='bx bx-info-circle me-2'></i>Modelo *
-              </label>
-              <input type="text" id="modelo" name="modelo" class="form-control" required>
-            </div>
-            <div class="mb-3">
-              <label for="data_aquisicao" class="form-label">
-                <i class='bx bx-calendar me-2'></i>Data de Aquisição
-              </label>
-              <input type="date" id="data_aquisicao" name="data_aquisicao" class="form-control">
-            </div>
-            <div class="mb-3">
-              <label for="status" class="form-label">
-                <i class='bx bx-toggle-right me-2'></i>Status *
-              </label>
-              <select id="status" name="status" class="form-select" required>
-                <option value="disponivel">Disponível</option>
-                <option value="em_uso">Em Uso</option>
-                <option value="manutencao">Em Manutenção</option>
-                <option value="inativo">Inativo</option>
-              </select>
-            </div>
-            <div class="mb-3">
-              <label for="observacoes" class="form-label">
-                <i class='bx bx-comment me-2'></i>Observações
-              </label>
-              <textarea id="observacoes" name="observacoes" class="form-control" rows="3"></textarea>
-            </div>
-            <button type="submit" class="btn btn-primary w-100">
-              <i class='bx bx-save me-2'></i> Salvar Periférico
-            </button>
-          </form>
-        </div>
-      </div>
-      
       <!-- Card Ilha -->
       <div class="card mb-4" id="card-ilha">
         <div class="card-header">
@@ -298,48 +93,91 @@ Admin TI - Cadastros<span class="produto-text"></span>
           </form>
         </div>
       </div>
+    </div>
 
-      <!-- Card Atribuição de Periférico a PA -->
-      <div class="card mb-4">
+    <!-- Coluna 2 -->
+    <div class="col-md-6">
+      <!-- Card PA -->
+      <div class="card mb-4" id="card-posicao-atendimento">
         <div class="card-header">
-          <i class='bx bx-plug me-2'></i> Cadastrar Periférico a PA
+          <i class='bx bx-desktop me-2'></i> Cadastrar nova PA
         </div>
         <div class="card-body">
-          <form method="post" action="{% url 'ti:atribuicao_periferico_pa_create' %}">
+          <form method="post" action="{% url 'ti:posicao_atendimento_create' %}">
             {% csrf_token %}
             <div class="mb-3">
-              <label for="periferico" class="form-label">
-                <i class='bx bx-devices me-2'></i>Periférico *
+              <label for="sala" class="form-label">
+                <i class='bx bx-door-open me-2'></i>Sala *
               </label>
-              <select id="periferico" name="periferico" class="form-select" required>
-                <option value="">-- Selecione um Periférico --</option>
-                {% for periferico in perifericos_list %}
-                  <option value="{{ periferico.id }}">{{ periferico }}</option>
+              <select id="sala" name="sala" class="form-select" required>
+                <option value="">-- Selecione uma Sala --</option>
+                {% for sala in salas_list %}
+                  <option value="{{ sala.id }}">{{ sala.nome }}</option>
                 {% endfor %}
               </select>
             </div>
             <div class="mb-3">
-              <label for="posicao_atendimento_periferico" class="form-label">
-                <i class='bx bx-desktop me-2'></i>PA *
+              <label for="ilha" class="form-label">
+                <i class='bx bx-grid-alt me-2'></i>Ilha *
               </label>
-              <select id="posicao_atendimento_periferico" name="posicao_atendimento" class="form-select" required>
-                <option value="">-- Selecione uma PA --</option>
-                {% for pa in posicoes_atendimento_list %}
-                  <option value="{{ pa.id }}">{{ pa }}</option>
-                {% endfor %}
+              <select id="ilha" name="ilha" class="form-select" required>
+                <option value="">-- Selecione uma Ilha --</option>
               </select>
             </div>
             <div class="mb-3">
-              <label for="data_atribuicao" class="form-label">
-                <i class='bx bx-calendar me-2'></i>Data de Atribuição *
+              <label for="numero" class="form-label">
+                <i class='bx bx-hash me-2'></i>Número da PA
               </label>
-              <input type="date" id="data_atribuicao" name="data_atribuicao" class="form-control" required>
+              <input type="text" id="numero" name="numero" class="form-control">
+              <small class="text-muted">Deixe em branco para numeração automática baseada na ilha.</small>
             </div>
-            <div class="d-grid">
-              <button type="submit" class="btn btn-primary">
-                <i class='bx bx-save me-2'></i>Cadastrar
-              </button>
+            <div class="mb-3">
+              <label for="status_pa" class="form-label">
+                <i class='bx bx-info-circle me-2'></i>Status *
+              </label>
+              <select id="status_pa" name="status" class="form-select" required>
+                <option value="livre">Livre</option>
+                <option value="ocupada">Ocupada</option>
+                <option value="manutencao">Em Manutenção</option>
+                <option value="inativa">Inativa</option>
+              </select>
             </div>
+            <div class="mb-3 full-width">
+              <label for="observacoes_pa" class="form-label">
+                <i class='bx bx-comment-detail me-2'></i>Observações
+              </label>
+              <textarea id="observacoes_pa" name="observacoes" class="form-control" rows="3"></textarea>
+            </div>
+            <button type="submit" class="btn btn-primary w-100">
+              <i class='bx bx-save me-2'></i> Salvar PA
+            </button>
+          </form>
+        </div>
+      </div>
+
+      <!-- Card Tipo de Periférico -->
+      <div class="card mb-4" id="card-tipo-periferico">
+        <div class="card-header">
+          <i class='bx bx-tag me-2'></i> Cadastrar Novo Tipo de Periférico
+        </div>
+        <div class="card-body">
+          <form method="post" action="{% url 'ti:tipo_periferico_create' %}">
+            {% csrf_token %}
+            <div class="mb-3 full-width">
+              <label for="nome_tipo" class="form-label">
+                <i class='bx bx-label me-2'></i>Nome do Tipo *
+              </label>
+              <input type="text" id="nome_tipo" name="nome" class="form-control" required>
+            </div>
+            <div class="mb-3 full-width">
+              <label for="descricao_tipo" class="form-label">
+                <i class='bx bx-align-left me-2'></i>Descrição
+              </label>
+              <textarea id="descricao_tipo" name="descricao" class="form-control" rows="3"></textarea>
+            </div>
+            <button type="submit" class="btn btn-primary w-100">
+              <i class='bx bx-save me-2'></i> Salvar Tipo de Periférico
+            </button>
           </form>
         </div>
       </div>

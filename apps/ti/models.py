@@ -106,8 +106,8 @@ class AtribuicaoFuncionarioPA(models.Model):
 class AtribuicaoPerifericoPA(models.Model):
     periferico = models.ForeignKey(Periferico, on_delete=models.CASCADE)
     posicao_atendimento = models.ForeignKey(PosicaoAtendimento, on_delete=models.CASCADE)
-    data_atribuicao = models.DateField()
-    data_remocao = models.DateField(blank=True, null=True)
+    data_atribuicao = models.DateTimeField()
+    data_remocao = models.DateTimeField(blank=True, null=True)
     ativo = models.BooleanField(default=True)
     
     def __str__(self):

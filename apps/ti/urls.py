@@ -52,10 +52,13 @@ urlpatterns = [
     path('atribuicoes-funcionarios/excluir/<int:pk>/', views.atribuicao_funcionario_pa_delete, name='atribuicao_funcionario_pa_delete'),
     
     # URLs para Atribuição de Periféricos a PAs
-    path('atribuicoes-perifericos/', views.atribuicao_periferico_pa_list, name='atribuicao_periferico_pa_list'),
+    path('atribuicao-perifericos/', views.atribuicao_periferico, name='atribuicao_periferico'),
     path('atribuicoes-perifericos/cadastrar/', views.atribuicao_periferico_pa_create, name='atribuicao_periferico_pa_create'),
     path('atribuicoes-perifericos/editar/<int:pk>/', views.atribuicao_periferico_pa_update, name='atribuicao_periferico_pa_update'),
     path('atribuicoes-perifericos/excluir/<int:pk>/', views.atribuicao_periferico_pa_delete, name='atribuicao_periferico_pa_delete'),
+
+    # API para filtrar PAs para atribuição de periférico
+    path('api/pas-para-atribuicao-periferico/<int:periferico_id>/', views.api_pas_para_atribuicao_periferico, name='api_pas_para_atribuicao_periferico'),
 
     # URLs da API para controle de PAs
     path('api/funcionarios/', views.get_funcionarios_json, name='api_get_funcionarios'),
