@@ -40,6 +40,11 @@ body {
 }
 
 .container {
+    align-items: center;
+    display: flex;
+    flex-direction: column;
+    gap: 30px;
+    justify-content: center;
     max-width: 1200px;
 }
 
@@ -545,4 +550,64 @@ body {
     pointer-events: none; /* Impede cliques em links desabilitados */
     background-color: #f8f9fa;
     border-color: var(--color-gray);
+}
+
+/* ==================================================
+   Estilos para Lista de Computadores Disponíveis
+   ================================================== */
+
+.inventory-summary-computadores {
+    padding: 0.75rem 1rem;
+    background-color: rgba(248, 249, 250, 0.7); /* Fundo levemente destacado */
+    border-radius: 8px;
+    border: 1px solid rgba(0,0,0,0.05);
+    margin-top: 1rem; /* Garante margem superior */
+}
+
+.inventory-summary-computadores h6 {
+    font-weight: 600;
+    color: var(--color-primary-dark);
+    font-size: 1em; /* Tamanho um pouco maior para o título da seção */
+    margin-bottom: 0.75rem; /* Espaço abaixo do título */
+}
+
+.inventory-summary-computadores h6 i {
+    color: var(--color-secondary); /* Cor do ícone */
+    font-size: 1.2em;
+}
+
+.computadores-disponiveis-lista {
+    display: flex;
+    flex-direction: column; /* Itens empilhados verticalmente */
+    gap: 0.5rem; /* Espaço entre os itens da marca */
+}
+
+.marca-item {
+    display: flex;
+    justify-content: space-between; /* Alinha nome da marca à esquerda e quantidade à direita */
+    align-items: center;
+    padding: 0.3rem 0.2rem; /* Pequeno padding interno */
+    font-size: 0.9em; /* Tamanho da fonte para os itens */
+    border-bottom: 1px dashed rgba(0,0,0,0.08); /* Linha sutil separadora */
+}
+
+.marca-item:last-child {
+    border-bottom: none; /* Remove a borda do último item */
+}
+
+.marca-nome {
+    color: var(--color-text-dark);
+    font-weight: 500;
+}
+
+.marca-quantidade {
+    font-size: 0.9em; /* Tamanho da fonte dentro do badge */
+    padding: 0.35em 0.6em; /* Padding do badge */
+    background-color: var(--color-primary-dark) !important; /* Cor de fundo do badge */
+    color: var(--color-white) !important; /* Cor do texto do badge */
+}
+
+.inventory-summary-computadores .text-muted {
+    font-style: italic;
+    font-size: 0.9em;
 } 

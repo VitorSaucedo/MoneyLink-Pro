@@ -83,13 +83,13 @@
             </div>
 
             <div class="mb-3">
-              <label for="{{ form_periferico.status.id_for_label }}" class="form-label">
-                <i class='bx bx-toggle-right me-2'></i>{{ form_periferico.status.label }} *
+              <label for="{{ form_periferico.quantidade.id_for_label }}" class="form-label">
+                <i class='bx bx-hash me-2'></i>{{ form_periferico.quantidade.label }} *
               </label>
-              {{ form_periferico.status }}
-              {% if form_periferico.status.errors %}
+              {{ form_periferico.quantidade }}
+              {% if form_periferico.quantidade.errors %}
                 <div class="text-danger mt-1">
-                  {% for error in form_periferico.status.errors %}
+                  {% for error in form_periferico.quantidade.errors %}
                     <small><i class='bx bx-error-circle me-1'></i>{{ error }}</small><br>
                   {% endfor %}
                 </div>

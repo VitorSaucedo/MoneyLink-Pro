@@ -17,6 +17,7 @@
 
 {% block content %}
 <div class="container mt-4">
+  <h1 class="titulo-pagina mb-4"><i class='bx bx-archive me-2'></i>Controle de Estoque de TI</h1>
   <div class="row">
     <div class="col-12">
       <div class="card" id="card-estoque">
@@ -71,16 +72,31 @@
                   </tr>
                 {% endfor %}
                 
-                <tr class="table-success">
-                  <td class="fw-bold"><i class='bx bx-calculator'></i> Total por Local</td>
-                  {% for sala in salas %}
-                    {% for ilha in sala.ilhas.all %}
-                      {% with local_total=perifericos_por_sala_ilha|get_count:sala.id|get_count:ilha.id|sum_values %}
-                        <td class="fw-bold">{{ local_total }}</td>
+                <!-- Linha para computadores -->
+                <tr class="table-info">
+                  <td><i class='bx bx-laptop'></i> Computadores (Em Uso)</td>
+                  {% for sala_loop in salas %} {# Renomeado para evitar conflito com a var sala do loop externo #}
+                    {% for ilha_loop in sala_loop.ilhas.all %} {# Renomeado para evitar conflito #}
+                      {% with contagem_comp_ilha=computadores_em_uso_por_sala_ilha|get_item:sala_loop.id|get_item:ilha_loop.id %}
+                        <td>{{ contagem_comp_ilha|default:0 }}</td>
                       {% endwith %}
                     {% endfor %}
                   {% endfor %}
-                  <td class="fw-bold">{{ total_geral }}</td>
+                  <td class="fw-bold">{{ computadores_em_uso_total_geral }}</td>
+                </tr>
+                
+                <tr class="table-success">
+                  <td class="fw-bold"><i class='bx bx-calculator'></i> Total por Local</td>
+                  {% for sala_loop in salas %} {# Renomeado #}
+                    {% for ilha_loop in sala_loop.ilhas.all %} {# Renomeado #}
+                      {% with local_total_perifericos=perifericos_por_sala_ilha|get_item:sala_loop.id|get_item:ilha_loop.id|sum_values %}
+                        {% with local_total_computadores=computadores_em_uso_por_sala_ilha|get_item:sala_loop.id|get_item:ilha_loop.id|default:0 %}
+                          <td class="fw-bold">{{ local_total_perifericos|add:local_total_computadores }}</td>
+                        {% endwith %}
+                      {% endwith %}
+                    {% endfor %}
+                  {% endfor %}
+                  <td class="fw-bold">{{ total_geral_perifericos|add:computadores_em_uso_total_geral }}</td>
                 </tr>
               </tbody>
             </table>
@@ -93,6 +109,21 @@
                 Nenhuma movimentação registrada.
               {% endif %}
             </small>
+          </div>
+          <div class="mt-3 inventory-summary inventory-summary-computadores">
+            <h6 class="mb-2"><i class='bx bx-list-check me-1'></i>Computadores Disponíveis por Marca:</h6>
+            {% if computadores_disponiveis_por_marca_list %}
+              <div class="computadores-disponiveis-lista ps-2">
+                {% for item in computadores_disponiveis_por_marca_list %}
+                  <div class="marca-item">
+                    <span class="marca-nome">{{ item.marca }}:</span> 
+                    <span class="marca-quantidade badge bg-secondary rounded-pill">{{ item.quantidade_disponivel }}</span>
+                  </div>
+                {% endfor %}
+              </div>
+            {% else %}
+              <p class="text-muted ms-3 mb-0">Nenhum computador disponível.</p>
+            {% endif %}
           </div>
         </div>
       </div>
@@ -128,24 +159,28 @@
                   <tr>
                     <th>Data</th>
                     <th>Evento</th>
-                    <th>Periférico</th>
+                    <th>Item Movimentado</th>
                     <th>Localização</th>
                   </tr>
                 </thead>
                 <tbody>
                   {% for evento in historico_page_obj %}
                     <tr>
-                      <td>{{ evento.data|date:"d/m/Y" }}</td>
+                      <td>{{ evento.data_evento|date:"d/m/Y H:i" }}</td>
                       <td>
                         {% if evento.tipo_evento == 'Adicionado em' %}
-                          <span class="badge bg-success text-white"><i class='bx bx-plus-circle me-1'></i>{{ evento.tipo_evento }}</span>
+                          <span class="badge 
+                            {% if evento.tipo_item == 'computador' %}bg-info text-dark{% else %}bg-success text-white{% endif %}"
+                          ><i class='bx bx-plus-circle me-1'></i>{{ evento.tipo_evento }}</span>
                         {% elif evento.tipo_evento == 'Removido de' %}
-                          <span class="badge bg-danger text-white"><i class='bx bx-minus-circle me-1'></i>{{ evento.tipo_evento }}</span>
+                          <span class="badge 
+                            {% if evento.tipo_item == 'computador' %}bg-warning text-dark{% else %}bg-danger text-white{% endif %}"
+                          ><i class='bx bx-minus-circle me-1'></i>{{ evento.tipo_evento }}</span>
                         {% else %}
                           {{ evento.tipo_evento }}
                         {% endif %}
                       </td>
-                      <td>{{ evento.periferico }}</td>
+                      <td>{{ evento.item_movimentado }}</td>
                       <td>{{ evento.local }}</td>
                     </tr>
                   {% endfor %}

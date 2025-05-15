@@ -172,6 +172,48 @@ TI - Controle de Salas, Ilhas e PAs
                                               <span class="text-muted">Nenhum periférico atribuído</span>
                                             {% endif %}
                                           </div>
+                                          
+                                          <!-- Periféricos faltantes -->
+                                          {% if perifericos_faltando_por_pa|get_item:pa.id and perifericos_faltando_por_pa|get_item:pa.id|get_item:'tipos'|length > 0 %}
+                                            <div class="perifericos-faltantes mt-2">
+                                              <h6 class="text-warning"><i class='bx bx-error-circle me-1'></i> Periféricos Faltantes:</h6>
+                                              <div class="perifericos-faltantes-list">
+                                                {% for tipo in perifericos_faltando_por_pa|get_item:pa.id|get_item:'tipos' %}
+                                                  <div class="periferico-faltante-item">
+                                                    <span class="periferico-faltante-nome">{{ tipo.nome }}</span>
+                                                    <button type="button" class="btn btn-sm btn-outline-warning add-periferico-btn" 
+                                                            data-pa-id="{{ pa.id }}" data-tipo-id="{{ tipo.id }}" data-tipo-nome="{{ tipo.nome }}">
+                                                      <i class='bx bx-plus-circle me-1'></i> Adicionar {{ tipo.nome }}
+                                                    </button>
+                                                  </div>
+                                                {% endfor %}
+                                              </div>
+                                            </div>
+                                          {% endif %}
+                                        </div>
+
+                                        <!-- Computador atribuído a esta PA -->
+                                        <div class="pa-computadores mt-2">
+                                          <h6><i class='bx bx-laptop me-1'></i> Computador</h6>
+                                          <div class="computadores-list-container" data-pa-id="{{ pa.id }}">
+                                            {# Esta div será populada por JavaScript com base nos computadores atribuídos à PA #}
+                                            {# Renderização inicial pelo Django para evitar piscar e para que o JS possa ler o estado inicial se necessário: #}
+                                            {% with computadores_da_pa=computadores_por_pa|get_item:pa.id %}
+                                              {% if computadores_da_pa %}
+                                                {% with comp=computadores_da_pa.0 %}
+                                                  <span class="computador-tag" data-computador-id="{{ comp.id }}" data-pa-id="{{ pa.id }}">
+                                                    {{ comp.marca }} {% if comp.modelo %}({{ comp.modelo }}){% endif %}
+                                                    <i class='bx bx-x-circle remove-computador-btn ms-1' title='Remover este computador' style="cursor:pointer; vertical-align: middle;"></i>
+                                                  </span>
+                                                {% endwith %}
+                                                <!-- Removido botão "Adicionar" - agora é permitido apenas um computador por PA -->
+                                              {% else %}
+                                                <button type="button" class="btn btn-sm btn-info assign-computador-btn-main" data-pa-id="{{ pa.id }}" data-action="open_computador_add_dropdown">
+                                                  <i class='bx bx-plus-circle me-1'></i> Atribuir Computador
+                                                </button>
+                                              {% endif %}
+                                            {% endwith %}
+                                          </div>
                                         </div>
                                       </div>
                                     </div>
@@ -267,6 +309,48 @@ TI - Controle de Salas, Ilhas e PAs
                                               <span class="text-muted">Nenhum periférico atribuído</span>
                                             {% endif %}
                                           </div>
+                                          
+                                          <!-- Periféricos faltantes -->
+                                          {% if perifericos_faltando_por_pa|get_item:pa.id and perifericos_faltando_por_pa|get_item:pa.id|get_item:'tipos'|length > 0 %}
+                                            <div class="perifericos-faltantes mt-2">
+                                              <h6 class="text-warning"><i class='bx bx-error-circle me-1'></i> Periféricos Faltantes:</h6>
+                                              <div class="perifericos-faltantes-list">
+                                                {% for tipo in perifericos_faltando_por_pa|get_item:pa.id|get_item:'tipos' %}
+                                                  <div class="periferico-faltante-item">
+                                                    <span class="periferico-faltante-nome">{{ tipo.nome }}</span>
+                                                    <button type="button" class="btn btn-sm btn-outline-warning add-periferico-btn" 
+                                                            data-pa-id="{{ pa.id }}" data-tipo-id="{{ tipo.id }}" data-tipo-nome="{{ tipo.nome }}">
+                                                      <i class='bx bx-plus-circle me-1'></i> Adicionar {{ tipo.nome }}
+                                                    </button>
+                                                  </div>
+                                                {% endfor %}
+                                              </div>
+                                            </div>
+                                          {% endif %}
+                                        </div>
+
+                                        <!-- Computador atribuído a esta PA -->
+                                        <div class="pa-computadores mt-2">
+                                          <h6><i class='bx bx-laptop me-1'></i> Computador</h6>
+                                          <div class="computadores-list-container" data-pa-id="{{ pa.id }}">
+                                            {# Esta div será populada por JavaScript com base nos computadores atribuídos à PA #}
+                                            {# Renderização inicial pelo Django para evitar piscar e para que o JS possa ler o estado inicial se necessário: #}
+                                            {% with computadores_da_pa=computadores_por_pa|get_item:pa.id %}
+                                              {% if computadores_da_pa %}
+                                                {% with comp=computadores_da_pa.0 %}
+                                                  <span class="computador-tag" data-computador-id="{{ comp.id }}" data-pa-id="{{ pa.id }}">
+                                                    {{ comp.marca }} {% if comp.modelo %}({{ comp.modelo }}){% endif %}
+                                                    <i class='bx bx-x-circle remove-computador-btn ms-1' title='Remover este computador' style="cursor:pointer; vertical-align: middle;"></i>
+                                                  </span>
+                                                {% endwith %}
+                                                <!-- Removido botão "Adicionar" - agora é permitido apenas um computador por PA -->
+                                              {% else %}
+                                                <button type="button" class="btn btn-sm btn-info assign-computador-btn-main" data-pa-id="{{ pa.id }}" data-action="open_computador_add_dropdown">
+                                                  <i class='bx bx-plus-circle me-1'></i> Atribuir Computador
+                                                </button>
+                                              {% endif %}
+                                            {% endwith %}
+                                          </div>
                                         </div>
                                       </div>
                                     </div>
@@ -341,6 +425,61 @@ TI - Controle de Salas, Ilhas e PAs
   </div>
 </div>
 {# --- Fim do Modal --- #}
+
+{# --- Modal para Observações de Manutenção --- #}
+<div class="modal-backdrop" id="manutencao-obs-backdrop" style="display: none;"></div>
+<div class="modal" id="manutencao-obs-modal" tabindex="-1" style="display: none;">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title"><i class='bx bx-comment-edit text-warning me-2'></i> Observações da Manutenção</h5>
+        <button type="button" class="btn-close" aria-label="Close" id="manutencao-obs-modal-close-btn"></button>
+      </div>
+      <div class="modal-body">
+        <p>Por favor, adicione observações para o item <strong id="manutencao-item-nome"></strong> que está sendo colocado em manutenção (opcional).</p>
+        <textarea id="manutencao-observacoes-input" class="form-control" rows="3" placeholder="Digite o motivo da manutenção aqui..."></textarea>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" id="manutencao-obs-modal-cancel-btn">Cancelar</button>
+        <button type="button" class="btn btn-warning" id="manutencao-obs-modal-save-btn">Salvar Observações</button> {# Mudado para btn-warning #}
+      </div>
+    </div>
+  </div>
+</div>
+{# --- Fim do Modal de Observações --- #}
+
+{# --- Modal para Periféricos Disponíveis --- #}
+<div class="perifericos-disponiveis-modal-backdrop" id="perifericos-disponiveis-backdrop" style="display: none;"></div>
+<div class="perifericos-disponiveis-modal" id="perifericos-disponiveis-modal" style="display: none;">
+  <div class="perifericos-disponiveis-modal-header">
+    <h5><i class='bx bx-devices me-2'></i> <span id="modal-tipo-nome">Periféricos</span> Disponíveis</h5>
+    <button type="button" class="perifericos-disponiveis-modal-close" aria-label="Close" id="perifericos-disponiveis-close">×</button>
+  </div>
+  <div class="perifericos-disponiveis-modal-body">
+    <div id="perifericos-disponiveis-loading" class="text-center py-4">
+      <div class="spinner-border text-primary" role="status">
+        <span class="visually-hidden">Carregando...</span>
+      </div>
+      <p class="mt-2">Carregando periféricos disponíveis...</p>
+    </div>
+    <div id="perifericos-disponiveis-empty" class="text-center py-4" style="display: none;">
+      <i class='bx bx-package' style="font-size: 2rem; color: #999;"></i>
+      <p class="mt-2">Nenhum periférico disponível deste tipo.</p>
+    </div>
+    <div id="perifericos-disponiveis-error" class="text-center py-4 text-danger" style="display: none;">
+      <i class='bx bx-error-circle' style="font-size: 2rem;"></i>
+      <p class="mt-2">Erro ao carregar periféricos disponíveis.</p>
+      <p id="perifericos-disponiveis-error-message" class="small"></p>
+    </div>
+    <div id="perifericos-disponiveis-content" class="perifericos-disponiveis-list">
+      <!-- Lista de periféricos disponíveis será carregada aqui via JavaScript -->
+    </div>
+  </div>
+  <div class="perifericos-disponiveis-modal-footer">
+    <button type="button" class="btn btn-secondary" id="perifericos-disponiveis-cancel">Cancelar</button>
+  </div>
+</div>
+{# --- Fim do Modal de Periféricos Disponíveis --- #}
 
 {% endblock %}
 

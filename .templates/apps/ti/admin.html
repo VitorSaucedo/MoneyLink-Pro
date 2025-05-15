@@ -93,6 +93,50 @@ Admin TI - Cadastros<span class="produto-text"></span>
           </form>
         </div>
       </div>
+      
+      <!-- Card Computador -->
+      <div class="card mb-4" id="card-computador">
+        <div class="card-header">
+          <i class='bx bx-laptop me-2'></i> Cadastrar Computador
+        </div>
+        <div class="card-body">
+          <form method="post" action="{% url 'ti:computador_create' %}">
+            {% csrf_token %}
+            <div class="mb-3">
+              <label for="marca_computador" class="form-label">
+                <i class='bx bx-purchase-tag me-2'></i>Marca *
+              </label>
+              <input type="text" id="marca_computador" name="marca" class="form-control" required>
+            </div>
+            <div class="mb-3">
+              <label for="quantidade_computador" class="form-label">
+                <i class='bx bx-calculator me-2'></i>Quantidade *
+              </label>
+              <input type="number" id="quantidade_computador" name="quantidade" class="form-control" min="1" value="1" required>
+            </div>
+            <div class="mb-3">
+              <label for="status_computador" class="form-label">
+                <i class='bx bx-slider me-2'></i>Status *
+              </label>
+              <select id="status_computador" name="status" class="form-select" required>
+                <option value="disponivel">Disponível</option>
+                <option value="em_uso">Em Uso</option>
+                <option value="manutencao">Em Manutenção</option>
+                <option value="inativo">Inativo</option>
+              </select>
+            </div>
+            <div class="mb-3">
+              <label for="observacoes_computador" class="form-label">
+                <i class='bx bx-align-left me-2'></i>Observações
+              </label>
+              <textarea id="observacoes_computador" name="observacoes" class="form-control" rows="3"></textarea>
+            </div>
+            <button type="submit" class="btn btn-primary w-100">
+              <i class='bx bx-save me-2'></i> Salvar Computador
+            </button>
+          </form>
+        </div>
+      </div>
     </div>
 
     <!-- Coluna 2 -->
@@ -177,6 +221,40 @@ Admin TI - Cadastros<span class="produto-text"></span>
             </div>
             <button type="submit" class="btn btn-primary w-100">
               <i class='bx bx-save me-2'></i> Salvar Tipo de Periférico
+            </button>
+          </form>
+        </div>
+      </div>
+      
+      <!-- Card Cadastro de Ramal -->
+      <div class="card mb-4" id="card-ramal">
+        <div class="card-header">
+          <i class='bx bx-phone me-2'></i> Cadastrar Ramal
+        </div>
+        <div class="card-body">
+          <form method="post" action="{% url 'ti:ramal_update' %}" id="form-ramal">
+            {% csrf_token %}
+            <div class="mb-3 full-width">
+              <label for="funcionario_ramal" class="form-label">
+                <i class='bx bx-user me-2'></i>Funcionário *
+              </label>
+              <select id="funcionario_ramal" name="funcionario_id" class="form-select" required>
+                <option value="">-- Selecione um Funcionário --</option>
+                {% for funcionario in funcionarios_list %}
+                  <option value="{{ funcionario.id }}">{{ funcionario.nome_completo }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="mb-3 full-width">
+              <label for="numero_ramal" class="form-label">
+                <i class='bx bx-phone me-2'></i>Número do Ramal *
+              </label>
+              <input type="text" id="numero_ramal" name="ramal" class="form-control" maxlength="4" pattern="[0-9]{4}" title="O ramal deve ter 4 dígitos numéricos" placeholder="Exemplo: 1000" required>
+              <small class="text-muted">O ramal deve ter 4 dígitos e começar a partir do 1000</small>
+              <div id="ramal-feedback" class="invalid-feedback"></div>
+            </div>
+            <button type="submit" class="btn btn-primary w-100">
+              <i class='bx bx-save me-2'></i> Salvar Ramal
             </button>
           </form>
         </div>

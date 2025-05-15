@@ -742,20 +742,76 @@ ul.nav-tabs li.nav-item {
 
 .periferico-tag {
     display: inline-block;
+    background-color: rgba(112, 246, 17, 0.15); /* Verde claro com transparência */
+    color: var(--color-text-dark);
+    border-radius: 6px;
     padding: 4px 8px;
-    background: linear-gradient(135deg, var(--color-primary-dark) 0%, #1a346b 100%);
-    color: white;
-    border-radius: 4px;
-    font-size: 0.8rem;
-    transition: all 0.3s ease;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    font-size: 0.85rem;
+    margin-right: 6px;
+    margin-bottom: 6px;
+    border: 1px solid rgba(112, 246, 17, 0.3);
+    transition: all 0.2s ease;
+    position: relative;
+    cursor: pointer;
 }
 
 .periferico-tag:hover {
+    background-color: rgba(112, 246, 17, 0.25);
     transform: translateY(-2px);
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
-    background: linear-gradient(135deg, var(--color-secondary) 0%, #4caf50 100%);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    border-color: rgba(112, 246, 17, 0.5);
+}
+
+/* Estilos para computador */
+.pa-computadores {
+    margin-top: 10px;
+    padding: 8px 10px;
+    background-color: rgba(11, 213, 240, 0.05);
+    border-radius: 8px;
+    font-size: 0.9rem;
+}
+
+.pa-computadores h6 {
+    color: var(--color-primary-dark);
+    font-size: 0.9rem;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+    display: flex;
+    align-items: center;
+}
+
+.pa-computadores h6 i {
+    margin-right: 8px;
+    color: var(--color-tertiary);
+}
+
+.computadores-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+.computador-tag {
+    display: inline-block;
+    background-color: rgba(11, 213, 240, 0.15); /* Azul claro com transparência */
+    color: var(--color-primary-dark);
+    border-radius: 6px;
+    padding: 4px 8px;
+    font-size: 0.85rem;
+    margin-right: 6px;
+    margin-bottom: 6px;
+    border: 1px solid rgba(11, 213, 240, 0.3);
+    transition: all 0.2s ease;
+    position: relative;
     cursor: pointer;
+    font-weight: 500;
+}
+
+.computador-tag:hover {
+    background-color: rgba(11, 213, 240, 0.25);
+    transform: translateY(-2px);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    border-color: rgba(11, 213, 240, 0.5);
 }
 
 /* ==========================================
@@ -1217,4 +1273,310 @@ ul.nav-tabs li.nav-item {
 .salas-tabs .nav-link:not(.active):hover::before {
     top: 100%;
     left: 100%;
+}
+
+/* ==========================================
+   Estilos para Gerenciamento de Computadores
+   ========================================== */
+
+/* Botão principal para atribuir computador quando nenhum existe */
+.assign-computador-btn-main {
+    font-weight: 500;
+    padding: 0.3rem 0.7rem; /* Menor padding */
+    font-size: 0.85em; /* Fonte um pouco menor */
+}
+
+.assign-computador-btn-main i {
+    font-size: 1em; /* Ajustar tamanho do ícone */
+}
+
+/* Botão para adicionar outro computador */
+.add-computador-btn {
+    font-size: 0.8em;
+    padding: 0.2rem 0.5rem;
+}
+
+/* Ícone de remoção na tag do computador */
+.computador-tag .remove-computador-btn {
+    color: var(--color-danger);
+    opacity: 0.7;
+    transition: opacity 0.2s ease, transform 0.2s ease;
+    font-size: 1.1em; /* Um pouco maior para facilitar o clique */
+}
+
+.computador-tag .remove-computador-btn:hover {
+    opacity: 1;
+    transform: scale(1.2);
+}
+
+/* Dropdown de Computadores Disponíveis */
+.computador-dropdown-menu {
+    /* position: absolute; - Removido, agora é fixed via JS */
+    z-index: 999999 !important; /* Valor muito alto para garantir que fique acima de tudo */
+    background-color: var(--color-white);
+    border: 1px solid var(--color-gray);
+    border-radius: 8px;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.2);
+    padding: 0; /* Removido padding geral, será por item/header */
+    min-width: 320px; /* Largura mínima aumentada */
+    max-height: 450px; /* Altura máxima do dropdown, pode ser ajustada pelo JS */
+    overflow-y: auto !important; /* Garantir que o scroll seja mostrado quando necessário */
+    display: none; /* Escondido por padrão */
+    font-size: 1rem;
+    /* Evitar que seja cortado pelo fim da tela */
+    margin-bottom: 0;
+    /* Scrollbar bonita */
+    scrollbar-width: thin;
+    scrollbar-color: #0d6efd #f0f0f0;
+}
+
+.computador-dropdown-menu .p-2.text-muted {
+    padding: 10px 15px !important;
+}
+
+/* Estilização da scrollbar para Chrome/Edge/Safari */
+.computador-dropdown-menu::-webkit-scrollbar {
+    width: 8px;
+}
+
+.computador-dropdown-menu::-webkit-scrollbar-track {
+    background: #f0f0f0;
+    border-radius: 4px;
+}
+
+.computador-dropdown-menu::-webkit-scrollbar-thumb {
+    background-color: #0d6efd;
+    border-radius: 4px;
+    border: 2px solid #f0f0f0;
+}
+
+.computador-dropdown-menu::-webkit-scrollbar-thumb:hover {
+    background-color: #0a58ca;
+}
+
+/* Estilo do header de marca no layout simplificado */
+.computador-marca-dropdown {
+    padding: 10px 15px;
+    cursor: pointer;
+    border-bottom: 1px solid #f0f0f0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    transition: all 0.2s ease;
+    background-color: white;
+    position: relative;
+}
+
+.computador-marca-dropdown:hover {
+    background-color: #f0f8ff;
+}
+
+.computador-marca-dropdown .nome {
+    font-weight: 500;
+}
+
+.computador-marca-dropdown .badge {
+    font-size: 0.8em;
+    padding: 4px 8px;
+    border-radius: 12px;
+    transition: all 0.2s ease;
+}
+
+/* Estilo para mensagem informativa no topo do dropdown */
+.dropdown-info-message {
+    padding: 8px 15px;
+    font-size: 0.9em;
+    color: #666;
+    border-bottom: 1px solid #eee;
+    margin-bottom: 5px;
+    background-color: #f8f9fa;
+}
+
+.dropdown-info-message i {
+    margin-right: 5px;
+    color: #0d6efd;
+}
+
+/* ==========================================
+   Estilos para Periféricos Faltantes
+   ========================================== */
+.perifericos-faltantes {
+    margin-top: 8px;
+    padding: 8px 10px;
+    background-color: rgba(255, 193, 7, 0.1);
+    border-radius: 6px;
+    border: 1px dashed rgba(255, 193, 7, 0.5);
+}
+
+.perifericos-faltantes h6 {
+    color: #856404;
+    font-size: 0.9rem;
+    font-weight: 600;
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+}
+
+.perifericos-faltantes h6 i {
+    color: #856404;
+    margin-right: 5px;
+}
+
+.perifericos-faltantes-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.periferico-faltante-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 4px 8px;
+    background-color: rgba(255, 255, 255, 0.7);
+    border-radius: 4px;
+}
+
+.periferico-faltante-nome {
+    font-weight: 500;
+    color: #333;
+}
+
+.add-periferico-btn {
+    font-size: 0.8em;
+    padding: 2px 8px;
+    border-color: #ffc107;
+    color: #856404;
+}
+
+.add-periferico-btn:hover {
+    background-color: #ffc107;
+    color: #fff;
+    border-color: #e0a800;
+}
+
+/* Modal para listar periféricos disponíveis */
+.perifericos-disponiveis-modal-backdrop {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    z-index: 1049;
+    display: none;
+}
+
+.perifericos-disponiveis-modal {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 90%;
+    max-width: 500px;
+    background-color: white;
+    border-radius: 8px;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+    z-index: 1050;
+    display: none;
+    overflow: hidden;
+}
+
+.perifericos-disponiveis-modal-header {
+    padding: 15px;
+    background: var(--gradient-card-header);
+    background-size: 400% 400%;
+    animation: var(--gradient-animation);
+    color: white;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.perifericos-disponiveis-modal-header h5 {
+    margin: 0;
+    font-weight: 600;
+    font-size: 1.1rem;
+}
+
+.perifericos-disponiveis-modal-close {
+    color: white;
+    font-size: 1.5rem;
+    cursor: pointer;
+    background: none;
+    border: none;
+    padding: 0;
+    margin: 0;
+    opacity: 0.8;
+}
+
+.perifericos-disponiveis-modal-close:hover {
+    opacity: 1;
+}
+
+.perifericos-disponiveis-modal-body {
+    padding: 15px;
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+.perifericos-disponiveis-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.periferico-disponivel-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 12px;
+    background-color: rgba(240, 240, 240, 0.5);
+    border-radius: 6px;
+    border: 1px solid #ddd;
+    transition: all 0.2s ease;
+}
+
+.periferico-disponivel-item:hover {
+    background-color: rgba(240, 240, 240, 0.8);
+    transform: translateY(-2px);
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+.periferico-disponivel-info {
+    flex: 1;
+}
+
+.periferico-disponivel-marca {
+    font-weight: 600;
+    color: #333;
+}
+
+.periferico-disponivel-modelo {
+    font-size: 0.85em;
+    color: #666;
+}
+
+.atribuir-periferico-btn {
+    padding: 4px 10px;
+    font-size: 0.85em;
+    background-color: var(--color-primary-dark);
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.atribuir-periferico-btn:hover {
+    background-color: #1a346b;
+    transform: translateY(-1px);
+}
+
+.perifericos-disponiveis-modal-footer {
+    padding: 10px 15px;
+    background-color: #f8f9fa;
+    border-top: 1px solid #ddd;
+    display: flex;
+    justify-content: flex-end;
 }

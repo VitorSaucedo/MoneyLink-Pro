@@ -7,7 +7,9 @@ from .models import (
     AtribuicaoFuncionarioPA, 
     AtribuicaoPerifericoPA,
     Sala,
-    Ilha
+    Ilha,
+    Computador,
+    AtribuicaoComputadorPA
 )
 from apps.funcionarios.models import Funcionario
 
@@ -23,15 +25,26 @@ class TipoPerifericoForm(forms.ModelForm):
 class PerifericoForm(forms.ModelForm):
     class Meta:
         model = Periferico
-        fields = ['tipo', 'marca', 'modelo', 'data_aquisicao', 'status', 'observacoes']
+        fields = ['tipo', 'marca', 'modelo', 'data_aquisicao', 'quantidade', 'observacoes']
         widgets = {
             'tipo': forms.Select(attrs={'class': 'form-control'}),
             'marca': forms.TextInput(attrs={'class': 'form-control'}),
             'modelo': forms.TextInput(attrs={'class': 'form-control'}),
             'data_aquisicao': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
-            'status': forms.Select(attrs={'class': 'form-control'}),
+            'quantidade': forms.NumberInput(attrs={'class': 'form-control', 'min': 0}),
             'observacoes': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
         }
+
+    def save(self, commit=True):
+        instance = super().save(commit=False)
+        if instance.quantidade > 0:
+            instance.status = 'disponivel'
+        else:
+            instance.status = 'inativo'
+        
+        if commit:
+            instance.save()
+        return instance
 
 class SalaForm(forms.ModelForm):
     class Meta:
@@ -110,6 +123,43 @@ class AtribuicaoPerifericoPAForm(forms.ModelForm):
             periferico = instance.periferico
             periferico.status = 'em_uso'
             periferico.save()
+            
+            instance.save()
+            
+        return instance
+
+class ComputadorForm(forms.ModelForm):
+    class Meta:
+        model = Computador
+        fields = ['marca', 'quantidade', 'status', 'observacoes']
+        widgets = {
+            'marca': forms.TextInput(attrs={'class': 'form-control'}),
+            'quantidade': forms.NumberInput(attrs={'class': 'form-control', 'min': 1}),
+            'status': forms.Select(attrs={'class': 'form-control'}),
+            'observacoes': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
+        }
+
+class AtribuicaoComputadorPAForm(forms.ModelForm):
+    class Meta:
+        model = AtribuicaoComputadorPA
+        fields = ['computador', 'posicao_atendimento']
+        widgets = {
+            'computador': forms.Select(attrs={'class': 'form-control'}),
+            'posicao_atendimento': forms.Select(attrs={'class': 'form-control'}),
+        }
+        
+    def save(self, commit=True):
+        instance = super().save(commit=False)
+        
+        if not self.instance.pk:
+            instance.data_atribuicao = timezone.now()
+            
+        instance.ativo = True
+        
+        if commit:
+            computador = instance.computador
+            computador.status = 'em_uso'
+            computador.save()
             
             instance.save()
             

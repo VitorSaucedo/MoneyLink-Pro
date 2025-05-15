@@ -9,6 +9,10 @@ urlpatterns = [
     path('controle-salas/', views.controle_salas, name='controle_salas'),
     path('all_forms/', views.controle_estoque, name='all_forms'),
     
+    # URLs para Controle de Manutenção
+    path('controle-manutencao/', views.controle_manutencao, name='controle_manutencao'),
+    path('marcar-consertado/<int:item_id>/<slug:tipo_item_slug>/', views.marcar_consertado, name='marcar_consertado'),
+    
     # URLs para API
     path('api/ilhas-por-sala/<int:sala_id>/', views.api_ilhas_por_sala, name='api_ilhas_por_sala'),
     path('atualizar_status_pa/', views.atualizar_status_pa, name='atualizar_status_pa'),
@@ -26,6 +30,10 @@ urlpatterns = [
     path('perifericos/cadastrar/', views.periferico_create, name='periferico_create'),
     path('perifericos/editar/<int:pk>/', views.periferico_update, name='periferico_update'),
     path('perifericos/excluir/<int:pk>/', views.periferico_delete, name='periferico_delete'),
+    
+    # URLs para Computadores
+    path('computadores/cadastrar/', views.computador_create, name='computador_create'),
+    path('computadores/atribuir/', views.atribuicao_computador_pa_create, name='atribuicao_computador_pa_create'),
     
     # URLs para Salas
     path('salas/', views.sala_list, name='sala_list'),
@@ -63,4 +71,14 @@ urlpatterns = [
     # URLs da API para controle de PAs
     path('api/funcionarios/', views.get_funcionarios_json, name='api_get_funcionarios'),
     path('api/atribuir_funcionario_pa/', views.atribuir_funcionario_pa, name='api_atribuir_funcionario_pa'),
+    path('api/computadores_disponiveis/', views.api_listar_computadores_disponiveis, name='api_listar_computadores_disponiveis'),
+    path('api/pa/<int:pa_id>/adicionar_computador/', views.api_adicionar_computador_pa, name='api_adicionar_computador_pa'),
+    path('api/pa/<int:pa_id>/remover_computador/', views.api_remover_computador_pa, name='api_remover_computador_pa'),
+    path('api/periferico/<int:periferico_id>/atualizar_status/', views.api_atualizar_status_periferico, name='api_atualizar_status_periferico'),
+    path('api/computador/<int:computador_id>/atualizar_status/', views.api_atualizar_status_computador, name='api_atualizar_status_computador'),
+    path('api/perifericos-disponiveis-por-tipo/<int:tipo_id>/', views.api_listar_perifericos_disponiveis_por_tipo, name='api_listar_perifericos_disponiveis_por_tipo'),
+    
+    # URLs para gerenciamento de ramais
+    path('ramal/update/', views.ramal_update, name='ramal_update'),
+    path('api/verificar-ramal/', views.api_verificar_ramal, name='api_verificar_ramal'),
 ] 

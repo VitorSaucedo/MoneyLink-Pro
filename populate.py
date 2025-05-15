@@ -13,7 +13,8 @@ django.setup()
 from django.contrib.auth.models import User
 from apps.ti.models import (
     Sala, Ilha, PosicaoAtendimento, TipoPeriferico, 
-    Periferico, AtribuicaoFuncionarioPA, AtribuicaoPerifericoPA
+    Periferico, AtribuicaoFuncionarioPA, AtribuicaoPerifericoPA,
+    Computador, AtribuicaoComputadorPA  # Adicionados os novos modelos
 )
 from apps.funcionarios.models import (
     Empresa, Departamento, Setor, Cargo, 
@@ -195,6 +196,29 @@ def criar_perifericos(tipos_perifericos=None):
     print(f"Criados {len(perifericos)} periféricos!")
     return perifericos
 
+# Função para criar computadores
+def criar_computadores(quantidade=60):
+    print("\nCriando computadores...")
+    
+    marcas = ["Dell", "HP", "Lenovo", "Acer", "Asus", "Positivo"]
+    
+    computadores = []
+    
+    for i in range(quantidade):
+        marca = random.choice(marcas)
+        quantidade_computador = 1  # Por padrão, cada registro representa 1 computador
+        
+        computador = Computador.objects.create(
+            marca=marca,
+            quantidade=quantidade_computador,
+            status="disponivel",
+            observacoes=f"Computador {i+1} para uso corporativo"
+        )
+        computadores.append(computador)
+    
+    print(f"Criados {len(computadores)} computadores!")
+    return computadores
+
 # Função para criar funcionários
 def criar_funcionarios(dados_basicos, quantidade=50):
     print("\nCriando funcionários...")
@@ -202,9 +226,13 @@ def criar_funcionarios(dados_basicos, quantidade=50):
     funcionarios = []
     
     nomes = ["João", "Maria", "Pedro", "Ana", "Carlos", "Julia", "Lucas", "Fernanda", 
-             "Marcos", "Amanda", "Rafael", "Camila", "Fernando", "Juliana", "Rodrigo"]
+             "Marcos", "Amanda", "Rafael", "Camila", "Fernando", "Juliana", "Rodrigo",
+             "Paulo", "Beatriz", "Gabriel", "Laura", "Leonardo", "Mariana", "Guilherme",
+             "Isabela", "Daniel", "Larissa", "Bruno", "Natália", "Felipe", "Bianca"]
     sobrenomes = ["Silva", "Santos", "Oliveira", "Souza", "Pereira", "Lima", "Costa", 
-                  "Ferreira", "Rodrigues", "Almeida", "Nascimento", "Carvalho", "Gomes"]
+                  "Ferreira", "Rodrigues", "Almeida", "Nascimento", "Carvalho", "Gomes",
+                  "Martins", "Araújo", "Ribeiro", "Barbosa", "Cardoso", "Teixeira",
+                  "Moreira", "Campos", "Dias", "Freitas", "Mendes", "Fernandes"]
     
     # Adicionando timestamp para garantir matrículas únicas
     timestamp = int(datetime.now().timestamp())
@@ -249,8 +277,8 @@ def criar_funcionarios(dados_basicos, quantidade=50):
     return funcionarios
 
 # Função para atribuir funcionários e periféricos às PAs
-def atribuir_a_pas(pas, funcionarios, perifericos):
-    print("\nAtribuindo funcionários e periféricos às PAs...")
+def atribuir_a_pas(pas, funcionarios, perifericos, computadores):
+    print("\nAtribuindo funcionários, periféricos e computadores às PAs...")
     
     # Agrupando os periféricos por tipo
     perifericos_por_tipo = {}
@@ -260,9 +288,18 @@ def atribuir_a_pas(pas, funcionarios, perifericos):
             perifericos_por_tipo[tipo_nome] = []
         perifericos_por_tipo[tipo_nome].append(periferico)
     
-    # Atribuindo um funcionário e os periféricos necessários a cada PA
+    # Shuffle dos computadores para distribuição aleatória
+    computadores_disponiveis = list(computadores)
+    random.shuffle(computadores_disponiveis)
+    
+    # Definir quantas PAs terão todos os itens completos (funcionário, periféricos e computador)
+    # e quantas terão apenas alguns itens
+    pas_totalmente_ocupadas = min(len(pas), len(funcionarios), len(computadores_disponiveis) // 2)
+    
+    # Atribuindo itens às PAs
     for i, pa in enumerate(pas):
-        if i < len(funcionarios):
+        # ATRIBUIÇÃO DE FUNCIONÁRIOS
+        if i < pas_totalmente_ocupadas:
             # Atribuir funcionário
             funcionario = funcionarios[i]
             pa.funcionario = funcionario
@@ -277,6 +314,7 @@ def atribuir_a_pas(pas, funcionarios, perifericos):
                 ativo=True
             )
             
+            # ATRIBUIÇÃO DE PERIFÉRICOS
             # Atribuir um periférico de cada tipo
             for tipo_nome, perifericos_disponiveis in perifericos_por_tipo.items():
                 if perifericos_disponiveis:
@@ -291,30 +329,105 @@ def atribuir_a_pas(pas, funcionarios, perifericos):
                         data_atribuicao=timezone.now(),
                         ativo=True
                     )
+            
+            # ATRIBUIÇÃO DE COMPUTADORES
+            # Algumas PAs terão mais de um computador
+            # 70% terá 1 computador, 20% terá 2 computadores, 10% não terá
+            computadores_por_pa = 1
+            if random.random() < 0.2:  # 20% com 2 computadores
+                computadores_por_pa = 2
+            
+            for _ in range(computadores_por_pa):
+                if computadores_disponiveis:
+                    computador = computadores_disponiveis.pop(0)
+                    computador.status = "em_uso"
+                    computador.save()
+                    
+                    # Registrar a atribuição do computador
+                    AtribuicaoComputadorPA.objects.create(
+                        computador=computador,
+                        posicao_atendimento=pa,
+                        data_atribuicao=timezone.now(),
+                        ativo=True
+                    )
+        
+        elif i < len(pas) * 0.7:  # 70% das restantes terão PAs vazias
+            pa.status = "inativa"  # Status "Vazia"
+            pa.save()
+        
+        elif i < len(pas) * 0.9:  # 20% das restantes terão PAs livres
+            pa.status = "livre"
+            pa.save()
+        
+        else:  # 10% das restantes terão PAs em manutenção
+            pa.status = "manutencao"
+            pa.save()
     
-    print("Funcionários e periféricos atribuídos às PAs com sucesso!")
+    print("Funcionários, periféricos e computadores atribuídos às PAs com sucesso!")
 
 # Função principal
 def main():
     print("Iniciando população da base de dados para a aba de TI...")
     
-    # Criar dados básicos
-    dados_basicos = criar_dados_basicos()
+    if len(sys.argv) > 1 and (sys.argv[1] == '--help' or sys.argv[1] == '-h'):
+        print("\nUso: python populate.py [opções]")
+        print("\nOpções:")
+        print("  --computadores-extras   Cria computadores extras (total 100)")
+        print("  --perifericos-extras    Cria periféricos extras (100 por tipo)")
+        print("  --funcionarios-extras   Cria funcionários extras (total 100)")
+        print("  --sem-confirmar         Executa sem pedir confirmação")
+        print("  --help, -h              Mostra esta mensagem de ajuda")
+        sys.exit(0)
     
-    # Criar estrutura física de TI
-    estrutura_ti = criar_estrutura_ti()
+    # Verificar se o usuário deseja confirmação
+    confirmar = '--sem-confirmar' not in sys.argv
     
-    # Criar periféricos
-    tipos_perifericos = TipoPeriferico.objects.all()
-    perifericos = criar_perifericos(tipos_perifericos)
+    # Se pede confirmação, perguntar ao usuário
+    if confirmar:
+        print("\n⚠️  ATENÇÃO! ⚠️")
+        print("Este script irá popular o banco de dados com dados de teste.")
+        print("Isso pode incluir a substituição de dados existentes.")
+        resposta = input("\nDeseja continuar? (s/N): ")
+        
+        if resposta.lower() not in ['s', 'sim', 'y', 'yes']:
+            print("Operação cancelada pelo usuário.")
+            return
     
-    # Criar funcionários
-    funcionarios = criar_funcionarios(dados_basicos, quantidade=len(estrutura_ti["pas"]))
+    # Verificar opções extras
+    computadores_extras = '--computadores-extras' in sys.argv
+    perifericos_extras = '--perifericos-extras' in sys.argv
+    funcionarios_extras = '--funcionarios-extras' in sys.argv
     
-    # Atribuir funcionários e periféricos às PAs
-    atribuir_a_pas(estrutura_ti["pas"], funcionarios, perifericos)
+    # Configurações para quantidades
+    qtd_computadores = 100 if computadores_extras else 60
+    qtd_perifericos_por_tipo = 100 if perifericos_extras else 50
+    qtd_funcionarios = 100 if funcionarios_extras else 50
     
-    print("\nPopulação da base de dados concluída com sucesso!")
+    try:
+        # Criar dados básicos
+        dados_basicos = criar_dados_basicos()
+        
+        # Criar estrutura física de TI
+        estrutura_ti = criar_estrutura_ti()
+        
+        # Criar periféricos
+        tipos_perifericos = TipoPeriferico.objects.all()
+        perifericos = criar_perifericos(tipos_perifericos)
+        
+        # Criar computadores
+        computadores = criar_computadores(qtd_computadores)
+        
+        # Criar funcionários
+        funcionarios = criar_funcionarios(dados_basicos, quantidade=qtd_funcionarios)
+        
+        # Atribuir funcionários, periféricos e computadores às PAs
+        atribuir_a_pas(estrutura_ti["pas"], funcionarios, perifericos, computadores)
+        
+        print("\nPopulação da base de dados concluída com sucesso!")
+    
+    except Exception as e:
+        print(f"\nErro durante o processo de população: {e}")
+        print("A operação foi interrompida. Alguns dados podem já ter sido criados.")
 
 if __name__ == "__main__":
     main() 

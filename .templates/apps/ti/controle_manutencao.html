@@ -1,0 +1,83 @@
+{% extends 'base-plus.html' %}
+{% load static %}
+
+{% block title %}Controle de Manutenção - TI{% endblock %}
+
+{% block addcss_extra %}
+    <link rel="stylesheet" href="{% static 'css/apps/funcionarios/forms/administrativo.css' %}">
+    <link rel="stylesheet" href="{% static 'css/apps/ti/controle_manutencao.css' %}">
+    <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+{% endblock %}
+
+{% block header_title %}Controle de Manutenção de Periféricos e Computadores{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h1 class="titulo-pagina mb-4"><i class='bx bx-wrench me-2'></i>Controle de Manutenção de TI</h1>
+    <div class="card">
+        <div class="card-header">
+            <i class='bx bx-wrench'></i> Periféricos e Computadores em Manutenção
+        </div>
+        <div class="card-body">
+            {# Lista de Resumo Integrada #}
+            <ul class="integrated-summary-list">
+                <li><span class="item-name">Mouse:</span> <span class="item-count">{{ contagem_por_tipo.Mouse|default:0 }}</span></li>
+                <li><span class="item-name">Mousepad:</span> <span class="item-count">{{ contagem_por_tipo.Mousepad|default:0 }}</span></li>
+                <li><span class="item-name">Teclado:</span> <span class="item-count">{{ contagem_por_tipo.Teclado|default:0 }}</span></li>
+                <li><span class="item-name">Monitor:</span> <span class="item-count">{{ contagem_por_tipo.Monitor|default:0 }}</span></li>
+                <li><span class="item-name">Fone/Headset:</span> <span class="item-count">{{ contagem_por_tipo.Fone|default:0 }}</span></li>
+                <li><span class="item-name">Computador:</span> <span class="item-count">{{ contagem_por_tipo.Computador|default:0 }}</span></li>
+                {% if contagem_por_tipo.Outros_Periféricos > 0 %}
+                <li><span class="item-name">Outros Periféricos:</span> <span class="item-count">{{ contagem_por_tipo.Outros_Periféricos|default:0 }}</span></li>
+                {% endif %}
+                <li class="total-manutencao">
+                    TOTAL EM MANUTENÇÃO:
+                    <span class="item-count">{{ total_itens_manutencao|default:0 }}</span>
+                </li>
+            </ul>
+
+            {% if itens_manutencao %}
+                <table class="table-manutencao">
+                    <thead>
+                        <tr>
+                            <th>Item</th>
+                            <th>Marca/Modelo</th>
+                            <th>Sala de Origem</th>
+                            <th>Ilha de Origem</th>
+                            <th>Última Localização (PA)</th>
+                            <th>Observações</th>
+                            <th>Ação</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in itens_manutencao %}
+                        <tr>
+                            <td>{{ item.nome_item }}</td>
+                            <td>{{ item.marca_modelo }}</td>
+                            <td>{{ item.ultima_pa.sala.nome|default:"N/A" }}</td>
+                            <td>{{ item.ultima_pa.ilha.nome|default:"N/A" }}</td>
+                            <td>{{ item.ultima_pa.numero|default:"N/A" }}</td>
+                            <td>{{ item.observacoes|default:"-" }}</td>
+                            <td>
+                                <form method="POST" action="{% url 'ti:marcar_consertado' item.id_item item.tipo_item_slug %}" style="display: inline;">
+                                    {% csrf_token %}
+                                    <button type="submit" class="btn-consertado">
+                                        <i class="fas fa-check-circle"></i> Marcar como Consertado
+                                    </button>
+                                </form>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            {% else %}
+                <p class="text-center">Nenhum item em manutenção no momento.</p>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block addjs_extra %}
+    <script src="{% static 'js/apps/ti/controle_manutencao.js' %}"></script>
+{% endblock %} 
