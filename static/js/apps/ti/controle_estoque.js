@@ -14,7 +14,12 @@ document.addEventListener('DOMContentLoaded', function() {
             // Ignora a linha de total (última linha com classe table-success)
             if (!linha.classList.contains('table-success')) {
                 linha.addEventListener('mouseenter', function() {
-                    this.style.backgroundColor = 'rgba(112, 246, 17, 0.15)';
+                    // Verifica se o tema escuro está ativo
+                    if (document.documentElement.getAttribute('data-theme') === 'dark') {
+                        this.style.backgroundColor = 'rgba(110, 66, 193, 0.2)';
+                    } else {
+                        this.style.backgroundColor = 'rgba(112, 246, 17, 0.15)';
+                    }
                 });
                 
                 linha.addEventListener('mouseleave', function() {
@@ -60,8 +65,30 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
     
+    // Função para reagir a mudanças de tema
+    function observarMudancaDeTema() {
+        // Observa mudanças no tema e atualiza as configurações
+        const observer = new MutationObserver(function(mutations) {
+            mutations.forEach(function(mutation) {
+                if (mutation.attributeName === 'data-theme') {
+                    // Reaplica as configurações quando o tema mudar
+                    configurarDestaqueTabelaEstoque();
+                    configurarTooltips();
+                    destacarCelulasVazias();
+                }
+            });
+        });
+        
+        // Observa mudanças no atributo data-theme do documento
+        observer.observe(document.documentElement, {
+            attributes: true,
+            attributeFilter: ['data-theme']
+        });
+    }
+    
     // Inicializa as funcionalidades
     configurarDestaqueTabelaEstoque();
     configurarTooltips();
     destacarCelulasVazias();
+    observarMudancaDeTema();
 }); 

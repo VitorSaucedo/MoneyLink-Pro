@@ -1,8 +1,9 @@
 /**
  * admin.js - Funcionalidades para a página de administração do módulo TI
  * 
- * Este arquivo contém as funções para ajuste de largura de elementos e
- * carregamento dinâmico de ilhas com base na sala selecionada.
+ * Este arquivo contém as funções para ajuste de largura de elementos,
+ * carregamento dinâmico de ilhas com base na sala selecionada,
+ * e suporte ao modo escuro.
  */
 
 document.addEventListener('DOMContentLoaded', function() {

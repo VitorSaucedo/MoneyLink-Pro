@@ -28,9 +28,82 @@
     --gradient-animation: gradientBG 12s ease infinite;
 }
 
+/* Dark Mode - Variáveis para o tema escuro */
+[data-theme="dark"] {
+    --color-primary-dark: #213a77; /* Azul escuro mais claro */
+    --color-secondary: #8659d4; /* Roxo - substituindo o verde */
+    --color-tertiary: #29e3ff; /* Ciano mais brilhante */
+    --color-white: #1a1625; /* Fundo escuro */
+    --color-gray: #3d3450; /* Cinza escuro */
+    --color-light-gray: #2d2438; /* Cinza claro escuro */
+    --color-text-dark: #ffffff; /* Texto branco */
+    --color-text-light: #b8b5c0; /* Texto cinza claro */
+    
+    --box-shadow-light: 0 2px 6px rgba(0,0,0,0.15);
+    --box-shadow-medium: 0 4px 12px rgba(0,0,0,0.25);
+    --box-shadow-card-hover: 0 6px 18px rgba(110, 66, 193, 0.25); /* Sombra roxa no hover para o tema escuro */
+    
+    /* Gradientes escuros */
+    --gradient-primary-green: linear-gradient(135deg, #8659d4 0%, #213a77 100%);
+    --gradient-secondary-green: linear-gradient(135deg, #8659d4 0%, #29e3ff 50%, #8659d4 100%);
+    --gradient-card-header: linear-gradient(-45deg, #6e42c1, #8659d4, #3a4c8a, #6e42c1);
+}
+
+/* Alternativas de cores para os headers no modo escuro */
+[data-theme="dark"] .card .card-header {
+    /* Opção 1: Gradiente roxo-azul (tema mais escuro e elegante) */
+    background: linear-gradient(-45deg, #6e42c1, #8659d4, #3a4c8a, #6e42c1) !important;
+    color: #ffffff !important;
+    text-shadow: 0 1px 2px rgba(0,0,0,0.2);
+}
+
+/* Seletor para ativar cores alternativas */
+.alt-dark-header-1 .card .card-header {
+    background: linear-gradient(-45deg, #6e42c1, #8659d4, #3a4c8a, #6e42c1) !important;
+}
+
+.alt-dark-header-2 .card .card-header {
+    background: linear-gradient(-45deg, #5c3aad, #7354c4, #2d3970, #5c3aad) !important;
+}
+
+.alt-dark-header-3 .card .card-header {
+    background: linear-gradient(-45deg, #462a84, #5e41a5, #203156, #462a84) !important;
+}
+
+/* Ajustes para o toggle de tema no cabeçalho */
+.theme-switch-wrapper {
+    margin-top: -2px;
+    vertical-align: middle;
+}
+
+header .theme-switch {
+    width: 50px;
+    height: 28px;
+}
+
+header .theme-switch .slider:before {
+    height: 20px;
+    width: 20px;
+    left: 4px;
+    bottom: 4px;
+}
+
+header .theme-switch input:checked + .slider:before {
+    transform: translateX(22px);
+}
+
+header .slider i {
+    font-size: 12px;
+}
+
 /* Estilos Gerais da Página */
 body {
     background-color: var(--color-light-gray);
+    transition: background-color 0.3s ease;
+}
+
+[data-theme="dark"] body {
+    background-color: var(--color-white);
 }
 
 .container {
@@ -42,16 +115,45 @@ body {
     margin: 0 auto;
 }
 
+/* Título da página com correção de background para o modo escuro */
 .titulo-pagina {
     color: var(--color-primary-dark);
     font-weight: 600;
     border-bottom: 3px solid var(--color-secondary);
     padding-bottom: 0.5rem;
     display: inline-block;
+    transition: color 0.3s ease, border-color 0.3s ease, background-color 0.3s ease;
+    background-color: transparent; /* Garantindo que seja transparente */
 }
 
 .titulo-pagina i {
     color: var(--color-secondary);
+    transition: color 0.3s ease;
+}
+
+[data-theme="dark"] .titulo-pagina {
+    color: var(--color-text-dark);
+    border-bottom-color: #6e42c1; /* Roxo para a linha abaixo do texto */
+    background-color: var(--color-white); /* Mesma cor do fundo da página no tema escuro */
+}
+
+/* Container do título */
+.header-container {
+    align-items: center;
+    background-color: transparent;
+    display: flex;
+    justify-content: center;
+    transition: background-color 0.3s ease;
+    width: 100%;
+    padding: 0.5rem 0;
+}
+
+[data-theme="dark"] .header-container {
+    background-color: var(--color-white); /* Mesma cor do fundo da página no tema escuro */
+}
+
+[data-theme="dark"] .titulo-pagina i {
+    color: #8659d4; /* Roxo mais claro para o ícone de engrenagem */
 }
 
 /* Estilos dos Cards */
@@ -65,13 +167,25 @@ body {
     flex-direction: column;
     width: 100%;
     margin-bottom: 1.5rem;
-    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    transition: transform 0.3s ease, box-shadow 0.3s ease, background-color 0.3s ease, border-color 0.3s ease;
     position: relative;
+}
+
+[data-theme="dark"] .card {
+    background-color: var(--color-light-gray);
+    border-color: var(--color-gray);
+    box-shadow: var(--box-shadow-light);
 }
 
 .card:hover {
     transform: translateY(-4px);
     box-shadow: var(--box-shadow-card-hover);
+}
+
+/* Sombra personalizada para o hover no tema escuro */
+[data-theme="dark"] .card:hover {
+    box-shadow: 0 6px 18px rgba(110, 66, 193, 0.25); /* Sombra roxa compatível com o header */
+    border-color: rgba(110, 66, 193, 0.4); /* Borda sutil para destacar */
 }
 
 .card .card-header {
@@ -88,6 +202,13 @@ body {
     align-items: center;
     position: relative;
     z-index: 1;
+    transition: color 0.3s ease;
+    overflow: hidden; /* Importante para conter o efeito de brilho */
+}
+
+[data-theme="dark"] .card .card-header {
+    color: #ffffff !important;
+    text-shadow: 0 1px 2px rgba(0,0,0,0.2);
 }
 
 .card .card-header i {
@@ -96,14 +217,14 @@ body {
     vertical-align: middle;
 }
 
-/* Efeito de brilho metálico */
+/* Efeito de brilho metálico - Apenas no header */
 .card .card-header::before {
     content: '';
     position: absolute;
-    top: -100%;
-    left: -100%;
-    width: 200%;
-    height: 200%;
+    top: -150%;
+    left: -150%;
+    width: 300%;
+    height: 300%;
     background: linear-gradient(
       135deg,
       rgba(255,255,255,0) 0%,
@@ -114,12 +235,12 @@ body {
     );
     transform: rotate(45deg);
     transition: all 0.7s ease;
-    z-index: -1;
+    z-index: 0;
 }
 
 .card:hover .card-header::before {
-    top: 100%;
-    left: 100%;
+    top: 150%;
+    left: 150%;
 }
 
 .card .card-body {
@@ -128,6 +249,12 @@ body {
     flex-direction: column;
     gap: 1rem;
     background: linear-gradient(135deg, rgba(255, 255, 255, 1) 0%, rgba(245, 255, 245, 0.8) 100%);
+    transition: background 0.3s ease;
+}
+
+[data-theme="dark"] .card .card-body {
+    background: linear-gradient(135deg, rgba(45, 36, 56, 1) 0%, rgba(26, 22, 37, 0.8) 100%);
+    color: var(--color-text-dark);
 }
 
 /* Estilos dos Formulários */
@@ -158,10 +285,19 @@ body {
     transition: color 0.3s ease;
 }
 
+[data-theme="dark"] .card form .form-label {
+    color: var(--color-secondary);
+}
+
 .card form .form-label i {
     margin-right: 0.5rem;
     color: var(--color-secondary);
     font-size: 1.1rem;
+    transition: color 0.3s ease;
+}
+
+[data-theme="dark"] .card form .form-label i {
+    color: #9c80e0; /* Roxo claro para os ícones dos formulários */
 }
 
 .card form .form-control,
@@ -170,9 +306,17 @@ body {
     border-radius: 8px;
     padding: 0.75rem 1rem;
     font-size: 1rem;
-    transition: border-color 0.3s ease, box-shadow 0.3s ease, background-color 0.3s ease;
+    transition: border-color 0.3s ease, box-shadow 0.3s ease, background-color 0.3s ease, color 0.3s ease;
     background-color: var(--color-white);
     width: 100%;
+    color: var(--color-text-dark);
+}
+
+[data-theme="dark"] .card form .form-control,
+[data-theme="dark"] .card form .form-select {
+    background-color: var(--color-white);
+    border-color: var(--color-gray);
+    color: var(--color-text-dark);
 }
 
 .card form .form-control:focus,
@@ -181,6 +325,14 @@ body {
     box-shadow: 0 0 0 3px rgba(112, 246, 17, 0.15);
     background-color: #fafffa;
     outline: none;
+}
+
+[data-theme="dark"] .card form .form-control:focus,
+[data-theme="dark"] .card form .form-select:focus {
+    border-color: var(--color-secondary);
+    box-shadow: 0 0 0 3px rgba(110, 66, 193, 0.2);
+    background-color: #2a2235;
+    color: var(--color-text-dark);
 }
 
 /* Botão de Submissão */
@@ -204,9 +356,20 @@ body {
     gap: 0.5rem;
 }
 
+[data-theme="dark"] .card form button[type="submit"] {
+    background: linear-gradient(135deg, #6e42c1, #7e56d1, #4b6dd4, #6e42c1) !important;
+    background-size: 300% 300% !important;
+    color: #ffffff;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+}
+
 .card form button[type="submit"]:hover {
     transform: translateY(-2px);
     box-shadow: 0 6px 12px rgba(112, 246, 17, 0.2);
+}
+
+[data-theme="dark"] .card form button[type="submit"]:hover {
+    box-shadow: 0 6px 12px rgba(110, 66, 193, 0.4);
 }
 
 .card form button[type="submit"]:disabled,
@@ -217,6 +380,12 @@ body {
     box-shadow: none;
     opacity: 0.7;
     transform: none;
+}
+
+[data-theme="dark"] .card form button[type="submit"]:disabled,
+[data-theme="dark"] .card form button[type="submit"].disabled {
+    background: linear-gradient(135deg, #444444, #333333) !important;
+    color: #888888;
 }
 
 .card form button[type="submit"]:disabled:hover,
@@ -268,7 +437,7 @@ body {
     font-weight: 600;
     text-transform: uppercase;
     letter-spacing: 0.5px;
-    transition: transform 0.3s ease, background-color 0.3s ease, box-shadow 0.3s ease;
+    transition: transform 0.3s ease, background-color 0.3s ease, box-shadow 0.3s ease, color 0.3s ease;
     box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
     margin-bottom: 1rem;
     text-decoration: none;
@@ -276,11 +445,23 @@ body {
     max-width: 300px;
 }
 
+[data-theme="dark"] .btn-listagem {
+    background-color: #3a2b70; /* Roxo escuro mais adequado */
+    color: #ffffff;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.25);
+}
+
 .btn-listagem:hover {
     background-color: var(--color-primary-dark);
     transform: translateY(-2px);
     box-shadow: 0 6px 12px rgba(20, 38, 80, 0.2);
     color: var(--color-secondary);
+}
+
+[data-theme="dark"] .btn-listagem:hover {
+    background-color: #4d3991; /* Roxo escuro ligeiramente mais claro */
+    box-shadow: 0 6px 12px rgba(58, 43, 112, 0.4);
+    color: #a48edf; /* Roxo claro para contraste */
 }
 
 .btn-listagem i {
@@ -293,6 +474,10 @@ body {
     background-repeat: no-repeat;
     background-position: right 10px center;
     background-size: 20px;
+}
+
+[data-theme="dark"] .is-loading {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24'%3E%3Cpath fill='%23b8b5c0' d='M12,4a8,8,0,0,1,7.89,6.7A1.53,1.53,0,0,0,21.38,12h0a1.5,1.5,0,0,0,1.48-1.75,11,11,0,0,0-21.72,0A1.5,1.5,0,0,0,2.62,12h0a1.53,1.53,0,0,0,1.49-1.3A8,8,0,0,1,12,4Z'%3E%3CanimateTransform attributeName='transform' dur='0.75s' repeatCount='indefinite' type='rotate' values='0 12 12;360 12 12'/%3E%3C/path%3E%3C/svg%3E");
 }
 
 .is-valid {
@@ -310,6 +495,10 @@ body {
     margin-top: 0.25rem;
 }
 
+[data-theme="dark"] .invalid-feedback {
+    color: #ff6b6b;
+}
+
 .form-control.is-invalid {
     border-color: var(--color-danger);
     padding-right: calc(1.5em + 0.75rem);
@@ -321,6 +510,19 @@ body {
 
 .form-control.is-invalid + .invalid-feedback {
     display: block;
+}
+
+/* Transição para todos os elementos */
+body, 
+.card, 
+.card-header, 
+.card-body, 
+.form-control, 
+.form-select, 
+.form-label, 
+.btn-listagem, 
+.titulo-pagina {
+    transition: all 0.3s ease;
 }
 
 /* Responsividade */

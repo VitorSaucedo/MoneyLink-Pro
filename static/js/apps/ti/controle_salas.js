@@ -41,6 +41,312 @@ $(document).ready(function() {
     });
   }
   
+  // ===== Início do carregamento otimizado =====
+  // Variáveis globais para controle de dados
+  let dadosCarregados = {}; // Armazena dados já carregados por sala/ilha
+  let carregamentosEmCurso = {}; // Evita carregamentos duplicados
+  let modoCarregamento = document.getElementById('modo-carregamento')?.value || 'tradicional';
+  
+  // Inicializar com a sala ativa se estivermos no modo otimizado
+  if (modoCarregamento === 'otimizado' && currentSalaId) {
+    // Mostrar loader enquanto carregamos os dados iniciais
+    mostrarLoadingNaSala(currentSalaId);
+    // Iniciar carregamento da primeira sala
+    carregarDadosSala(currentSalaId, currentIlhaIds[currentSalaId]);
+  }
+  
+  // Função para mostrar o indicador de carregamento em uma sala específica
+  function mostrarLoadingNaSala(salaId, ilhaId = null) {
+    const containerSeletor = ilhaId 
+      ? `#ilha-${ilhaId}`
+      : `#sala-${salaId}`;
+    
+    const container = document.querySelector(containerSeletor);
+    if (container) {
+      // Adicionar overlay de carregamento se não existir
+      if (!container.querySelector('.loading-overlay')) {
+        const loadingHtml = `
+          <div class="loading-overlay" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; 
+                                        background-color: rgba(255,255,255,0.7); z-index: 1000; display: flex; 
+                                        justify-content: center; align-items: center;">
+            <div class="spinner-border text-primary" role="status">
+              <span class="visually-hidden">Carregando...</span>
+            </div>
+          </div>
+        `;
+        container.style.position = 'relative'; // Assegurar posicionamento relativo
+        container.insertAdjacentHTML('beforeend', loadingHtml);
+      }
+    }
+  }
+  
+  // Função para remover o indicador de carregamento
+  function esconderLoadingNaSala(salaId, ilhaId = null) {
+    const containerSeletor = ilhaId 
+      ? `#ilha-${ilhaId}`
+      : `#sala-${salaId}`;
+    
+    const container = document.querySelector(containerSeletor);
+    if (container) {
+      const overlay = container.querySelector('.loading-overlay');
+      if (overlay) {
+        overlay.remove();
+      }
+    }
+  }
+  
+  // Função para carregar dados de uma sala específica
+  async function carregarDadosSala(salaId, ilhaId = null, forcarRecarga = false) {
+    // Chave única para esta combinação de sala/ilha
+    const cacheKey = `sala_${salaId}_ilha_${ilhaId || 'todas'}`;
+    
+    // Evitar múltiplas requisições simultâneas para a mesma sala/ilha
+    if (carregamentosEmCurso[cacheKey]) {
+      return;
+    }
+    
+    // Verificar se já temos os dados em cache, exceto se forçar recarga
+    if (!forcarRecarga && dadosCarregados[cacheKey]) {
+      renderizarDadosSala(dadosCarregados[cacheKey], salaId, ilhaId);
+      return;
+    }
+    
+    // Marcar que estamos carregando esta sala/ilha
+    carregamentosEmCurso[cacheKey] = true;
+    
+    try {
+      // Construir URL com parâmetros de filtro
+      let url = '/ti/api/controle-salas-dados/?sala_id=' + salaId;
+      if (ilhaId) {
+        url += '&ilha_id=' + ilhaId;
+      }
+      
+      // Fazer a requisição
+      const response = await fetch(url, {
+        method: 'GET',
+        headers: {
+          'X-Requested-With': 'XMLHttpRequest'
+        }
+      });
+      
+      if (!response.ok) {
+        throw new Error(`Erro na requisição: ${response.status}`);
+      }
+      
+      const data = await response.json();
+      
+      if (data.success) {
+        // Armazenar dados em cache
+        dadosCarregados[cacheKey] = data;
+        
+        // Renderizar os dados na interface
+        renderizarDadosSala(data, salaId, ilhaId);
+      } else {
+        throw new Error(data.error || 'Erro ao carregar dados da sala');
+      }
+    } catch (error) {
+      console.error('Erro ao carregar dados:', error);
+      mostrarMensagem(`Erro ao carregar dados: ${error.message}`, 'error');
+    } finally {
+      // Finalizar indicadores de carregamento
+      esconderLoadingNaSala(salaId, ilhaId);
+      delete carregamentosEmCurso[cacheKey];
+    }
+  }
+  
+  // Função para renderizar os dados recebidos da API na interface
+  function renderizarDadosSala(data, salaId, ilhaId = null) {
+    // Obtemos as posições da resposta 
+    const posicoes = data.posicoes || [];
+    
+    // Para cada posição, encontramos o elemento correspondente e atualizamos
+    posicoes.forEach(pa => {
+      const paCardElement = document.querySelector(`.pa-card[data-pa-id="${pa.id}"]`);
+      if (!paCardElement) return; // Pular se o elemento não for encontrado
+      
+      // Atualizar status da PA
+      atualizarVisualizacaoStatusPA(paCardElement, pa.status);
+      
+      // Atualizar funcionário
+      if (pa.funcionario) {
+        atualizarVisualizacaoFuncionarioPA(paCardElement, pa.funcionario, pa.status);
+      } else {
+        // Limpar dados de funcionário
+        const funcionarioInfoElem = paCardElement.querySelector('.funcionario-info');
+        if (funcionarioInfoElem) {
+          funcionarioInfoElem.innerHTML = '<span class="text-muted">Sem funcionário atribuído</span>';
+        }
+      }
+      
+      // Atualizar periféricos
+      atualizarPerifericosNaPA(paCardElement, pa.perifericos, pa.faltando);
+      
+      // Atualizar computadores
+      atualizarVisualizacaoComputadoresPA(paCardElement, pa.computadores);
+    });
+    
+    // Se temos mais dados para carregar (paginação)
+    if (data.meta && data.meta.mais_resultados) {
+      // Implementar lógica para "carregar mais" se necessário
+      console.log('Há mais resultados disponíveis');
+    }
+  }
+  
+  // Função para adicionar botão de recarga na aba ativa
+  function adicionarBotaoRecarga() {
+    // Remover botões existentes primeiro para evitar duplicação
+    document.querySelectorAll('.btn-reload-sala').forEach(btn => btn.remove());
+    
+    // Adicionar botão na sala ativa
+    if (currentSalaId) {
+      const salaPane = document.querySelector(`#sala-${currentSalaId}`);
+      if (salaPane && !salaPane.querySelector('.btn-reload-sala')) {
+        const headerSection = salaPane.querySelector('.sala-header') || salaPane.querySelector('.container-fluid');
+        
+        if (headerSection) {
+          const btnHtml = `
+            <button class="btn btn-sm btn-outline-secondary btn-reload-sala" 
+                    style="position: absolute; right: 15px; top: 15px;"
+                    title="Recarregar dados desta sala">
+              <i class="fas fa-sync-alt"></i> Atualizar
+            </button>
+          `;
+          headerSection.style.position = 'relative';
+          headerSection.insertAdjacentHTML('beforeend', btnHtml);
+          
+          // Adicionar evento de click
+          const btnReload = headerSection.querySelector('.btn-reload-sala');
+          btnReload.addEventListener('click', function() {
+            // Rotação do ícone para indicar carregamento
+            const icon = this.querySelector('i');
+            icon.classList.add('fa-spin');
+            this.disabled = true;
+            
+            // Forçar recarga dos dados (ignorando cache)
+            const ilhaAtiva = currentIlhaIds[currentSalaId];
+            mostrarLoadingNaSala(currentSalaId, ilhaAtiva);
+            carregarDadosSala(currentSalaId, ilhaAtiva, true).finally(() => {
+              // Parar rotação quando carregamento terminar
+              icon.classList.remove('fa-spin');
+              this.disabled = false;
+            });
+          });
+        }
+      }
+    }
+  }
+  
+  // Adicionar o botão quando o DOM estiver pronto
+  adicionarBotaoRecarga();
+  
+  // Adicionar o botão também quando trocar de sala
+  document.querySelectorAll('#salas-tab .nav-link').forEach(tab => {
+    const originalClickHandler = tab.onclick;
+    tab.onclick = function(e) {
+      // Chamar handler original se existir
+      if (originalClickHandler) {
+        originalClickHandler.call(this, e);
+      }
+      
+      // Adicionar botão com um pequeno delay para garantir que a sala esteja visível
+      setTimeout(adicionarBotaoRecarga, 300);
+    };
+  });
+  
+  // Função para atualizar periféricos em uma PA
+  function atualizarPerifericosNaPA(paCardElement, perifericos = [], tiposFaltantes = []) {
+    const perifericosContainer = paCardElement.querySelector('.perifericos-container');
+    if (!perifericosContainer) return;
+    
+    // Limpar container
+    perifericosContainer.innerHTML = '';
+    
+    // Adicionar cada periférico
+    perifericos.forEach(periferico => {
+      const perifericoHtml = `
+        <div class="periferico-tag" data-periferico-id="${periferico.id}" data-tipo="${periferico.tipo}">
+          <span class="periferico-tipo">${periferico.tipo}</span>: 
+          <span class="periferico-marca">${periferico.marca}</span>
+          ${periferico.modelo ? `<span class="periferico-modelo">${periferico.modelo}</span>` : ''}
+        </div>
+      `;
+      perifericosContainer.insertAdjacentHTML('beforeend', perifericoHtml);
+    });
+    
+    // Adicionar indicadores de periféricos faltantes
+    const faltantesContainer = paCardElement.querySelector('.perifericos-faltantes');
+    if (faltantesContainer) {
+      faltantesContainer.innerHTML = '';
+      
+      if (tiposFaltantes.length > 0) {
+        const faltantesHtml = tiposFaltantes.map(tipo => 
+          `<span class="badge rounded-pill bg-warning text-dark me-1">${tipo}</span>`
+        ).join('');
+        
+        faltantesContainer.innerHTML = `
+          <div class="mt-2">
+            <small class="text-muted">Faltando: </small>
+            ${faltantesHtml}
+          </div>
+        `;
+      }
+    }
+    
+    // Reativar os eventos nos novos elementos
+    paCardElement.querySelectorAll('.periferico-tag').forEach(tag => {
+      tag.addEventListener('click', function(e) {
+        e.stopPropagation();
+        abrirMenuAcoesPeriferico($(this));
+      });
+    });
+  }
+  
+  // Event listener para troca de abas de sala (modificado para carregamento otimizado)
+  document.querySelectorAll('#salas-tab .nav-link').forEach(tab => {
+    tab.addEventListener('click', function() {
+      const salaId = this.getAttribute('data-sala-id');
+      const targetPaneId = this.getAttribute('data-bs-target').replace('#', '');
+      
+      // Se estivermos no modo de carregamento otimizado
+      if (modoCarregamento === 'otimizado') {
+        // Mostrar loading na sala
+        mostrarLoadingNaSala(salaId);
+        // Carregar dados da sala selecionada
+        carregarDadosSala(salaId);
+      }
+      
+      // Armazenar sala anterior e atual
+      previousSalaId = currentSalaId;
+      currentSalaId = salaId;
+      
+      // Continuar com a lógica de animação existente...
+    });
+  });
+  
+  // Event listener para troca de abas de ilha (modificado para carregamento otimizado)
+  // REMOVER ESTE BLOCO INTEIRO:
+  // document.querySelectorAll('.ilhas-tabs .nav-link').forEach(tab => {
+  //   tab.addEventListener('click', function() {
+  //     const salaId = this.closest('.tab-pane').id.replace('sala-', '');
+  //     const ilhaId = this.getAttribute('data-ilha-id');
+      
+  //     // Se estivermos no modo de carregamento otimizado
+  //     if (modoCarregamento === 'otimizado') {
+  //       // Mostrar loading na ilha
+  //       mostrarLoadingNaSala(salaId, ilhaId);
+  //       // Carregar dados específicos da ilha
+  //       carregarDadosSala(salaId, ilhaId);
+  //     }
+      
+  //     // Armazenar ilha anterior e atual para esta sala
+  //     previousIlhaIds[salaId] = currentIlhaIds[salaId];
+  //     currentIlhaIds[salaId] = ilhaId;
+      
+  //     // Continuar com a lógica de animação existente...
+  //   });
+  // });
+  // ===== Fim do carregamento otimizado =====
+  
   // Adicionar evento de clique aos indicadores de status das PAs
   document.querySelectorAll('.pa-status-indicator').forEach(statusIndicator => {
     statusIndicator.addEventListener('click', function(e) {
@@ -286,12 +592,21 @@ $(document).ready(function() {
     button.addEventListener('click', function(e) {
       e.preventDefault(); // Prevenir comportamento padrão
       
-      const ilhaId = this.getAttribute('data-ilha-id');
+      const novoIlhaId = this.getAttribute('data-ilha-id');
       const salaId = this.closest('.tab-pane').id.replace('sala-', '');
-      
+      const ilhaAtivaAntesDoClique = currentIlhaIds[salaId]; // ID da ilha que estava ativa
+
       // Não fazer nada se clicar na mesma ilha
-      if (currentIlhaIds[salaId] === ilhaId) {
+      if (ilhaAtivaAntesDoClique === novoIlhaId) {
         return;
+      }
+
+      // Se estivermos no modo de carregamento otimizado
+      if (modoCarregamento === 'otimizado') {
+        // Mostrar loading na NOVA ilha
+        mostrarLoadingNaSala(salaId, novoIlhaId);
+        // Carregar dados da NOVA ilha
+        carregarDadosSala(salaId, novoIlhaId);
       }
       
       // Remover classes ativas apenas das abas desta sala
@@ -305,32 +620,70 @@ $(document).ready(function() {
       this.setAttribute('aria-selected', 'true');
       
       // Determinar a direção baseada na comparação dos IDs
-      const direction = parseInt(ilhaId) > parseInt(currentIlhaIds[salaId] || 0) ? 'right' : 'left';
+      // Usar ilhaAtivaAntesDoClique para determinar a direção correta
+      const direction = parseInt(novoIlhaId) > parseInt(ilhaAtivaAntesDoClique || 0) ? 'right' : 'left';
       
-      // Mostrar o alvo antes da animação para garantir que o conteúdo esteja visível
-      const currentIlhaPane = document.querySelector(`#ilha-${currentIlhaIds[salaId]}-sala-${salaId}`);
-      const targetIlhaPane = document.querySelector(`#ilha-${ilhaId}-sala-${salaId}`);
+      // Selecionar os painéis
+      const currentIlhaPaneSelector = `#ilha-${ilhaAtivaAntesDoClique}-sala-${salaId}`;
+      const targetIlhaPaneSelector = `#ilha-${novoIlhaId}-sala-${salaId}`;
+      
+      const currentIlhaPane = document.querySelector(currentIlhaPaneSelector);
+      const targetIlhaPane = document.querySelector(targetIlhaPaneSelector);
+      
+      // console.log(`[ILHAS] Tentando transição: DE ${currentIlhaPaneSelector} PARA ${targetIlhaPaneSelector}`);
+      // console.log('[ILHAS] currentIlhaPane:', currentIlhaPane);
+      // console.log('[ILHAS] targetIlhaPane:', targetIlhaPane);
+
+      if (!targetIlhaPane) {
+        // console.error(`[ILHAS] Painel alvo ${targetIlhaPaneSelector} não encontrado! Revertendo ativação da aba.`);
+        // Reverter a ativação da aba
+        this.classList.remove('active');
+        this.setAttribute('aria-selected', 'false');
+        // Reativar a aba anterior
+        const abaAnterior = document.querySelector(`#ilhas-sala-${salaId}-tab .nav-link[data-ilha-id="${ilhaAtivaAntesDoClique}"]`);
+        if (abaAnterior) {
+          abaAnterior.classList.add('active');
+          abaAnterior.setAttribute('aria-selected', 'true');
+        }
+        mostrarMensagem(`Erro: Conteúdo da ilha ${novoIlhaId} não encontrado.`, 'error');
+        return; // Interrompe a execução
+      }
       
       if (currentIlhaPane && targetIlhaPane) {
         // Importante: garantir que ambos estejam visíveis durante a transição
         targetIlhaPane.style.display = 'block';
         currentIlhaPane.style.display = 'block';
+      } else if (!currentIlhaPane && targetIlhaPane) {
+        // console.warn(`[ILHAS] Painel atual ${currentIlhaPaneSelector} não encontrado, mas o alvo ${targetIlhaPaneSelector} foi. Prosseguindo apenas com o alvo.`);
+        // Se o painel atual não existe (ex: primeiro carregamento ou estado inconsistente),
+        // apenas mostre o painel alvo sem animação de saída.
+        targetIlhaPane.style.display = 'block';
+        targetIlhaPane.classList.add('show', 'active');
+        
+        // Atualizar referências de ilhas APÓS determinar seletores
+        previousIlhaIds[salaId] = ilhaAtivaAntesDoClique;
+        currentIlhaIds[salaId] = novoIlhaId;
+        
+        setTimeout(organizarLayoutPAs, 100);
+        $(document).trigger('tabTransitionComplete', [targetIlhaPaneSelector]); // Disparar evento para outros scripts
+        return; // Pular animação se currentPane não existe
       }
       
       // Animar transição
       animateTabTransition(
         `#ilhas-sala-${salaId}-content`,
-        `#ilha-${currentIlhaIds[salaId]}-sala-${salaId}`,
-        `#ilha-${ilhaId}-sala-${salaId}`,
+        currentIlhaPaneSelector, // Usar o ID da ilha que ESTAVA ativa
+        targetIlhaPaneSelector,  // Usar o ID da NOVA ilha
         direction
       );
       
-      // Atualizar referências de ilhas
-      previousIlhaIds[salaId] = currentIlhaIds[salaId];
-      currentIlhaIds[salaId] = ilhaId;
+      // Atualizar referências de ilhas APÓS de obter os seletores corretos e iniciar a animação
+      previousIlhaIds[salaId] = ilhaAtivaAntesDoClique;
+      currentIlhaIds[salaId] = novoIlhaId;
       
       // Garantir que as PAs sejam organizadas corretamente após a mudança de ilha
-      setTimeout(organizarLayoutPAs, 100);
+      // O tempo aqui deve ser consistente com o tempo da animação em animateTabTransition
+      setTimeout(organizarLayoutPAs, 550); // Ajustado para após a animação de 500ms + pequeno buffer
     });
   });
   

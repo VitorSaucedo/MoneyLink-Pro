@@ -3,6 +3,16 @@
 
 {% block header_title %}
 Admin TI - Cadastros<span class="produto-text"></span>
+<!-- Seletor de tema (claro/escuro) -->
+<div class="theme-switch-wrapper ms-3 d-inline-block">
+  <label class="theme-switch" for="checkbox">
+    <input type="checkbox" id="checkbox" />
+    <div class="slider">
+      <i class="bx bx-sun fa-sun"></i>
+      <i class="bx bx-moon fa-moon"></i>
+    </div>
+  </label>
+</div>
 {% endblock %}
 
 {% block addcss_extra %}
@@ -10,6 +20,8 @@ Admin TI - Cadastros<span class="produto-text"></span>
   <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
   {# Adicionar estilos personalizados para a página #}
   <link rel="stylesheet" href="{% static 'css/apps/ti/admin.css' %}">
+  {# Adicionar CSS do modo escuro #}
+  <link rel="stylesheet" href="{% static 'css/darkmode.css' %}">
 {% endblock %}
 
 {% block pre_content %}
@@ -18,7 +30,9 @@ Admin TI - Cadastros<span class="produto-text"></span>
 
 {% block content %}
 <div class="container my-4">
-  <h1 class="titulo-pagina mb-4"><i class='bx bxs-cog me-2'></i>Cadastros de TI</h1>
+  <div class="d-flex justify-content-between align-items-center mb-4 header-container">
+    <h1 class="titulo-pagina"><i class='bx bxs-cog me-2'></i>Cadastros de TI</h1>
+  </div>
 
   <div class="row">
     <!-- Coluna 1 -->
@@ -266,4 +280,5 @@ Admin TI - Cadastros<span class="produto-text"></span>
 
 {% block addjs_extra %}
 <script src="{% static 'js/apps/ti/admin.js' %}"></script>
+<script src="{% static 'js/darkmode.js' %}"></script>
 {% endblock %} 
