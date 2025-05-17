@@ -86,7 +86,7 @@ Controle de Estoque - TI
                 {% endfor %}
                 
                 <!-- Linha para computadores -->
-                <tr class="table-info">
+                <tr>
                   <td><i class='bx bx-laptop'></i> Computadores (Em Uso)</td>
                   {% for sala_loop in salas %} {# Renomeado para evitar conflito com a var sala do loop externo #}
                     {% for ilha_loop in sala_loop.ilhas.all %} {# Renomeado para evitar conflito #}
@@ -162,7 +162,7 @@ Controle de Estoque - TI
     <div class="col-12">
       <div class="card" id="card-historico-movimentacoes">
         <div class="card-header">
-          <i class='bx bx-history'></i> Histórico de Movimentações
+          <i class='bx bx-history'></i> Histórico de movimentações de periféricos
         </div>
         <div class="card-body">
           {% if historico_page_obj.object_list %}

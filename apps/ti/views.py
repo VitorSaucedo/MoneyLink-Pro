@@ -31,6 +31,7 @@ from django.utils import timezone
 from django.views.decorators.http import require_POST
 from django.views.decorators.http import require_GET
 from django.core.paginator import Paginator
+from django.http import HttpResponseBadRequest
 
 # Create your views here.
 
@@ -1800,3 +1801,201 @@ def api_listar_perifericos_disponiveis_por_tipo(request, tipo_id):
         return JsonResponse({'success': False, 'error': str(e)}, status=500)
 
 
+# Função para Auto Atribuição de PA pelo próprio funcionário
+@login_required
+def auto_atribuicao_pa(request):
+    """
+    View para permitir que o funcionário selecione a própria PA.
+    Detecta o usuário logado e atribui a PA a ele automaticamente.
+    """
+    # Verificar se o usuário está associado a um funcionário
+    try:
+        funcionario = Funcionario.objects.get(usuario=request.user)
+    except Funcionario.DoesNotExist:
+        funcionario = None
+        messages.error(request, 'Seu usuário não está vinculado a nenhum funcionário no sistema.')
+    
+    context = {
+        'funcionario': funcionario
+    }
+    
+    # Se o funcionário existe, buscar a PA atual e PAs disponíveis
+    if funcionario:
+        # Verificar se o funcionário está atribuído a uma PA ativa através da tabela de atribuições
+        atribuicao_atual = AtribuicaoFuncionarioPA.objects.filter(
+            funcionario=funcionario,
+            ativo=True
+        ).select_related('posicao_atendimento', 'posicao_atendimento__sala', 'posicao_atendimento__ilha').first()
+        
+        pa_atual = None
+        if atribuicao_atual:
+            pa_atual = atribuicao_atual.posicao_atendimento
+        else:
+            # Verificar também diretamente na tabela de PAs como fallback
+            pa_atual = PosicaoAtendimento.objects.filter(funcionario=funcionario).first()
+            
+        context['pa_atual'] = pa_atual
+        
+        # Buscar PAs livres ou ocupadas (para permitir troca)
+        pas_disponiveis = PosicaoAtendimento.objects.filter(
+            Q(status='livre') | Q(status='ocupada')
+        ).select_related('sala', 'ilha', 'funcionario')
+        
+        # Se o funcionário já tem uma PA, exclua ela da lista
+        if pa_atual:
+            pas_disponiveis = pas_disponiveis.exclude(id=pa_atual.id)
+        
+        context['pas_disponiveis'] = pas_disponiveis
+    
+    # Processo de atribuição (via POST)
+    if request.method == 'POST' and funcionario:
+        pa_id = request.POST.get('posicao_atendimento')
+        
+        if not pa_id:
+            if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                return JsonResponse({
+                    'success': False,
+                    'message': 'Selecione uma PA válida.'
+                })
+            messages.error(request, 'Selecione uma PA válida.')
+            return redirect('ti:auto_atribuicao_pa')
+        
+        try:
+            pa = PosicaoAtendimento.objects.get(id=pa_id)
+            
+            # Verificar se a PA está em estado válido para atribuição (livre, ocupada ou manutenção)
+            if pa.status not in ['livre', 'ocupada', 'manutencao']:
+                if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                    return JsonResponse({
+                        'success': False,
+                        'message': f'PA {pa.numero} não está disponível. Status atual: {pa.get_status_display()}.'
+                    })
+                messages.error(request, f'PA {pa.numero} não está disponível. Status atual: {pa.get_status_display()}.')
+                return redirect('ti:auto_atribuicao_pa')
+            
+            # Se o funcionário já tem uma PA, desatribuir
+            if pa_atual:
+                pa_atual.funcionario = None
+                pa_atual.status = 'livre'
+                pa_atual.save()
+                
+                # Finalizar a atribuição anterior no histórico
+                atribuicoes_antigas = AtribuicaoFuncionarioPA.objects.filter(
+                    funcionario=funcionario,
+                    posicao_atendimento=pa_atual,
+                    ativo=True
+                )
+                for atribuicao in atribuicoes_antigas:
+                    atribuicao.ativo = False
+                    atribuicao.data_fim = timezone.now().date()
+                    atribuicao.save()
+                    
+            # Se a PA selecionada já está ocupada por outro funcionário, desatribuir
+            if pa.status == 'ocupada' and pa.funcionario and pa.funcionario != funcionario:
+                funcionario_anterior = pa.funcionario
+                
+                # Finalizar a atribuição do funcionário anterior no histórico
+                atribuicoes_antigas = AtribuicaoFuncionarioPA.objects.filter(
+                    funcionario=funcionario_anterior,
+                    posicao_atendimento=pa,
+                    ativo=True
+                )
+                for atribuicao in atribuicoes_antigas:
+                    atribuicao.ativo = False
+                    atribuicao.data_fim = timezone.now().date()
+                    atribuicao.save()
+                    
+                # Registrar esta troca para fins de auditoria
+                from django.contrib.admin.models import LogEntry, CHANGE
+                from django.contrib.contenttypes.models import ContentType
+                
+                try:
+                    # Tentando criar um log de auditoria
+                    LogEntry.objects.create(
+                        user_id=request.user.id,
+                        content_type_id=ContentType.objects.get_for_model(PosicaoAtendimento).id,
+                        object_id=pa.id,
+                        object_repr=str(pa),
+                        action_flag=CHANGE,
+                        change_message=f'PA ocupada por {funcionario_anterior} foi transferida para {funcionario}'
+                    )
+                except Exception:
+                    # Silenciosamente ignorar erros no log (não é crítico)
+                    pass
+            
+            # Atribuir funcionário à nova PA
+            pa.funcionario = funcionario
+            pa.status = 'ocupada'
+            pa.save()
+            
+            # Registrar no histórico
+            AtribuicaoFuncionarioPA.objects.create(
+                funcionario=funcionario,
+                posicao_atendimento=pa,
+                data_inicio=timezone.now().date(),
+                ativo=True
+            )
+            
+            if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                return JsonResponse({
+                    'success': True,
+                    'message': f'Você foi atribuído com sucesso à PA {pa.numero} - {pa.ilha.nome} ({pa.sala.nome})'
+                })
+            
+            messages.success(request, f'Você foi atribuído com sucesso à PA {pa.numero} - {pa.ilha.nome} ({pa.sala.nome})')
+            return redirect('ti:auto_atribuicao_pa')
+            
+        except PosicaoAtendimento.DoesNotExist:
+            if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                return JsonResponse({
+                    'success': False,
+                    'message': 'PA não encontrada.'
+                })
+            messages.error(request, 'PA não encontrada.')
+            return redirect('ti:auto_atribuicao_pa')
+    
+    return render(request, 'apps/ti/auto_atribuicao_pa.html', context)
+
+# Função para API - Periféricos disponíveis por tipo
+@login_required
+@require_GET
+def api_listar_perifericos_disponiveis_por_tipo(request, tipo_id):
+    """
+    Retorna uma lista de periféricos disponíveis de um determinado tipo.
+    """
+    # Validar o tipo de periférico
+    try:
+        tipo = TipoPeriferico.objects.get(pk=tipo_id)
+    except TipoPeriferico.DoesNotExist:
+        return JsonResponse({
+            'success': False,
+            'message': f'Tipo de periférico com ID {tipo_id} não encontrado.',
+            'perifericos': []
+        })
+    
+    # Obter periféricos disponíveis deste tipo
+    perifericos_disponiveis = Periferico.objects.filter(
+        tipo=tipo,
+        status='disponivel'
+    ).values('id', 'marca', 'modelo', 'numero_serie')
+    
+    # Verificar periféricos em uso
+    perifericos_em_uso_ids = AtribuicaoPerifericoPA.objects.filter(
+        ativo=True,
+        periferico__tipo=tipo
+    ).values_list('periferico_id', flat=True)
+    
+    # Excluir periféricos em uso
+    perifericos_disponiveis = perifericos_disponiveis.exclude(id__in=perifericos_em_uso_ids)
+    
+    # Formatar a saída
+    perifericos_list = list(perifericos_disponiveis)
+    for periferico in perifericos_list:
+        # Adicionar informações adicionais se necessário
+        periferico['descricao'] = f"{periferico['marca']} {periferico['modelo']} - SN: {periferico['numero_serie'] if periferico['numero_serie'] else 'N/A'}"
+    
+    return JsonResponse({
+        'success': True,
+        'message': f'Encontrados {len(perifericos_list)} periféricos do tipo {tipo.nome}.',
+        'perifericos': perifericos_list
+    })

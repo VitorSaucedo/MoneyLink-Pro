@@ -30,8 +30,8 @@
 
 /* Dark Mode - Variáveis para o tema escuro */
 [data-theme="dark"] {
-    --color-primary-dark: #213a77; /* Azul escuro mais claro */
-    --color-secondary: #8659d4; /* Roxo - substituindo o verde */
+    --color-primary-dark: #1e1e2f; /* Fundo principal muito escuro (quase preto azulado) */
+    --color-secondary: #6e42c1; /* Roxo para elementos secundários */
     --color-tertiary: #29e3ff; /* Ciano mais brilhante */
     --color-white: #1a1625; /* Fundo escuro */
     --color-gray: #3d3450; /* Cinza escuro */
@@ -39,9 +39,9 @@
     --color-text-dark: #ffffff; /* Texto branco */
     --color-text-light: #b8b5c0; /* Texto cinza claro */
     
-    --box-shadow-light: 0 2px 6px rgba(0,0,0,0.15);
-    --box-shadow-medium: 0 4px 12px rgba(0,0,0,0.25);
-    --box-shadow-card-hover: 0 6px 18px rgba(110, 66, 193, 0.25); /* Sombra roxa no hover para o tema escuro */
+    --box-shadow-light: none;
+    --box-shadow-medium: none;
+    --box-shadow-card-hover: none;
     
     /* Gradientes escuros */
     --gradient-primary-green: linear-gradient(135deg, #8659d4 0%, #213a77 100%);
@@ -103,27 +103,48 @@ body {
 }
 
 [data-theme="dark"] body {
-    background-color: var(--color-white);
+    background-color: #1a1625; /* Cor de fundo muito escura */
 }
 
 .container {
     align-items: center;
     display: flex;
     flex-direction: column;
-    gap: 30px;
     max-width: 1200px !important;
     margin: 0 auto;
+    border: none !important;
+    box-shadow: none !important;
+    outline: none !important;
+}
+
+/* Estilo do corpo do card */
+.card .card-body {
+    padding: 1.25rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    background-color: var(--color-white);
+    transition: background-color 0.3s ease;
+    border-bottom: none !important;
+    box-shadow: none !important;
+}
+
+[data-theme="dark"] .card .card-body {
+    background-color: #1e1e2f;
+    color: var(--color-text-dark);
+    border: none;
 }
 
 /* Título da página com correção de background para o modo escuro */
 .titulo-pagina {
     color: var(--color-primary-dark);
     font-weight: 600;
-    border-bottom: 3px solid var(--color-secondary);
+    border: none;
     padding-bottom: 0.5rem;
     display: inline-block;
-    transition: color 0.3s ease, border-color 0.3s ease, background-color 0.3s ease;
+    transition: color 0.3s ease, background-color 0.3s ease;
     background-color: transparent; /* Garantindo que seja transparente */
+    box-shadow: none;
 }
 
 .titulo-pagina i {
@@ -133,8 +154,9 @@ body {
 
 [data-theme="dark"] .titulo-pagina {
     color: var(--color-text-dark);
-    border-bottom-color: #6e42c1; /* Roxo para a linha abaixo do texto */
-    background-color: var(--color-white); /* Mesma cor do fundo da página no tema escuro */
+    border: none;
+    background-color: transparent; 
+    box-shadow: none;
 }
 
 /* Container do título */
@@ -146,10 +168,15 @@ body {
     transition: background-color 0.3s ease;
     width: 100%;
     padding: 0.5rem 0;
+    border: none !important;
+    box-shadow: none !important;
+    outline: none !important;
 }
 
 [data-theme="dark"] .header-container {
-    background-color: var(--color-white); /* Mesma cor do fundo da página no tema escuro */
+    background-color: #1a1625;
+    border: none;
+    box-shadow: none;
 }
 
 [data-theme="dark"] .titulo-pagina i {
@@ -159,33 +186,35 @@ body {
 /* Estilos dos Cards */
 .card {
     background-color: var(--color-white);
-    border: 1px solid var(--color-gray);
+    border: none !important;
     border-radius: 10px;
-    box-shadow: var(--box-shadow-light);
+    box-shadow: none !important;
+    outline: none !important;
+    border-bottom: none !important;
     overflow: hidden;
     display: flex;
     flex-direction: column;
     width: 100%;
     margin-bottom: 1.5rem;
-    transition: transform 0.3s ease, box-shadow 0.3s ease, background-color 0.3s ease, border-color 0.3s ease;
+    transition: transform 0.3s ease, background-color 0.3s ease;
     position: relative;
 }
 
 [data-theme="dark"] .card {
-    background-color: var(--color-light-gray);
-    border-color: var(--color-gray);
-    box-shadow: var(--box-shadow-light);
+    background-color: #1e1e2f;
+    border: none;
+    box-shadow: none;
 }
 
 .card:hover {
-    transform: translateY(-4px);
-    box-shadow: var(--box-shadow-card-hover);
+    transform: none;
+    box-shadow: none;
 }
 
-/* Sombra personalizada para o hover no tema escuro */
+/* Removida sombra para o hover no tema escuro */
 [data-theme="dark"] .card:hover {
-    box-shadow: 0 6px 18px rgba(110, 66, 193, 0.25); /* Sombra roxa compatível com o header */
-    border-color: rgba(110, 66, 193, 0.4); /* Borda sutil para destacar */
+    box-shadow: none;
+    border-color: transparent;
 }
 
 .card .card-header {
@@ -199,6 +228,7 @@ body {
     letter-spacing: 0.5px;
     text-shadow: 0 1px 2px rgba(0,0,0,0.1);
     display: flex;
+    border: none !important;
     align-items: center;
     position: relative;
     z-index: 1;
@@ -241,6 +271,14 @@ body {
 .card:hover .card-header::before {
     top: 150%;
     left: 150%;
+}
+
+[data-theme="dark"] .col-md-6 {
+    background-color: #1a1625;
+}
+
+[data-theme="dark"] .row {
+    background-color: #1a1625;
 }
 
 .card .card-body {

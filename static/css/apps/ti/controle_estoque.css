@@ -34,8 +34,8 @@
 
 /* Dark Mode - Variáveis para o tema escuro */
 [data-theme="dark"] {
-    --color-primary-dark: #213a77; /* Azul escuro mais claro */
-    --color-secondary: #8659d4; /* Roxo - substituindo o verde */
+    --color-primary-dark: #1e1e2f; /* Fundo principal muito escuro (quase preto azulado) */
+    --color-secondary: #6e42c1; /* Roxo para elementos secundários */
     --color-tertiary: #29e3ff; /* Ciano mais brilhante */
     --color-accent: #c79a5e; /* Tom terroso mais claro */
     --color-white: #1a1625; /* Fundo escuro */
@@ -44,9 +44,9 @@
     --color-text-dark: #ffffff; /* Texto branco */
     --color-text-light: #b8b5c0; /* Texto cinza claro */
     
-    --box-shadow-light: 0 2px 6px rgba(0,0,0,0.15);
-    --box-shadow-medium: 0 4px 12px rgba(0,0,0,0.25);
-    --box-shadow-card-hover: 0 6px 18px rgba(110, 66, 193, 0.25); /* Sombra roxa no hover para o tema escuro */
+    --box-shadow-light: none;
+    --box-shadow-medium: none;
+    --box-shadow-card-hover: none;
     
     /* Gradientes escuros */
     --gradient-primary-green: linear-gradient(135deg, #8659d4 0%, #213a77 100%);
@@ -64,7 +64,7 @@ body {
 }
 
 [data-theme="dark"] body {
-    background-color: var(--color-white);
+    background-color: #1a1625; /* Cor de fundo muito escura */
 }
 
 .container {
@@ -74,6 +74,23 @@ body {
     gap: 30px;
     justify-content: center;
     max-width: 1200px;
+    border: none;
+    box-shadow: none;
+}
+
+[data-theme="dark"] .container.mt-4 {
+    background-color: transparent;
+    border: none !important;
+    box-shadow: none !important;
+    border-radius: 0;
+    padding: 15px;
+}
+
+/* Override para o container de histórico permitir layout de linha */
+.historico-container {
+    display: block !important;
+    flex-direction: unset !important;
+    align-items: unset !important;
 }
 
 .titulo-pagina {
@@ -104,33 +121,35 @@ body {
    ========================================== */
 .card {
     background-color: var(--color-white);
-    border: 1px solid var(--color-gray);
+    border: none;
     border-radius: 10px;
-    box-shadow: var(--box-shadow-light);
+    box-shadow: none !important;
+    outline: none !important;
+    border-bottom: none !important;
     overflow: hidden;
     display: flex;
     flex-direction: column;
     width: 100%;
     margin-bottom: 1.5rem;
-    transition: transform 0.3s ease, box-shadow 0.3s ease, background-color 0.3s ease, border-color 0.3s ease;
+    transition: transform 0.3s ease, background-color 0.3s ease;
     position: relative;
 }
 
 [data-theme="dark"] .card {
-    background-color: var(--color-light-gray);
-    border-color: var(--color-gray);
-    box-shadow: var(--box-shadow-light);
+    background-color: #1e1e2f;
+    border: none;
+    box-shadow: none;
 }
 
 .card:hover {
-    transform: translateY(-4px);
-    box-shadow: var(--box-shadow-card-hover);
+    transform: none;
+    box-shadow: none;
 }
 
-/* Sombra personalizada para o hover no tema escuro */
+/* Removida sombra para o hover no tema escuro */
 [data-theme="dark"] .card:hover {
-    box-shadow: 0 6px 18px rgba(110, 66, 193, 0.25); /* Sombra roxa compatível com o header */
-    border-color: rgba(110, 66, 193, 0.4); /* Borda sutil para destacar */
+    box-shadow: none;
+    border-color: transparent;
 }
 
 .card .card-header {
@@ -194,13 +213,16 @@ body {
     display: flex;
     flex-direction: column; /* Mantém os forms em coluna por padrão */
     gap: 1rem;
-    background: linear-gradient(135deg, rgba(255, 255, 255, 1) 0%, rgba(245, 255, 245, 0.8) 100%);
-    transition: background 0.3s ease;
+    background-color: var(--color-white);
+    transition: background-color 0.3s ease;
+    border-bottom: none !important;
+    box-shadow: none !important;
 }
 
 [data-theme="dark"] .card .card-body {
-    background: linear-gradient(135deg, rgba(45, 36, 56, 1) 0%, rgba(26, 22, 37, 0.8) 100%);
+    background-color: #1e1e2f;
     color: var(--color-text-dark);
+    border: none;
 }
 
 /* ==========================================

@@ -9,6 +9,9 @@ urlpatterns = [
     path('controle-salas/', views.controle_salas, name='controle_salas'),
     path('all_forms/', views.controle_estoque, name='all_forms'),
     
+    # URLs para Auto Atribuição de PA
+    path('auto-atribuicao-pa/', views.auto_atribuicao_pa, name='auto_atribuicao_pa'),
+    
     # URLs para Controle de Manutenção
     path('controle-manutencao/', views.controle_manutencao, name='controle_manutencao'),
     path('marcar-consertado/<int:item_id>/<slug:tipo_item_slug>/', views.marcar_consertado, name='marcar_consertado'),

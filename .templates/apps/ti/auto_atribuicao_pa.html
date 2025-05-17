@@ -1,0 +1,203 @@
+{% extends 'base-plus.html' %}
+{% load static %}
+
+{% block title %}TI - Auto Atribuição de PA{% endblock %}
+
+{% block header_title %}
+TI - Auto Atribuição de PA
+{% endblock %}
+
+{% block addcss_extra %}
+  {# Boxicons e CSS do app #}
+  <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+  <link rel="stylesheet" href="{% static 'css/mensagens.css' %}">
+  <link rel="stylesheet" href="{% static 'css/apps/ti/auto_atribuicao_pa.css' %}">
+{% endblock %}
+
+{% block pre_content %}
+  {% include 'partials/_messages.html' %}
+{% endblock %}
+
+{% block content %}
+<div class="container my-4">
+  <h1 class="titulo-pagina mb-4"><i class='bx bx-user-pin me-2'></i>Auto Atribuição de PA</h1>
+  
+  {# Container para mensagens de feedback #}
+  <div id="message-container"></div>
+
+  {# Token CSRF para requisições AJAX #}
+  {% csrf_token %}
+
+  <div class="row">
+    <div class="col-lg-8 mx-auto">
+      <div class="card">
+        <div class="card-header">
+          <i class='bx bx-desktop me-2'></i> Selecione sua PA
+        </div>
+        <div class="card-body">
+          {% if user.is_authenticated %}
+            {% if funcionario %}
+              <div class="funcionario-info mb-4">
+                <h5><i class='bx bx-user-circle me-2'></i>Dados do Usuário</h5>
+                <div class="info-container">
+                  <div class="info-item">
+                    <span class="info-label"><i class='bx bx-user me-1'></i> Nome:</span>
+                    <span class="info-value">{{ funcionario.nome_completo }}</span>
+                  </div>
+                  {% if funcionario.cargo %}
+                  <div class="info-item">
+                    <span class="info-label"><i class='bx bx-id-card me-1'></i> Cargo:</span>
+                    <span class="info-value">{{ funcionario.cargo.nome }}</span>
+                  </div>
+                  {% endif %}
+                  {% if funcionario.departamento %}
+                  <div class="info-item">
+                    <span class="info-label"><i class='bx bx-buildings me-1'></i> Departamento:</span>
+                    <span class="info-value">{{ funcionario.departamento.nome }}</span>
+                  </div>
+                  {% endif %}
+                  {% if funcionario.ramal %}
+                  <div class="info-item">
+                    <span class="info-label"><i class='bx bx-phone me-1'></i> Ramal:</span>
+                    <span class="info-value">{{ funcionario.ramal }}</span>
+                  </div>
+                  {% endif %}
+                </div>
+              </div>
+              
+              <div class="current-pa mb-4">
+                <h5><i class='bx bx-current-location me-2'></i>PA Atual</h5>
+                {% if pa_atual %}
+                  <div class="pa-atual-info">
+                    <div class="pa-atual-badge">
+                      <span class="pa-numero">PA {{ pa_atual.numero }}</span>
+                      <span class="pa-local">{{ pa_atual.ilha.nome }} - {{ pa_atual.sala.nome }}</span>
+                    </div>
+                  </div>
+                {% else %}
+                  <div class="empty-pa-message">
+                    <i class='bx bx-error-circle'></i>
+                    <span>Você não está atribuído a nenhuma PA</span>
+                  </div>
+                {% endif %}
+              </div>
+              
+              <form id="pa-form" method="post" class="pa-select-form">
+                {% csrf_token %}
+                <div class="mb-3">
+                  <label for="pa-select" class="form-label"><i class='bx bx-desktop me-1'></i> Selecione a nova PA:</label>
+                  <select id="pa-select" name="posicao_atendimento" class="form-select">
+                    <option value="">Selecione uma PA...</option>
+                    {% for pa in pas_disponiveis %}
+                      <option value="{{ pa.id }}" {% if pa.status == 'ocupada' %}class="pa-ocupada"{% endif %}>
+                        PA {{ pa.numero }} - {{ pa.ilha.nome }} ({{ pa.sala.nome }})
+                        {% if pa.status == 'livre' %}
+                          [Livre]
+                        {% elif pa.status == 'ocupada' and pa.funcionario %}
+                          [Ocupada por: {{ pa.funcionario.nome_completo }}]
+                        {% elif pa.status == 'ocupada' %}
+                          [Ocupada]
+                        {% endif %}
+                      </option>
+                    {% endfor %}
+                  </select>
+                  <div class="form-text">
+                    <i class='bx bx-info-circle'></i> Você pode escolher PAs livres ou trocar com outro funcionário.
+                  </div>
+                </div>
+                
+                <div class="form-actions">
+                  <button type="submit" class="btn btn-primary">
+                    <i class='bx bx-check-circle me-1'></i> Confirmar Atribuição
+                  </button>
+                </div>
+              </form>
+            {% else %}
+              <div class="alert alert-warning">
+                <i class='bx bx-error me-2'></i> Seu usuário não está vinculado a nenhum funcionário cadastrado no sistema.
+              </div>
+            {% endif %}
+          {% else %}
+            <div class="alert alert-warning">
+              <i class='bx bx-log-in me-2'></i> Você precisa estar logado para acessar essa funcionalidade.
+            </div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block addjs_extra %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  const form = document.getElementById('pa-form');
+  
+  if (form) {
+    form.addEventListener('submit', function(e) {
+      e.preventDefault();
+      
+      const paSelect = document.getElementById('pa-select');
+      if (!paSelect.value) {
+        // Criar alerta se nenhuma PA foi selecionada
+        const messageContainer = document.getElementById('message-container');
+        messageContainer.innerHTML = `
+          <div class="alert alert-warning alert-dismissible fade show" role="alert">
+            <i class='bx bx-error me-2'></i> Por favor, selecione uma PA.
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+          </div>
+        `;
+        return;
+      }
+      
+      // Enviar o formulário via AJAX
+      const formData = new FormData(form);
+      
+      fetch('{% url "ti:auto_atribuicao_pa" %}', {
+        method: 'POST',
+        body: formData,
+        headers: {
+          'X-Requested-With': 'XMLHttpRequest'
+        }
+      })
+      .then(response => response.json())
+      .then(data => {
+        const messageContainer = document.getElementById('message-container');
+        
+        if (data.success) {
+          messageContainer.innerHTML = `
+            <div class="alert alert-success alert-dismissible fade show" role="alert">
+              <i class='bx bx-check-circle me-2'></i> ${data.message}
+              <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+          `;
+          
+          // Atualizar a página após 2 segundos
+          setTimeout(() => {
+            window.location.reload();
+          }, 2000);
+        } else {
+          messageContainer.innerHTML = `
+            <div class="alert alert-danger alert-dismissible fade show" role="alert">
+              <i class='bx bx-error-circle me-2'></i> ${data.message}
+              <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+          `;
+        }
+      })
+      .catch(error => {
+        console.error('Erro:', error);
+        const messageContainer = document.getElementById('message-container');
+        messageContainer.innerHTML = `
+          <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            <i class='bx bx-error-circle me-2'></i> Ocorreu um erro ao processar sua solicitação.
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+          </div>
+        `;
+      });
+    });
+  }
+});
+</script>
+{% endblock %}
