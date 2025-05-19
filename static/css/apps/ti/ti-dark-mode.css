@@ -19,7 +19,7 @@
     
     /* Cores de texto */
     --ti-text-primary: #ffffff;      /* Texto principal */
-    --ti-text-secondary: #b8b5c0;    /* Texto secundário */
+    --ti-text-secondary: #091f77;    /* Texto secundário */
     --ti-text-muted: #9991a9;        /* Texto desativado/mudo */
     
     /* Cores de destaque */
@@ -61,7 +61,7 @@
 [data-theme="dark"] .container,
 [data-theme="dark"] .card,
 [data-theme="dark"] .panel {
-    background-color: var(--ti-bg-secondary);
+    background-color: var(--bg-primary);
     border: none !important;
     box-shadow: var(--ti-shadow-none) !important;
 }
@@ -70,8 +70,7 @@
 [data-theme="dark"] .card-header,
 [data-theme="dark"] .panel-heading,
 [data-theme="dark"] .card .card-header,
-[data-theme="dark"] .pa-header,
-[data-theme="dark"] .salas-tabs {
+[data-theme="dark"] .pa-header {
     background: var(--ti-gradient-header) !important;
     background-image: var(--ti-gradient-header) !important;
     background-size: 400% 400% !important;
@@ -88,7 +87,11 @@
 [data-theme="dark"] .panel-heading::before,
 [data-theme="dark"] .card .card-header::before,
 [data-theme="dark"] .pa-header::before,
-[data-theme="dark"] .salas-tabs::before {
+/* Remove this selector to fix the salas-tabs appearance */
+[data-theme="dark"] .card-header::before,
+[data-theme="dark"] .panel-heading::before,
+[data-theme="dark"] .card .card-header::before,
+[data-theme="dark"] .pa-header::before {
     content: '';
     position: absolute;
     top: -100%;
@@ -112,7 +115,9 @@
 [data-theme="dark"] .card:hover .card-header::before,
 [data-theme="dark"] .panel:hover .panel-heading::before,
 [data-theme="dark"] div:hover > .pa-header::before,
-[data-theme="dark"] .nav:hover > .salas-tabs::before {
+[data-theme="dark"] .card:hover .card-header::before,
+[data-theme="dark"] .panel:hover .panel-heading::before,
+[data-theme="dark"] div:hover > .pa-header::before {
     top: 100%;
     left: 100%;
 }
@@ -147,8 +152,16 @@
     background-color: rgba(110, 66, 193, 0.05);
 }
 
-[data-theme="dark"] tr:hover {
-    background-color: var(--ti-bg-hover);
+/* Regra forte para desabilitar qualquer efeito de hover no dark mode */
+[data-theme="dark"] tr:hover,
+[data-theme="dark"] tbody tr:hover,
+[data-theme="dark"] .table-manutencao tr:hover,
+[data-theme="dark"] .table-manutencao tbody tr:hover,
+[data-theme="dark"] table tr:hover,
+[data-theme="dark"] table tbody tr:hover,
+[data-theme="dark"] table.table-manutencao tr:hover {
+    background-color: inherit !important;
+    background: inherit !important;
 }
 
 /* Formulários */
@@ -190,6 +203,45 @@
 [data-theme="dark"] .app-ti textarea:focus {
     border-color: var(--ti-accent-tertiary);
     box-shadow: none;
+}
+
+/* Estilo personalizado para as abas de salas em dark mode */
+[data-theme="dark"] .salas-tabs {
+    background: var(--ti-gradient-header) !important;
+    background-image: var(--ti-gradient-header) !important;
+    background-size: 400% 400% !important;
+    animation: gradientBG 15s ease infinite !important;
+    border-bottom: none;
+    padding: 0.75rem 0.5rem 0 0.5rem;
+    border-radius: 6px 6px 0 0;
+}
+
+[data-theme="dark"] .salas-tabs .nav-link {
+    background: rgba(30, 30, 47, 0.7);
+    color: var(--ti-text-primary);
+    border: 1px solid rgba(110, 66, 193, 0.3);
+    border-bottom: none;
+    border-radius: 8px 8px 0 0;
+    margin-right: 4px;
+    transition: all 0.2s ease;
+    backdrop-filter: blur(3px);
+    -webkit-backdrop-filter: blur(3px);
+}
+
+[data-theme="dark"] .salas-tabs .nav-link.active {
+    background: rgba(110, 66, 193, 0.8);
+    color: white;
+    border-color: var(--ti-accent-tertiary);
+    box-shadow: 0 -2px 10px rgba(110, 66, 193, 0.4);
+    position: relative;
+    z-index: 1;
+}
+
+[data-theme="dark"] .salas-tabs .nav-link:hover:not(.active) {
+    background: rgba(51, 43, 74, 0.8);
+    color: var(--ti-text-primary);
+    border-color: rgba(110, 66, 193, 0.5);
+    box-shadow: 0 -2px 6px rgba(110, 66, 193, 0.2);
 }
 
 /* Botões */
@@ -249,18 +301,6 @@
 
 [data-theme="dark"] .badge.bg-success {
     background-color: var(--ti-status-success) !important;
-}
-
-[data-theme="dark"] .badge.bg-primary {
-    background-color: var(--ti-accent-tertiary) !important;
-}
-
-[data-theme="dark"] .badge.bg-warning {
-    background-color: var(--ti-status-warning) !important;
-}
-
-[data-theme="dark"] .badge.bg-danger {
-    background-color: var(--ti-status-danger) !important;
 }
 
 /* Título da página */
@@ -384,10 +424,6 @@
     background-color: var(--ti-status-success);
 }
 
-[data-theme="dark"] .pa-status-indicator.status-ocupada {
-    background-color: var(--ti-accent-tertiary);
-}
-
 [data-theme="dark"] .pa-status-indicator.status-manutencao {
     background-color: var(--ti-status-warning);
 }
@@ -414,7 +450,7 @@
 /* Periféricos */
 [data-theme="dark"] .pa-perifericos h6,
 [data-theme="dark"] .pa-computadores h6 {
-    color: var(--ti-text-primary);
+    color: var(--color-primary-dark);
 }
 
 [data-theme="dark"] .perifericos-list {
@@ -453,7 +489,7 @@
 
 [data-theme="dark"] .table-manutencao th {
     background-color: var(--ti-bg-card);
-    color: var(--ti-accent-tertiary);
+    color: #ffffffff;
     border: 1px solid var(--ti-border-light);
 }
 

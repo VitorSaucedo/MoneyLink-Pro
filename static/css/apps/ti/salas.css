@@ -83,7 +83,6 @@ body {
 .ilhas-container {
     background-color: #ffffff; /* Garante fundo branco */
     border: none; /* Remove todas as bordas */
-    border-bottom: 1px solid var(--color-gray); /* Mantém apenas borda inferior */
     border-radius: 0; /* Remove arredondamento */
     box-shadow: none; /* Remove sombra */
     overflow: hidden;
@@ -1194,10 +1193,10 @@ ul.nav-tabs li.nav-item {
     color: var(--color-primary-dark) !important;
     /* border-color: var(--color-success); */ /* Removido */
 }
-.modal-footer .btn-danger:hover {
+/*.modal-footer .btn-danger:hover {*/
     /* background-color: #157347; */ /* Usar transform/shadow */
     /* border-color: #146c43; */ /* Removido */
-}
+/*}*/
 
 /* Ajuste de Responsividade para Modal */
 @media (max-width: 576px) {
@@ -1579,4 +1578,8 @@ ul.nav-tabs li.nav-item {
     border-top: 1px solid #ddd;
     display: flex;
     justify-content: flex-end;
+}
+
+#salas-tab-content {
+  min-height: auto !important;
 }

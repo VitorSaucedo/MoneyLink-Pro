@@ -18,8 +18,14 @@
 .table-manutencao tr:nth-child(even) {
     background-color: #f9f9f9;
 }
-.table-manutencao tr:hover {
-    background-color: #f1f1f1;
+/* Regra forte para desabilitar qualquer efeito de hover */
+.table-manutencao tr:hover,
+.table-manutencao tbody tr:hover,
+.table-manutencao tr:hover td,
+table.table-manutencao tr:hover,
+table.table-manutencao tbody tr:hover {
+    background-color: inherit !important;
+    background: inherit !important;
 }
 .btn-consertado {
     background-color: var(--color-success);
