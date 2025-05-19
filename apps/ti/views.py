@@ -2,7 +2,10 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.http import JsonResponse
-from django.db.models import Count, Q, Prefetch
+from django.db.models import Count, Q, Prefetch, Subquery, OuterRef
+from .utils import (atribuir_item_pa, desatribuir_item_pa, verificar_disponibilidade_periferico, 
+                    verificar_disponibilidade_computador, gerar_resposta_api, listar_itens_atribuidos_pa)
+from .pagination_utils import paginate_queryset, get_pagination_data
 from .models import (
     TipoPeriferico, 
     Periferico, 
@@ -41,11 +44,13 @@ def controle_estoque(request):
     View para exibir o controle de estoque de periféricos por sala e ilha.
     Mostra uma tabela com a contagem de periféricos de cada tipo em cada sala/ilha.
     """
-    # Obter todas as salas
-    salas = Sala.objects.all().prefetch_related('ilhas')
+    # Obter todas as salas com ilhas pré-carregadas
+    salas = Sala.objects.all().prefetch_related(
+        Prefetch('ilhas', queryset=Ilha.objects.all().order_by('nome'))
+    )
     
     # Obter todos os tipos de periféricos
-    tipos_perifericos = TipoPeriferico.objects.all()
+    tipos_perifericos = TipoPeriferico.objects.all().order_by('nome')
     
     # Inicializar dicionário para contagem de periféricos por sala/ilha/tipo
     perifericos_por_sala_ilha = {}
@@ -63,50 +68,60 @@ def controle_estoque(request):
                 perifericos_por_sala_ilha[sala.id][ilha.id][tipo.id] = 0
             
             # Obter todas as PAs desta ilha
-            posicoes_atendimento_ilha = PosicaoAtendimento.objects.filter(ilha=ilha) # Renomeada para evitar conflito
+            posicoes_atendimento_ilha = PosicaoAtendimento.objects.filter(ilha=ilha)
             
-            # Para cada PA, contar os periféricos por tipo
-            for pa in posicoes_atendimento_ilha: # Uso da variável renomeada
-                # Obter os periféricos atribuídos a esta PA
-                atribuicoes_pa_ativa = AtribuicaoPerifericoPA.objects.filter( # Renomeada para evitar conflito
+            # Para cada PA, buscar e contar os periféricos atribuídos
+            for pa in posicoes_atendimento_ilha:
+                # Buscar atribuições ativas de periféricos para esta PA usando select_related
+                atribuicoes_ativas = AtribuicaoPerifericoPA.objects.filter(
                     posicao_atendimento=pa,
-                    data_remocao__isnull=True  # Somente atribuições ativas
+                    ativo=True
                 ).select_related('periferico__tipo')
                 
-                for atribuicao in atribuicoes_pa_ativa: # Uso da variável renomeada
+                # Contar periféricos por tipo
+                for atribuicao in atribuicoes_ativas:
                     tipo_id = atribuicao.periferico.tipo.id
                     if tipo_id in perifericos_por_sala_ilha[sala.id][ilha.id]:
                         perifericos_por_sala_ilha[sala.id][ilha.id][tipo_id] += 1
                         total_geral_perifericos += 1
-                    else:
-                        # Log ou tratamento para tipo_id não esperado, se necessário
-                        pass 
     
-    # Obter computadores cadastrados
-    computadores = Computador.objects.all()
-    computadores_cadastrados_total = computadores.count()
+    # Obter contagem de computadores cadastrados de forma otimizada
+    computadores_cadastrados_total = Computador.objects.count()
 
-    # Contagem de computadores em uso por sala/ilha
+    # Contagem de computadores em uso por sala/ilha - abordagem mais eficiente
     computadores_em_uso_por_sala_ilha = {}
     computadores_em_uso_total_geral = 0
+    
+    # Pré-calcular contagens de computadores por ilha usando agregação
+    contagens_computadores_por_ilha = (
+        AtribuicaoComputadorPA.objects
+        .filter(ativo=True)
+        .values('posicao_atendimento__ilha')
+        .annotate(count=Count('computador', distinct=True))
+    )
+    
+    # Criar dicionário de contagens para acesso rápido
+    contagens_dict = {item['posicao_atendimento__ilha']: item['count'] 
+                     for item in contagens_computadores_por_ilha if item['posicao_atendimento__ilha'] is not None}
+    
+    # Preencher o dicionário de contagens por sala/ilha
     for sala in salas:
         computadores_em_uso_por_sala_ilha[sala.id] = {}
         for ilha in sala.ilhas.all():
-            computadores_em_uso_por_sala_ilha[sala.id][ilha.id] = 0 # Inicializa a contagem para a ilha
-            pas_na_ilha = PosicaoAtendimento.objects.filter(ilha=ilha)
-            # Contar computadores ativos para PAs nesta ilha
-            # Supondo que cada atribuição ativa de AtribuicaoComputadorPA conta como 1 computador em uso.
-            # Se um computador puder ter quantidade > 1 e isso for relevante, a lógica precisará de ajuste.
-            contagem_ilha_atual = AtribuicaoComputadorPA.objects.filter(posicao_atendimento__in=pas_na_ilha, ativo=True).count()
+            # Obter a contagem do dicionário pré-calculado ou usar 0
+            contagem_ilha_atual = contagens_dict.get(ilha.id, 0)
             computadores_em_uso_por_sala_ilha[sala.id][ilha.id] = contagem_ilha_atual
             computadores_em_uso_total_geral += contagem_ilha_atual
 
-    # Calcular computadores disponíveis
-    ids_computadores_em_uso = AtribuicaoComputadorPA.objects.filter(ativo=True).values_list('computador_id', flat=True).distinct()
+    # Computadores em uso - Query mais eficiente
+    ids_computadores_em_uso = AtribuicaoComputadorPA.objects.filter(ativo=True)\
+        .values_list('computador_id', flat=True)\
+        .distinct()
     
-    # Computadores que estão efetivamente disponíveis (status 'disponivel' e não em uma atribuição ativa)
-    computadores_realmente_disponiveis_query = Computador.objects.filter(status='disponivel').exclude(id__in=ids_computadores_em_uso)
-    computadores_disponiveis_total = computadores_realmente_disponiveis_query.count()
+    # Computadores disponíveis - Query mais eficiente
+    computadores_disponiveis_total = Computador.objects.filter(status='disponivel')\
+        .exclude(id__in=Subquery(ids_computadores_em_uso))\
+        .count()
 
     # Calcular computadores disponíveis POR MARCA (incluindo marcas com 0 disponíveis)
     # ids_computadores_em_uso já foi definido acima
@@ -135,28 +150,41 @@ def controle_estoque(request):
             'quantidade_disponivel': disponiveis_dict.get(marca_nome, 0) # Usa 0 se a marca não estiver no dict de disponíveis
         })
 
-    # --- Início da Construção do Histórico de Movimentações --- 
+    # --- Construção do Histórico de Movimentações de forma otimizada --- 
+    
+    # Define a quantidade máxima de registros a serem retornados de cada tabela
+    limite_registros = 500  # Limite para melhorar a performance
+    itens_por_pagina = 20   # Aumentamos a quantidade para mostrar mais histórico por página
+    
+    # 1. Buscar histórico de movimentações de PERIFÉRICOS com limite para melhorar performance
+    perifericos_query = AtribuicaoPerifericoPA.objects\
+        .select_related('periferico', 'periferico__tipo', 'posicao_atendimento__ilha', 'posicao_atendimento__sala')\
+        .order_by('-data_atribuicao')[:limite_registros]
+    
     historico_movimentacoes = []
-
-    # 1. Buscar histórico de movimentações de PERIFÉRICOS
-    atribuicoes_perifericos_todas = AtribuicaoPerifericoPA.objects.select_related(
-        'periferico__tipo', 
-        'posicao_atendimento__ilha__sala'
-    ).order_by('-data_atribuicao')
-
-    for atribuicao in atribuicoes_perifericos_todas:
-        local = f"{atribuicao.posicao_atendimento.sala.nome if atribuicao.posicao_atendimento.sala else 'S/Sala'}, {atribuicao.posicao_atendimento.ilha.nome if atribuicao.posicao_atendimento.ilha else 'S/Ilha'} - PA {atribuicao.posicao_atendimento.numero}"
-        item_descricao = f"Periférico: {atribuicao.periferico.tipo.nome} {atribuicao.periferico.marca} {atribuicao.periferico.modelo or ''}"
+    
+    # Processar atribuições de periféricos
+    for atribuicao in perifericos_query:
+        pa = atribuicao.posicao_atendimento
+        periferico = atribuicao.periferico
         
+        # Construir local e descrição do item uma única vez por atribuição
+        sala_nome = pa.sala.nome if pa.sala else 'S/Sala'
+        ilha_nome = pa.ilha.nome if pa.ilha else 'S/Ilha'
+        local = f"{sala_nome}, {ilha_nome} - PA {pa.numero}"
+        item_descricao = f"Periférico: {periferico.tipo.nome} {periferico.marca} {periferico.modelo or ''}"
+        
+        # Evento de adição
         if atribuicao.data_atribuicao:
             historico_movimentacoes.append({
                 'data_evento': atribuicao.data_atribuicao,
                 'tipo_evento': 'Adicionado em',
                 'item_movimentado': item_descricao,
                 'local': local,
-                'tipo_item': 'periferico' # Identificador do tipo de item
+                'tipo_item': 'periferico'
             })
         
+        # Evento de remoção
         if atribuicao.data_remocao:
             historico_movimentacoes.append({
                 'data_evento': atribuicao.data_remocao,
@@ -166,25 +194,33 @@ def controle_estoque(request):
                 'tipo_item': 'periferico'
             })
 
-    # 2. Buscar histórico de movimentações de COMPUTADORES
-    atribuicoes_computadores_todas = AtribuicaoComputadorPA.objects.select_related(
-        'computador',
-        'posicao_atendimento__ilha__sala'
-    ).order_by('-data_atribuicao')
-
-    for atribuicao in atribuicoes_computadores_todas:
-        local = f"{atribuicao.posicao_atendimento.sala.nome if atribuicao.posicao_atendimento.sala else 'S/Sala'}, {atribuicao.posicao_atendimento.ilha.nome if atribuicao.posicao_atendimento.ilha else 'S/Ilha'} - PA {atribuicao.posicao_atendimento.numero}"
-        item_descricao = f"Computador: {atribuicao.computador.marca}"
-
-        if atribuicao.data_atribuicao: # data_atribuicao é auto_now_add, então sempre existirá na criação
+    # 2. Buscar histórico de movimentações de COMPUTADORES com limite para melhorar performance
+    computadores_query = AtribuicaoComputadorPA.objects\
+        .select_related('computador', 'posicao_atendimento__ilha', 'posicao_atendimento__sala')\
+        .order_by('-data_atribuicao')[:limite_registros]
+    
+    # Processar atribuições de computadores
+    for atribuicao in computadores_query:
+        pa = atribuicao.posicao_atendimento
+        computador = atribuicao.computador
+        
+        # Construir local e descrição do item uma única vez por atribuição
+        sala_nome = pa.sala.nome if pa.sala else 'S/Sala'
+        ilha_nome = pa.ilha.nome if pa.ilha else 'S/Ilha'
+        local = f"{sala_nome}, {ilha_nome} - PA {pa.numero}"
+        item_descricao = f"Computador: {computador.marca}"
+        
+        # Evento de adição
+        if atribuicao.data_atribuicao:
             historico_movimentacoes.append({
                 'data_evento': atribuicao.data_atribuicao,
                 'tipo_evento': 'Adicionado em',
                 'item_movimentado': item_descricao,
                 'local': local,
-                'tipo_item': 'computador' # Identificador do tipo de item
+                'tipo_item': 'computador'
             })
         
+        # Evento de remoção
         if atribuicao.data_remocao:
             historico_movimentacoes.append({
                 'data_evento': atribuicao.data_remocao,
@@ -194,22 +230,19 @@ def controle_estoque(request):
                 'tipo_item': 'computador'
             })
     
-    # --- Fim da Construção do Histórico de Movimentações ---
-
-    # Ordenar o histórico combinado por data_evento (timestamp), mais recentes primeiro
-    # Filtrar itens sem data_evento (embora não deva acontecer com auto_now_add e save obrigatório)
+    # Ordenar o histórico combinado por data_evento, mais recentes primeiro
     historico_movimentacoes = [item for item in historico_movimentacoes if item.get('data_evento')]
     historico_movimentacoes.sort(key=lambda x: x['data_evento'], reverse=True)
-
-    # Obter a data da última atualização real
+    
+    # Obter a data da última atualização para o contexto
     data_ultima_atualizacao_real = None
     if historico_movimentacoes:
         data_ultima_atualizacao_real = historico_movimentacoes[0]['data_evento']
-
-    # Configurar paginação para o histórico
-    paginator = Paginator(historico_movimentacoes, 10) # 10 itens por página
-    page_number = request.GET.get('page')
-    page_obj = paginator.get_page(page_number)
+    
+    # Usar a função auxiliar de paginação
+    page_obj = paginate_queryset(request, historico_movimentacoes, itens_por_pagina)
+    # Obter metadados de paginação para o template
+    pagination_data = get_pagination_data(page_obj)
 
     # Contexto para o template
     context = {
@@ -218,50 +251,103 @@ def controle_estoque(request):
         'perifericos_por_sala_ilha': perifericos_por_sala_ilha,
         'total_geral_perifericos': total_geral_perifericos,
         'historico_page_obj': page_obj, # Passa o objeto da página para o template
+        'pagination_data': pagination_data, # Adiciona metadados de paginação
         'data_ultima_atualizacao_real': data_ultima_atualizacao_real, # Adiciona a data ao contexto
         'computadores_cadastrados_total': computadores_cadastrados_total,
         'computadores_em_uso_por_sala_ilha': computadores_em_uso_por_sala_ilha,
         'computadores_em_uso_total_geral': computadores_em_uso_total_geral,
         'computadores_disponiveis_total': computadores_disponiveis_total,
         'computadores_disponiveis_por_marca_list': computadores_disponiveis_por_marca_list,
+        'itens_por_pagina': itens_por_pagina,
     }
     
     return render(request, 'apps/ti/controle_estoque.html', context)
 
 @login_required
 def controle_manutencao(request):
+    # Utilizar as ferramentas de otimização de consulta
+    # 1. Carregar periféricos em manutenção com seus tipos
     perifericos_manutencao_qs = Periferico.objects.filter(status='manutencao').select_related('tipo')
+    
+    # 2. Carregar computadores em manutenção
     computadores_manutencao_qs = Computador.objects.filter(status='manutencao')
+    
+    # 3. Pré-carregar as últimas atribuições dos periféricos em manutenção
+    # Utilizar um dicionário para mapear periféricos para suas últimas atribuições
+    perifericos_ids = list(perifericos_manutencao_qs.values_list('id', flat=True))
+    ultima_atribuicao_periferico = {}
+    
+    if perifericos_ids:
+        # Usando Subquery para obter apenas a última atribuição de cada periférico
+        ultimas_atribuicoes_perifericos = AtribuicaoPerifericoPA.objects\
+            .filter(periferico_id__in=perifericos_ids)\
+            .order_by('periferico_id', '-data_atribuicao')\
+            .distinct('periferico_id')\
+            .select_related('posicao_atendimento__sala', 'posicao_atendimento__ilha')
 
+        # Em bancos que não suportam distinct com campos específicos (como SQLite),
+        # podemos usar esta abordagem alternativa:
+        perifericos_atribuicoes = {}
+        for atr in AtribuicaoPerifericoPA.objects.filter(periferico_id__in=perifericos_ids)\
+                                   .order_by('-data_atribuicao')\
+                                   .select_related('posicao_atendimento__sala', 'posicao_atendimento__ilha'):            
+            if atr.periferico_id not in perifericos_atribuicoes:
+                perifericos_atribuicoes[atr.periferico_id] = atr
+        
+        ultima_atribuicao_periferico = perifericos_atribuicoes
+    
+    # 4. Pré-carregar as últimas atribuições dos computadores em manutenção
+    # Utilizar um dicionário para mapear computadores para suas últimas atribuições
+    computadores_ids = list(computadores_manutencao_qs.values_list('id', flat=True))
+    ultima_atribuicao_computador = {}
+    
+    if computadores_ids:
+        # Abordagem similar para computadores
+        computadores_atribuicoes = {}
+        for atr in AtribuicaoComputadorPA.objects.filter(computador_id__in=computadores_ids)\
+                                   .order_by('-data_atribuicao')\
+                                   .select_related('posicao_atendimento__sala', 'posicao_atendimento__ilha'):
+            if atr.computador_id not in computadores_atribuicoes:
+                computadores_atribuicoes[atr.computador_id] = atr
+        
+        ultima_atribuicao_computador = computadores_atribuicoes
+    
+    # Inicializar contadores
     itens_manutencao_lista = []
     contagem_por_tipo = {
         'Mouse': 0,
         'Mousepad': 0,
         'Teclado': 0,
         'Monitor': 0,
-        'Fone': 0, # ou Headset, dependendo do nome no seu TipoPeriferico
+        'Fone': 0,
         'Computador': 0,
         'Outros Periféricos': 0
     }
     total_itens_manutencao = 0
-
+    
+    # Processar periféricos em manutenção
     for p in perifericos_manutencao_qs:
-        ultima_atribuicao = AtribuicaoPerifericoPA.objects.filter(periferico=p).order_by('-data_atribuicao').select_related('posicao_atendimento__sala', 'posicao_atendimento__ilha').first()
+        # Obter a última atribuição do dicionário pré-carregado
+        ultima_atribuicao = ultima_atribuicao_periferico.get(p.id)
         ultima_pa_obj = ultima_atribuicao.posicao_atendimento if ultima_atribuicao else None
+        
+        # Adicionar informações do periférico à lista
         itens_manutencao_lista.append({
             'id_item': p.id,
-            'tipo_item_obj': p, # Passa o objeto para facilitar o acesso no template se necessário
+            'tipo_item_obj': p,
             'nome_item': p.tipo.nome,
             'marca_modelo': f"{p.marca} {p.modelo}",
             'ultima_pa': ultima_pa_obj,
             'observacoes': p.observacoes,
             'tipo_item_slug': 'periferico'
         })
+        
+        # Atualizar contagem por tipo
         nome_tipo = p.tipo.nome.capitalize()
         if nome_tipo in contagem_por_tipo:
             contagem_por_tipo[nome_tipo] += 1
         else:
-            # Tenta mapear nomes comuns para categorias desejadas
+            # Mapear para categorias conhecidas
             if 'mouse' in nome_tipo.lower() and nome_tipo != 'Mousepad':
                 contagem_por_tipo['Mouse'] += 1
             elif 'mousepad' in nome_tipo.lower():
@@ -274,11 +360,16 @@ def controle_manutencao(request):
                 contagem_por_tipo['Fone'] += 1
             else:
                 contagem_por_tipo['Outros Periféricos'] += 1
+        
         total_itens_manutencao += 1
-
+    
+    # Processar computadores em manutenção
     for c in computadores_manutencao_qs:
-        ultima_atribuicao = AtribuicaoComputadorPA.objects.filter(computador=c).order_by('-data_atribuicao').select_related('posicao_atendimento__sala', 'posicao_atendimento__ilha').first()
+        # Obter a última atribuição do dicionário pré-carregado
+        ultima_atribuicao = ultima_atribuicao_computador.get(c.id)
         ultima_pa_obj = ultima_atribuicao.posicao_atendimento if ultima_atribuicao else None
+        
+        # Adicionar informações do computador à lista
         itens_manutencao_lista.append({
             'id_item': c.id,
             'tipo_item_obj': c,
@@ -288,16 +379,29 @@ def controle_manutencao(request):
             'observacoes': c.observacoes,
             'tipo_item_slug': 'computador'
         })
+        
         contagem_por_tipo['Computador'] += 1
         total_itens_manutencao += 1
     
+    # Ordenar itens por tipo para melhor visualização
+    itens_manutencao_lista.sort(key=lambda x: (x['tipo_item_slug'], x['nome_item']))
+    
+    # Implementar paginação
+    itens_por_pagina = 15
+    page_obj = paginate_queryset(request, itens_manutencao_lista, itens_por_pagina)
+    pagination_data = get_pagination_data(page_obj)
+    
+    # Preparar contexto para o template
     context = {
-        'itens_manutencao': itens_manutencao_lista,
+        'itens_manutencao': page_obj,
+        'pagination_data': pagination_data,
         'contagem_por_tipo': contagem_por_tipo,
         'total_itens_manutencao': total_itens_manutencao,
         'header_title': 'Controle de Manutenção de Periféricos e Computadores',
-        'title': 'Controle de Manutenção'
+        'title': 'Controle de Manutenção',
+        'itens_por_pagina': itens_por_pagina,
     }
+    
     return render(request, 'apps/ti/controle_manutencao.html', context)
 
 @login_required
@@ -500,10 +604,58 @@ def tipo_periferico_delete(request, pk):
 # Views para Periféricos
 @login_required
 def periferico_list(request):
-    perifericos = Periferico.objects.all()
+    # Otimizar consulta com select_related para carregar tipos junto com periféricos
+    perifericos_queryset = Periferico.objects.all()\
+        .select_related('tipo')\
+        .order_by('tipo__nome', 'marca', 'modelo')
+    
+    # Implementar filtros dinâmicos
+    status_filter = request.GET.get('status')
+    tipo_filter = request.GET.get('tipo_id')
+    search_query = request.GET.get('query')
+    
+    # Aplicar filtros se fornecidos
+    if status_filter and status_filter != 'todos':
+        perifericos_queryset = perifericos_queryset.filter(status=status_filter)
+    
+    if tipo_filter:
+        perifericos_queryset = perifericos_queryset.filter(tipo_id=tipo_filter)
+    
+    if search_query:
+        perifericos_queryset = perifericos_queryset.filter(
+            Q(marca__icontains=search_query) | 
+            Q(modelo__icontains=search_query) |
+            Q(numero_serie__icontains=search_query) |
+            Q(tipo__nome__icontains=search_query)
+        )
+    
+    # Implementar paginação
+    itens_por_pagina = 20
+    perifericos_paginados = paginate_queryset(request, perifericos_queryset, itens_por_pagina)
+    pagination_data = get_pagination_data(perifericos_paginados)
+    
+    # Carregar tipos para filtro
+    tipos_perifericos = TipoPeriferico.objects.all().order_by('nome')
+    
+    # Preparar opções para filtro de status
+    opcoes_status = [
+        {'value': 'todos', 'display': 'Todos'},
+        {'value': 'disponivel', 'display': 'Disponível'},
+        {'value': 'em_uso', 'display': 'Em Uso'},
+        {'value': 'manutencao', 'display': 'Em Manutenção'},
+        {'value': 'inativo', 'display': 'Inativo'}
+    ]
+    
     context = {
         'title': 'Periféricos',
-        'perifericos': perifericos,
+        'perifericos': perifericos_paginados,
+        'pagination_data': pagination_data,
+        'itens_por_pagina': itens_por_pagina,
+        'tipos_perifericos': tipos_perifericos,
+        'opcoes_status': opcoes_status,
+        'status_filter': status_filter,
+        'tipo_filter': tipo_filter,
+        'search_query': search_query,
     }
     return render(request, 'apps/ti/periferico_list.html', context)
 
@@ -650,10 +802,21 @@ def atualizar_status_pa(request):
 # Views para Atribuição de Funcionários a PAs
 @login_required
 def atribuicao_funcionario_pa_list(request):
-    atribuicoes = AtribuicaoFuncionarioPA.objects.all()
+    # Otimizar consulta com select_related para reduzir queries ao banco
+    atribuicoes_queryset = AtribuicaoFuncionarioPA.objects.all()\
+        .select_related('funcionario', 'posicao_atendimento__ilha', 'posicao_atendimento__sala')\
+        .order_by('-ativo', '-data_inicio')
+    
+    # Implementar paginação
+    itens_por_pagina = 20
+    atribuicoes_paginadas = paginate_queryset(request, atribuicoes_queryset, itens_por_pagina)
+    pagination_data = get_pagination_data(atribuicoes_paginadas)
+    
     context = {
         'title': 'Atribuições de Funcionários a PAs',
-        'atribuicoes': atribuicoes,
+        'atribuicoes': atribuicoes_paginadas,
+        'pagination_data': pagination_data,
+        'itens_por_pagina': itens_por_pagina,
     }
     return render(request, 'apps/ti/atribuicao_funcionario_pa_list.html', context)
 
@@ -984,7 +1147,7 @@ def api_ilhas_por_sala(request, sala_id):
 @require_POST # Garante que a view só aceite POST
 def remover_periferico_pa(request):
     if not request.headers.get('X-Requested-With') == 'XMLHttpRequest':
-        return JsonResponse({'success': False, 'error': 'Requisição inválida.'}, status=400)
+        return gerar_resposta_api(False, error='Requisição inválida.', status=400)
 
     try:
         if request.content_type == 'application/json':
@@ -992,10 +1155,10 @@ def remover_periferico_pa(request):
             periferico_id = data.get('periferico_id')
             pa_id = data.get('pa_id')
         else:
-            return JsonResponse({'success': False, 'error': 'Requisição inválida. Esperado JSON.'}, status=400)
+            return gerar_resposta_api(False, error='Requisição inválida. Esperado JSON.', status=400)
 
         if not periferico_id or not pa_id:
-            return JsonResponse({'success': False, 'error': 'IDs do periférico e da PA são obrigatórios.'}, status=400)
+            return gerar_resposta_api(False, error='IDs do periférico e da PA são obrigatórios.', status=400)
 
         # Encontrar a atribuição ATIVA do periférico para esta PA
         atribuicao = get_object_or_404(
@@ -1005,33 +1168,19 @@ def remover_periferico_pa(request):
             ativo=True # Garante que estamos removendo a atribuição ativa
         )
 
-        # Marcar a atribuição como inativa em vez de deletar
-        atribuicao.ativo = False
-        atribuicao.data_remocao = timezone.now()
-        atribuicao.save()
-        
-        # Atualizar o status do periférico para disponível
-        periferico = atribuicao.periferico
-        # Verificar se o periférico não está ativo em nenhuma outra PA antes de mudar status para 'disponivel'
-        outras_atribuicoes_ativas = AtribuicaoPerifericoPA.objects.filter(
-            periferico=periferico,
-            ativo=True
-        ).exclude(pk=atribuicao.pk).exists()
-        
-        if not outras_atribuicoes_ativas:
-            periferico.status = 'disponivel'
-            periferico.save()
+        # Usar a função auxiliar para desatribuir o periférico
+        desatribuir_item_pa(atribuicao)
 
-        return JsonResponse({'success': True, 'message': 'Periférico removido da PA com sucesso.'})
+        return gerar_resposta_api(True, message='Periférico removido da PA com sucesso.')
 
     except AtribuicaoPerifericoPA.DoesNotExist:
-        return JsonResponse({'success': False, 'error': 'Atribuição ativa não encontrada para este periférico e PA.'}, status=404)
+        return gerar_resposta_api(False, error='Atribuição ativa não encontrada para este periférico e PA.', status=404)
     except json.JSONDecodeError:
-        return JsonResponse({'success': False, 'error': 'Corpo da requisição JSON inválido.'}, status=400)
+        return gerar_resposta_api(False, error='Corpo da requisição JSON inválido.', status=400)
     except Exception as e:
         # Logar o erro em um ambiente de produção
         # logger.error(f"Erro ao remover periférico da PA: {e}")
-        return JsonResponse({'success': False, 'error': f'Erro interno do servidor: {str(e)}'}, status=500)
+        return gerar_resposta_api(False, error=f'Erro interno do servidor: {str(e)}', status=500)
 
 @login_required
 def render_controlesalas(request):
@@ -1487,53 +1636,36 @@ def api_adicionar_computador_pa(request, pa_id):
         computador_id = data.get('computador_id')
 
         if not computador_id:
-            return JsonResponse({'success': False, 'error': 'ID do Computador não fornecido.'}, status=400)
+            return gerar_resposta_api(False, error='ID do Computador não fornecido.', status=400)
 
         pa_alvo = get_object_or_404(PosicaoAtendimento, pk=pa_id)
-        computador_para_adicionar = get_object_or_404(Computador, pk=computador_id)
+        computador = get_object_or_404(Computador, pk=computador_id)
 
-        # Verificar se o computador já está ativo em outra PA
-        atribuicao_existente_ativa = AtribuicaoComputadorPA.objects.filter(computador=computador_para_adicionar, ativo=True).first()
-        if atribuicao_existente_ativa and atribuicao_existente_ativa.posicao_atendimento != pa_alvo:
-            return JsonResponse({
-                'success': False, 
-                'error': f'Este computador ({computador_para_adicionar.marca}) já está atribuído à PA {atribuicao_existente_ativa.posicao_atendimento.numero} na Sala {atribuicao_existente_ativa.posicao_atendimento.sala.nome if atribuicao_existente_ativa.posicao_atendimento.sala else "N/A"} / Ilha {atribuicao_existente_ativa.posicao_atendimento.ilha.nome if atribuicao_existente_ativa.posicao_atendimento.ilha else "N/A"}.'
-            }, status=400)
+        # Verificar disponibilidade do computador
+        disponivel, mensagem = verificar_disponibilidade_computador(computador_id, pa_id=pa_id)
+        if not disponivel:
+            return gerar_resposta_api(False, error=mensagem, status=400)
         
-        # Se já existe uma atribuição (mesmo que inativa) para esta PA e este computador, reativá-la.
-        # Caso contrário, criar uma nova.
-        atribuicao, criada = AtribuicaoComputadorPA.objects.update_or_create(
-            posicao_atendimento=pa_alvo,
-            computador=computador_para_adicionar,
-            defaults={'ativo': True, 'data_atribuicao': timezone.now(), 'data_remocao': None}
+        # Usar a função auxiliar para atribuir o computador à PA
+        atribuir_item_pa(computador, pa_alvo, AtribuicaoComputadorPA)
+        
+        # Listar computadores atribuídos à PA para a resposta
+        lista_computadores_pa = listar_itens_atribuidos_pa(pa_alvo, 'computador')
+
+        return gerar_resposta_api(
+            True, 
+            message='Computador adicionado à PA com sucesso!',
+            data={'lista_computadores_pa': lista_computadores_pa}
         )
 
-        computador_para_adicionar.status = 'em_uso' # Ou o status apropriado
-        computador_para_adicionar.save()
-        
-        # Atualizar a lista de computadores da PA para a resposta
-        lista_computadores_pa = []
-        atribuicoes_pa_atual = AtribuicaoComputadorPA.objects.filter(posicao_atendimento=pa_alvo, ativo=True).select_related('computador')
-        for atr in atribuicoes_pa_atual:
-            lista_computadores_pa.append({
-                'id': atr.computador.id,
-                'marca': atr.computador.marca,
-            })
-
-        return JsonResponse({
-            'success': True, 
-            'message': 'Computador adicionado à PA com sucesso!',
-            'lista_computadores_pa': lista_computadores_pa
-        })
-
     except PosicaoAtendimento.DoesNotExist:
-        return JsonResponse({'success': False, 'error': 'PA não encontrada.'}, status=404)
+        return gerar_resposta_api(False, error='PA não encontrada.', status=404)
     except Computador.DoesNotExist:
-        return JsonResponse({'success': False, 'error': 'Computador não encontrado.'}, status=404)
+        return gerar_resposta_api(False, error='Computador não encontrado.', status=404)
     except json.JSONDecodeError:
-        return JsonResponse({'success': False, 'error': 'Dados JSON inválidos.'}, status=400)
+        return gerar_resposta_api(False, error='Dados JSON inválidos.', status=400)
     except Exception as e:
-        return JsonResponse({'success': False, 'error': str(e)}, status=500)
+        return gerar_resposta_api(False, error=str(e), status=500)
 
 @require_POST
 @login_required
@@ -1543,57 +1675,40 @@ def api_remover_computador_pa(request, pa_id):
         computador_id = data.get('computador_id')
 
         if not computador_id:
-            return JsonResponse({'success': False, 'error': 'ID do Computador não fornecido.'}, status=400)
+            return gerar_resposta_api(False, error='ID do Computador não fornecido.', status=400)
 
         pa_alvo = get_object_or_404(PosicaoAtendimento, pk=pa_id)
-        computador_para_remover = get_object_or_404(Computador, pk=computador_id)
+        computador = get_object_or_404(Computador, pk=computador_id)
 
         atribuicao_ativa = AtribuicaoComputadorPA.objects.filter(
             posicao_atendimento=pa_alvo, 
-            computador=computador_para_remover, 
+            computador=computador, 
             ativo=True
         ).first()
 
         if not atribuicao_ativa:
-            return JsonResponse({'success': False, 'error': 'Computador não está ativamente atribuído a esta PA.'}, status=400)
+            return gerar_resposta_api(False, error='Computador não está ativamente atribuído a esta PA.', status=400)
 
-        atribuicao_ativa.ativo = False
-        atribuicao_ativa.data_remocao = timezone.now()
-        atribuicao_ativa.save()
-
-        # Verificar se o computador está ativo em alguma outra PA antes de mudar status para 'disponivel'
-        outras_atribuicoes_ativas = AtribuicaoComputadorPA.objects.filter(
-            computador=computador_para_remover,
-            ativo=True
-        ).exists()
+        # Usar a função auxiliar para desatribuir o computador
+        desatribuir_item_pa(atribuicao_ativa)
         
-        if not outras_atribuicoes_ativas:
-            computador_para_remover.status = 'disponivel'
-            computador_para_remover.save()
-        
-        # Atualizar a lista de computadores da PA para a resposta
-        lista_computadores_pa = []
-        atribuicoes_pa_atual = AtribuicaoComputadorPA.objects.filter(posicao_atendimento=pa_alvo, ativo=True).select_related('computador')
-        for atr in atribuicoes_pa_atual:
-            lista_computadores_pa.append({
-                'id': atr.computador.id,
-                'marca': atr.computador.marca,
-            })
+        # Listar computadores atribuídos à PA para a resposta
+        lista_computadores_pa = listar_itens_atribuidos_pa(pa_alvo, 'computador')
 
-        return JsonResponse({
-            'success': True, 
-            'message': 'Computador removido da PA com sucesso!',
-            'lista_computadores_pa': lista_computadores_pa
-        })
+        return gerar_resposta_api(
+            True,
+            message='Computador removido da PA com sucesso!',
+            data={'lista_computadores_pa': lista_computadores_pa}
+        )
 
     except PosicaoAtendimento.DoesNotExist:
-        return JsonResponse({'success': False, 'error': 'PA não encontrada.'}, status=404)
+        return gerar_resposta_api(False, error='PA não encontrada.', status=404)
     except Computador.DoesNotExist:
-        return JsonResponse({'success': False, 'error': 'Computador não encontrado.'}, status=404)
+        return gerar_resposta_api(False, error='Computador não encontrado.', status=404)
     except json.JSONDecodeError:
-        return JsonResponse({'success': False, 'error': 'Dados JSON inválidos.'}, status=400)
+        return gerar_resposta_api(False, error='Dados JSON inválidos.', status=400)
     except Exception as e:
-        return JsonResponse({'success': False, 'error': str(e)}, status=500)
+        return gerar_resposta_api(False, error=str(e), status=500)
 
 @require_POST
 @login_required
@@ -1956,46 +2071,3 @@ def auto_atribuicao_pa(request):
     
     return render(request, 'apps/ti/auto_atribuicao_pa.html', context)
 
-# Função para API - Periféricos disponíveis por tipo
-@login_required
-@require_GET
-def api_listar_perifericos_disponiveis_por_tipo(request, tipo_id):
-    """
-    Retorna uma lista de periféricos disponíveis de um determinado tipo.
-    """
-    # Validar o tipo de periférico
-    try:
-        tipo = TipoPeriferico.objects.get(pk=tipo_id)
-    except TipoPeriferico.DoesNotExist:
-        return JsonResponse({
-            'success': False,
-            'message': f'Tipo de periférico com ID {tipo_id} não encontrado.',
-            'perifericos': []
-        })
-    
-    # Obter periféricos disponíveis deste tipo
-    perifericos_disponiveis = Periferico.objects.filter(
-        tipo=tipo,
-        status='disponivel'
-    ).values('id', 'marca', 'modelo', 'numero_serie')
-    
-    # Verificar periféricos em uso
-    perifericos_em_uso_ids = AtribuicaoPerifericoPA.objects.filter(
-        ativo=True,
-        periferico__tipo=tipo
-    ).values_list('periferico_id', flat=True)
-    
-    # Excluir periféricos em uso
-    perifericos_disponiveis = perifericos_disponiveis.exclude(id__in=perifericos_em_uso_ids)
-    
-    # Formatar a saída
-    perifericos_list = list(perifericos_disponiveis)
-    for periferico in perifericos_list:
-        # Adicionar informações adicionais se necessário
-        periferico['descricao'] = f"{periferico['marca']} {periferico['modelo']} - SN: {periferico['numero_serie'] if periferico['numero_serie'] else 'N/A'}"
-    
-    return JsonResponse({
-        'success': True,
-        'message': f'Encontrados {len(perifericos_list)} periféricos do tipo {tipo.nome}.',
-        'perifericos': perifericos_list
-    })

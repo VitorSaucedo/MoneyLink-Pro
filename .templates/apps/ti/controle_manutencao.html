@@ -7,9 +7,23 @@
     <link rel="stylesheet" href="{% static 'css/apps/funcionarios/forms/administrativo.css' %}">
     <link rel="stylesheet" href="{% static 'css/apps/ti/controle_manutencao.css' %}">
     <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+    {# Adicionar CSS do modo escuro #}
+    <link rel="stylesheet" href="{% static 'css/darkmode.css' %}">
+    <link rel="stylesheet" href="{% static 'css/apps/ti/ti-dark-mode.css' %}">
 {% endblock %}
 
-{% block header_title %}Controle de Manutenção de Periféricos e Computadores{% endblock %}
+{% block header_title %}Controle de Manutenção de Periféricos e Computadores
+<!-- Seletor de tema (claro/escuro) -->
+<div class="theme-switch-wrapper ms-3 d-inline-block">
+  <label class="theme-switch" for="checkbox">
+    <input type="checkbox" id="checkbox" />
+    <div class="slider">
+      <i class="bx bx-sun fa-sun"></i>
+      <i class="bx bx-moon fa-moon"></i>
+    </div>
+  </label>
+</div>
+{% endblock %}
 
 {% block content %}
 <div class="container mt-4">
@@ -80,4 +94,6 @@
 
 {% block addjs_extra %}
     <script src="{% static 'js/apps/ti/controle_manutencao.js' %}"></script>
-{% endblock %} 
+    {# Modo escuro #}
+    <script src="{% static 'js/darkmode.js' %}"></script>
+{% endblock %}

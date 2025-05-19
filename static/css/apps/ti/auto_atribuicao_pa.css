@@ -260,7 +260,7 @@ body {
 }
 
 .form-label i {
-    color: var(--color-secondary);
+    color: #0066cc;
     margin-right: 0.5rem;
 }
 

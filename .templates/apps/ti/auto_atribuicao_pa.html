@@ -5,6 +5,16 @@
 
 {% block header_title %}
 TI - Auto Atribuição de PA
+<!-- Seletor de tema (claro/escuro) -->
+<div class="theme-switch-wrapper ms-3 d-inline-block">
+  <label class="theme-switch" for="checkbox">
+    <input type="checkbox" id="checkbox" />
+    <div class="slider">
+      <i class="bx bx-sun fa-sun"></i>
+      <i class="bx bx-moon fa-moon"></i>
+    </div>
+  </label>
+</div>
 {% endblock %}
 
 {% block addcss_extra %}
@@ -12,6 +22,9 @@ TI - Auto Atribuição de PA
   <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
   <link rel="stylesheet" href="{% static 'css/mensagens.css' %}">
   <link rel="stylesheet" href="{% static 'css/apps/ti/auto_atribuicao_pa.css' %}">
+  {# Adicionar CSS do modo escuro #}
+  <link rel="stylesheet" href="{% static 'css/darkmode.css' %}">
+  <link rel="stylesheet" href="{% static 'css/apps/ti/ti-dark-mode.css' %}">
 {% endblock %}
 
 {% block pre_content %}
@@ -130,6 +143,8 @@ TI - Auto Atribuição de PA
 {% endblock %}
 
 {% block addjs_extra %}
+{# Modo escuro #}
+<script src="{% static 'js/darkmode.js' %}"></script>
 <script>
 document.addEventListener('DOMContentLoaded', function() {
   const form = document.getElementById('pa-form');
