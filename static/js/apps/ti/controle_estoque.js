@@ -86,6 +86,18 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
     
+    // Função para métodos relacionados a loja estão desativados 
+    // porque usamos agora uma abordagem baseada no servidor
+    
+    // Funções relacionadas a carregamento de dados das lojas foram removidas
+    // porque agora usamos uma abordagem baseada no servidor
+    
+    // Função para atualização da tabela com dados simulados foi removida
+    // porque agora usamos uma abordagem baseada no servidor
+    
+    // Função para atualização de computadores disponíveis foi removida
+    // porque agora usamos uma abordagem baseada no servidor
+
     // Inicializa as funcionalidades
     configurarDestaqueTabelaEstoque();
     configurarTooltips();

@@ -140,14 +140,27 @@ Admin TI - Cadastros<span class="produto-text"></span>
               </select>
             </div>
             <div class="mb-3">
+              <label for="loja_computador" class="form-label">
+                <i class='bx bx-store me-2'></i>Loja *
+              </label>
+              <select id="loja_computador" name="loja" class="form-select" required>
+                <option value="">-- Selecione uma Loja --</option>
+                {% for loja in lojas_list %}
+                  <option value="{{ loja.id }}">{{ loja.nome }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="mb-3">
               <label for="observacoes_computador" class="form-label">
                 <i class='bx bx-align-left me-2'></i>Observações
               </label>
               <textarea id="observacoes_computador" name="observacoes" class="form-control" rows="3"></textarea>
             </div>
-            <button type="submit" class="btn btn-primary w-100">
-              <i class='bx bx-save me-2'></i> Salvar Computador
-            </button>
+            <div class="d-flex justify-content-start">
+              <button type="submit" class="btn btn-primary">
+                <i class='bx bx-save me-2'></i> Salvar Computador
+              </button>
+            </div>
           </form>
         </div>
       </div>
@@ -273,6 +286,166 @@ Admin TI - Cadastros<span class="produto-text"></span>
           </form>
         </div>
       </div>
+      
+      <!-- Card Cadastrar Novo Periférico (Migrado de atribuicao_periferico.html) -->
+      <div class="card mb-4" id="card-periferico">
+        <div class="card-header">
+          <i class='bx bx-devices me-2'></i> Cadastrar Novo Periférico
+        </div>
+        <div class="card-body">
+          <form method="post" action="{% url 'ti:periferico_create' %}">
+            {% csrf_token %}
+            
+            <div class="mb-3">
+              <label for="{{ form_periferico.loja.id_for_label }}" class="form-label">
+                <i class='bx bx-store me-2'></i>{{ form_periferico.loja.label }} *
+              </label>
+              {{ form_periferico.loja }}
+              {% if form_periferico.loja.errors %}
+                <div class="text-danger mt-1">
+                  {% for error in form_periferico.loja.errors %}
+                    <small><i class='bx bx-error-circle me-1'></i>{{ error }}</small><br>
+                  {% endfor %}
+                </div>
+              {% endif %}
+            </div>
+            
+            <div class="mb-3">
+              <label for="{{ form_periferico.tipo.id_for_label }}" class="form-label">
+                <i class='bx bx-category-alt me-2'></i>{{ form_periferico.tipo.label }} *
+              </label>
+              {{ form_periferico.tipo }}
+              {% if form_periferico.tipo.errors %}
+                <div class="text-danger mt-1">
+                  {% for error in form_periferico.tipo.errors %}
+                    <small><i class='bx bx-error-circle me-1'></i>{{ error }}</small><br>
+                  {% endfor %}
+                </div>
+              {% endif %}
+            </div>
+
+            <div class="mb-3">
+              <label for="{{ form_periferico.marca.id_for_label }}" class="form-label">
+                <i class='bx bx-building me-2'></i>{{ form_periferico.marca.label }} *
+              </label>
+              {{ form_periferico.marca }}
+              {% if form_periferico.marca.errors %}
+                <div class="text-danger mt-1">
+                  {% for error in form_periferico.marca.errors %}
+                    <small><i class='bx bx-error-circle me-1'></i>{{ error }}</small><br>
+                  {% endfor %}
+                </div>
+              {% endif %}
+            </div>
+
+            <div class="mb-3">
+              <label for="{{ form_periferico.modelo.id_for_label }}" class="form-label">
+                <i class='bx bx-info-circle me-2'></i>{{ form_periferico.modelo.label }} *
+              </label>
+              {{ form_periferico.modelo }}
+              {% if form_periferico.modelo.errors %}
+                <div class="text-danger mt-1">
+                  {% for error in form_periferico.modelo.errors %}
+                    <small><i class='bx bx-error-circle me-1'></i>{{ error }}</small><br>
+                  {% endfor %}
+                </div>
+              {% endif %}
+            </div>
+
+            <div class="mb-3">
+              <label for="{{ form_periferico.data_aquisicao.id_for_label }}" class="form-label">
+                <i class='bx bx-calendar me-2'></i>{{ form_periferico.data_aquisicao.label }}
+              </label>
+              {{ form_periferico.data_aquisicao }}
+              {% if form_periferico.data_aquisicao.errors %}
+                <div class="text-danger mt-1">
+                  {% for error in form_periferico.data_aquisicao.errors %}
+                    <small><i class='bx bx-error-circle me-1'></i>{{ error }}</small><br>
+                  {% endfor %}
+                </div>
+              {% endif %}
+            </div>
+
+            <div class="mb-3">
+              <label for="{{ form_periferico.quantidade.id_for_label }}" class="form-label">
+                <i class='bx bx-hash me-2'></i>{{ form_periferico.quantidade.label }} *
+              </label>
+              {{ form_periferico.quantidade }}
+              {% if form_periferico.quantidade.errors %}
+                <div class="text-danger mt-1">
+                  {% for error in form_periferico.quantidade.errors %}
+                    <small><i class='bx bx-error-circle me-1'></i>{{ error }}</small><br>
+                  {% endfor %}
+                </div>
+              {% endif %}
+            </div>
+            
+            <button type="submit" name="submit_periferico" class="btn btn-primary w-100">
+              <i class='bx bx-save me-2'></i> Salvar Periférico
+            </button>
+          </form>
+        </div>
+      </div>
+      
+      <!-- Card Cadastrar Periférico a PA (Migrado de atribuicao_periferico.html) -->
+      <div class="card mb-4">
+        <div class="card-header">
+          <i class='bx bx-plug me-2'></i> Cadastrar Periférico a PA
+        </div>
+        <div class="card-body">
+          <form method="post" action="{% url 'ti:atribuicao_periferico' %}" name="formAtribuicaoPa">
+            {% csrf_token %}
+
+            <div class="mb-3">
+              <label for="{{ form_atribuicao_pa.periferico.id_for_label }}" class="form-label">
+                <i class='bx bx-devices me-2'></i>{{ form_atribuicao_pa.periferico.label }} *
+              </label>
+              {{ form_atribuicao_pa.periferico }}
+              {% if form_atribuicao_pa.periferico.errors %}
+                <div class="text-danger mt-1">
+                  {% for error in form_atribuicao_pa.periferico.errors %}
+                    <small><i class='bx bx-error-circle me-1'></i>{{ error }}</small><br>
+                  {% endfor %}
+                </div>
+              {% endif %}
+            </div>
+
+            <div class="mb-3">
+              <label for="{{ form_atribuicao_pa.posicao_atendimento.id_for_label }}" class="form-label">
+                <i class='bx bx-desktop me-2'></i>{{ form_atribuicao_pa.posicao_atendimento.label }} *
+              </label>
+              {{ form_atribuicao_pa.posicao_atendimento }}
+              {% if form_atribuicao_pa.posicao_atendimento.errors %}
+                <div class="text-danger mt-1">
+                  {% for error in form_atribuicao_pa.posicao_atendimento.errors %}
+                    <small><i class='bx bx-error-circle me-1'></i>{{ error }}</small><br>
+                  {% endfor %}
+                </div>
+              {% endif %}
+            </div>
+            
+            <div class="mb-3 form-check"> {# Campo Ativo - checkbox #}
+              {{ form_atribuicao_pa.ativo }}
+              <label for="{{ form_atribuicao_pa.ativo.id_for_label }}" class="form-check-label ms-1">
+                <i class='bx bx-toggle-on me-1'></i>{{ form_atribuicao_pa.ativo.label }}
+              </label>
+              {% if form_atribuicao_pa.ativo.errors %}
+                <div class="text-danger mt-1">
+                  {% for error in form_atribuicao_pa.ativo.errors %}
+                    <small><i class='bx bx-error-circle me-1'></i>{{ error }}</small><br>
+                  {% endfor %}
+                </div>
+              {% endif %}
+            </div>
+
+            <div class="d-flex justify-content-start">
+              <button type="submit" name="submit_atribuicao_pa" class="btn btn-primary">
+                <i class='bx bx-save me-2'></i>Cadastrar Atribuição
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
     </div>
   </div>
 </div>
@@ -281,4 +454,64 @@ Admin TI - Cadastros<span class="produto-text"></span>
 {% block addjs_extra %}
 <script src="{% static 'js/apps/ti/admin.js' %}"></script>
 <script src="{% static 'js/darkmode.js' %}"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const perifericoSelect = document.querySelector('form[name="formAtribuicaoPa"] [name="periferico"]');
+    const paSelect = document.querySelector('form[name="formAtribuicaoPa"] [name="posicao_atendimento"]');
+
+    if (perifericoSelect && paSelect) {
+        perifericoSelect.addEventListener('change', function() {
+            const perifericoId = this.value;
+            // Limpar opções atuais de PA, exceto a primeira (placeholder)
+            while (paSelect.options.length > 1) {
+                paSelect.remove(1);
+            }
+            // Definir a primeira opção como placeholder e selecionada por padrão
+            paSelect.options[0].textContent = '-- Carregando PAs... --';
+            paSelect.options[0].selected = true;
+            paSelect.disabled = true;
+
+            if (perifericoId) {
+                const baseUrl = "{% url 'ti:api_pas_para_atribuicao_periferico' 0 %}".slice(0, -2); // Remove o '0/' do final
+                fetch(`${baseUrl}${perifericoId}/`)
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error(`HTTP error! status: ${response.status}`);
+                        }
+                        return response.json();
+                    })
+                    .then(data => {
+                        paSelect.options[0].textContent = '-- Selecione uma PA --'; // Restaurar placeholder
+                        if (data.posicoes_atendimento && data.posicoes_atendimento.length > 0) {
+                            data.posicoes_atendimento.forEach(pa => {
+                                const option = new Option(pa.nome, pa.id);
+                                paSelect.add(option);
+                            });
+                        } else {
+                            paSelect.options[0].textContent = '-- Nenhuma PA compatível encontrada --';
+                        }
+                        paSelect.disabled = false;
+                    })
+                    .catch(error => {
+                        console.error('Erro ao carregar PAs:', error);
+                        paSelect.options[0].textContent = '-- Erro ao carregar PAs --';
+                        paSelect.disabled = false;
+                    });
+            } else {
+                paSelect.options[0].textContent = '-- Selecione um periférico primeiro --';
+                paSelect.disabled = true; // Mantém desabilitado se nenhum periférico for selecionado
+            }
+        });
+
+        // Disparar o evento change no carregamento da página se um periférico já estiver selecionado
+        // (útil se o formulário for re-renderizado com valores antigos após um POST inválido)
+        if (perifericoSelect.value) {
+            perifericoSelect.dispatchEvent(new Event('change'));
+        }
+    } else {
+        if (!perifericoSelect) console.error('Select de periférico não encontrado.');
+        if (!paSelect) console.error('Select de PA não encontrado.');
+    }
+});
+</script>
 {% endblock %} 

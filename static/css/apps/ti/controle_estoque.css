@@ -543,8 +543,11 @@ body {
     font-weight: 600;
     color: var(--color-primary-dark);
     font-size: 1em; /* Tamanho um pouco maior para o título da seção */
-    margin-bottom: 0.75rem; /* Espaço abaixo do título */
-    transition: color 0.3s ease;
+    margin-bottom: 0.75rem; /* Estilo para o Card de Estoque */
+}
+
+#card-estoque {
+    transition: all 0.3s ease;
 }
 
 [data-theme="dark"] .inventory-summary-computadores h6 {
@@ -706,3 +709,116 @@ body,
 .custom-page-link {
     transition: all 0.3s ease;
 } 
+
+/* ==============================================
+   Estilos para o Seletor de Loja
+   ============================================== */
+.store-selector-container {
+    background-color: var(--color-white);
+    border-radius: 10px;
+    padding: 15px;
+    box-shadow: var(--box-shadow-light);
+    transition: all 0.3s ease;
+}
+
+[data-theme="dark"] .store-selector-container {
+    background-color: var(--color-primary-dark);
+    box-shadow: none;
+    border: 1px solid var(--color-gray);
+}
+
+.store-selector-container .form-label {
+    color: var(--color-primary-dark);
+    font-weight: 600;
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+}
+
+[data-theme="dark"] .store-selector-container .form-label {
+    color: var(--color-text-dark);
+}
+
+.store-selector-container .form-label i {
+    margin-right: 5px;
+    font-size: 1.2rem;
+    color: var(--color-secondary);
+}
+
+[data-theme="dark"] .store-selector-container .form-label i {
+    color: var(--color-secondary);
+}
+
+#store-selector {
+    border: 2px solid var(--color-gray);
+    border-radius: 8px;
+    padding: 0.75rem 1rem;
+    font-size: 1rem;
+    transition: border-color 0.3s ease, box-shadow 0.3s ease;
+    background-color: var(--color-white);
+    color: var(--color-text-dark);
+    cursor: pointer;
+}
+
+#store-selector:focus {
+    border-color: var(--color-secondary);
+    box-shadow: 0 0 0 0.25rem rgba(112, 246, 17, 0.25);
+    outline: none;
+}
+
+[data-theme="dark"] #store-selector {
+    background-color: var(--color-primary-dark);
+    border-color: var(--color-gray);
+    color: var(--color-text-dark);
+}
+
+[data-theme="dark"] #store-selector:focus {
+    border-color: var(--color-secondary);
+    box-shadow: 0 0 0 0.25rem rgba(110, 66, 193, 0.25);
+}
+
+/* Estilos para a transição de loja e carregamento */
+.store-transition {
+    position: relative;
+    transition: all 0.3s ease;
+    opacity: 0.7;
+}
+
+.loading-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    background-color: rgba(255, 255, 255, 0.8);
+    z-index: 10;
+    border-radius: 10px;
+}
+
+[data-theme="dark"] .loading-overlay {
+    background-color: rgba(30, 30, 47, 0.8);
+}
+
+.loading-overlay p {
+    margin-top: 10px;
+    font-weight: 500;
+    color: var(--color-primary-dark);
+}
+
+[data-theme="dark"] .loading-overlay p {
+    color: var(--color-text-dark);
+}
+
+.loading-overlay .spinner-border {
+    color: var(--color-secondary) !important;
+    width: 3rem;
+    height: 3rem;
+}
+
+[data-theme="dark"] .loading-overlay .spinner-border {
+    color: var(--ti-accent-tertiary) !important;
+}

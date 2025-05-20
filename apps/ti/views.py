@@ -43,7 +43,19 @@ def controle_estoque(request):
     """
     View para exibir o controle de estoque de periféricos por sala e ilha.
     Mostra uma tabela com a contagem de periféricos de cada tipo em cada sala/ilha.
+    Permite filtrar por loja (Sede, Cachoeirinha, São Leopoldo, Santa Maria).
     """
+    # Obter a loja selecionada pelo usuário (padrão: sede)
+    loja_selecionada = request.GET.get('loja', 'sede')
+    
+    # Lista de lojas disponíveis para o formulário de seleção
+    lojas = [
+        {'value': 'sede', 'display': 'Sede'},
+        {'value': 'cachoeirinha', 'display': 'Cachoeirinha'},
+        {'value': 'sao_leopoldo', 'display': 'São Leopoldo'},
+        {'value': 'santa_maria', 'display': 'Santa Maria'}
+    ]
+    
     # Obter todas as salas com ilhas pré-carregadas
     salas = Sala.objects.all().prefetch_related(
         Prefetch('ilhas', queryset=Ilha.objects.all().order_by('nome'))
@@ -73,9 +85,11 @@ def controle_estoque(request):
             # Para cada PA, buscar e contar os periféricos atribuídos
             for pa in posicoes_atendimento_ilha:
                 # Buscar atribuições ativas de periféricos para esta PA usando select_related
+                # e filtrar por loja selecionada
                 atribuicoes_ativas = AtribuicaoPerifericoPA.objects.filter(
                     posicao_atendimento=pa,
-                    ativo=True
+                    ativo=True,
+                    periferico__loja=loja_selecionada  # Filtrar por loja selecionada
                 ).select_related('periferico__tipo')
                 
                 # Contar periféricos por tipo
@@ -85,17 +99,18 @@ def controle_estoque(request):
                         perifericos_por_sala_ilha[sala.id][ilha.id][tipo_id] += 1
                         total_geral_perifericos += 1
     
-    # Obter contagem de computadores cadastrados de forma otimizada
-    computadores_cadastrados_total = Computador.objects.count()
+    # Obter contagem de computadores cadastrados de forma otimizada, filtrados por loja
+    computadores_cadastrados_total = Computador.objects.filter(loja=loja_selecionada).count()
 
     # Contagem de computadores em uso por sala/ilha - abordagem mais eficiente
     computadores_em_uso_por_sala_ilha = {}
     computadores_em_uso_total_geral = 0
     
     # Pré-calcular contagens de computadores por ilha usando agregação
+    # Filtrado por loja
     contagens_computadores_por_ilha = (
         AtribuicaoComputadorPA.objects
-        .filter(ativo=True)
+        .filter(ativo=True, computador__loja=loja_selecionada)
         .values('posicao_atendimento__ilha')
         .annotate(count=Count('computador', distinct=True))
     )
@@ -113,26 +128,32 @@ def controle_estoque(request):
             computadores_em_uso_por_sala_ilha[sala.id][ilha.id] = contagem_ilha_atual
             computadores_em_uso_total_geral += contagem_ilha_atual
 
-    # Computadores em uso - Query mais eficiente
-    ids_computadores_em_uso = AtribuicaoComputadorPA.objects.filter(ativo=True)\
-        .values_list('computador_id', flat=True)\
+    # Computadores em uso - Query mais eficiente, filtrados por loja
+    ids_computadores_em_uso = AtribuicaoComputadorPA.objects.filter(
+        ativo=True,
+        computador__loja=loja_selecionada
+    ).values_list('computador_id', flat=True)\
         .distinct()
     
-    # Computadores disponíveis - Query mais eficiente
-    computadores_disponiveis_total = Computador.objects.filter(status='disponivel')\
-        .exclude(id__in=Subquery(ids_computadores_em_uso))\
+    # Computadores disponíveis - Query mais eficiente, filtrados por loja
+    computadores_disponiveis_total = Computador.objects.filter(
+        status='disponivel',
+        loja=loja_selecionada
+    ).exclude(id__in=Subquery(ids_computadores_em_uso))\
         .count()
 
     # Calcular computadores disponíveis POR MARCA (incluindo marcas com 0 disponíveis)
     # ids_computadores_em_uso já foi definido acima
     
     # 1. Obter todas as marcas distintas cadastradas de computadores (para garantir que todas apareçam na lista)
-    todas_as_marcas_cadastradas = Computador.objects.values_list('marca', flat=True).distinct().order_by('marca')
+    # Filtrando por loja
+    todas_as_marcas_cadastradas = Computador.objects.filter(loja=loja_selecionada).values_list('marca', flat=True).distinct().order_by('marca')
     
     # 2. Obter a contagem de computadores REALMENTE disponíveis por marca
     #    (status='disponivel' E não estão em uso)
     contagem_disponiveis_raw = Computador.objects.filter(
-        status='disponivel'
+        status='disponivel',
+        loja=loja_selecionada
     ).exclude(
         id__in=ids_computadores_em_uso
     ).values('marca').annotate(
@@ -259,6 +280,8 @@ def controle_estoque(request):
         'computadores_disponiveis_total': computadores_disponiveis_total,
         'computadores_disponiveis_por_marca_list': computadores_disponiveis_por_marca_list,
         'itens_por_pagina': itens_por_pagina,
+        'lojas': lojas,  # Adiciona a lista de lojas ao contexto
+        'loja_selecionada': loja_selecionada,  # Adiciona a loja selecionada ao contexto
     }
     
     return render(request, 'apps/ti/controle_estoque.html', context)
@@ -428,6 +451,10 @@ def marcar_consertado(request, item_id, tipo_item_slug):
 
 @login_required
 def admin(request):
+    # Inicializar os formulários
+    form_periferico = PerifericoForm()
+    form_atribuicao_pa = AtribuicaoPerifericoPAForm()
+    
     context = {
         'title': 'Admin - TI',
         'tipos_perifericos': TipoPeriferico.objects.all().count(),
@@ -443,14 +470,40 @@ def admin(request):
         'perifericos_list': Periferico.objects.filter(status='disponivel'),
         'posicoes_atendimento_list': PosicaoAtendimento.objects.all(),
         'computadores_list': Computador.objects.filter(status='disponivel'),
+        # Adicionar os formulários no contexto
+        'form_periferico': form_periferico,
+        'form_atribuicao_pa': form_atribuicao_pa,
     }
     
     if request.method == 'POST':
         # O processamento do formulário de atribuição de funcionário foi REMOVIDO daqui.
         # Essa lógica agora é centralizada na API chamada pelo Controle de Salas.
         
-        if 'periferico' in request.POST and 'posicao_atendimento' in request.POST and 'data_atribuicao' in request.POST:
-            # Processamento do formulário de atribuição de periférico
+        # Verificar qual formulário foi enviado
+        if 'submit_periferico' in request.POST:
+            # Processamento do formulário de cadastro de periférico
+            form_periferico = PerifericoForm(request.POST)
+            if form_periferico.is_valid():
+                form_periferico.save()
+                messages.success(request, 'Periférico cadastrado com sucesso!')
+                return redirect('ti:admin')
+            else:
+                # Se o formulário não for válido, repassar o formulário com erros
+                context['form_periferico'] = form_periferico
+        
+        elif 'submit_atribuicao_pa' in request.POST:
+            # Processamento do formulário de atribuição de periférico a PA
+            form_atribuicao_pa = AtribuicaoPerifericoPAForm(request.POST)
+            if form_atribuicao_pa.is_valid():
+                form_atribuicao_pa.save()
+                messages.success(request, 'Atribuição de periférico cadastrada com sucesso!')
+                return redirect('ti:admin')
+            else:
+                # Se o formulário não for válido, repassar o formulário com erros
+                context['form_atribuicao_pa'] = form_atribuicao_pa
+                
+        elif 'periferico' in request.POST and 'posicao_atendimento' in request.POST and 'data_atribuicao' in request.POST:
+            # Processamento do formulário de atribuição de periférico (formato antigo)
             form = AtribuicaoPerifericoPAForm(request.POST)
             if form.is_valid():
                 form.save()

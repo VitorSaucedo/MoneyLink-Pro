@@ -26,8 +26,9 @@ class TipoPerifericoForm(forms.ModelForm):
 class PerifericoForm(forms.ModelForm):
     class Meta:
         model = Periferico
-        fields = ['tipo', 'marca', 'modelo', 'data_aquisicao', 'quantidade', 'observacoes']
+        fields = ['loja', 'tipo', 'marca', 'modelo', 'data_aquisicao', 'quantidade', 'observacoes']
         widgets = {
+            'loja': forms.Select(attrs={'class': 'form-control'}),
             'tipo': forms.Select(attrs={'class': 'form-control'}),
             'marca': forms.TextInput(attrs={'class': 'form-control'}),
             'modelo': forms.TextInput(attrs={'class': 'form-control'}),

@@ -6,6 +6,10 @@
    - Design flat sem sombras ou bordas entre elementos
    - Gradientes preservados nos cabeçalhos
    - Transparência/matching em áreas de conteúdo
+   
+   IMPORTANTE: Este arquivo contém apenas os estilos para o modo escuro.
+   Os estilos padrão (modo claro) devem permanecer nos arquivos CSS de cada página.
+   Regras com !important são usadas para resolver conflitos de especificidade.
    ============================================== */
 
 /* Variáveis específicas para Dark Mode do TI */
@@ -61,7 +65,7 @@
 [data-theme="dark"] .container,
 [data-theme="dark"] .card,
 [data-theme="dark"] .panel {
-    background-color: var(--bg-primary);
+    background-color: var(--ti-bg-primary) !important;
     border: none !important;
     box-shadow: var(--ti-shadow-none) !important;
 }
@@ -86,11 +90,6 @@
 [data-theme="dark"] .card-header::before,
 [data-theme="dark"] .panel-heading::before,
 [data-theme="dark"] .card .card-header::before,
-[data-theme="dark"] .pa-header::before,
-/* Remove this selector to fix the salas-tabs appearance */
-[data-theme="dark"] .card-header::before,
-[data-theme="dark"] .panel-heading::before,
-[data-theme="dark"] .card .card-header::before,
 [data-theme="dark"] .pa-header::before {
     content: '';
     position: absolute;
@@ -112,9 +111,6 @@
 }
 
 /* Ativar animação apenas no hover do header */
-[data-theme="dark"] .card:hover .card-header::before,
-[data-theme="dark"] .panel:hover .panel-heading::before,
-[data-theme="dark"] div:hover > .pa-header::before,
 [data-theme="dark"] .card:hover .card-header::before,
 [data-theme="dark"] .panel:hover .panel-heading::before,
 [data-theme="dark"] div:hover > .pa-header::before {
@@ -247,11 +243,28 @@
 /* Botões */
 [data-theme="dark"] .btn {
     border: none;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
-[data-theme="dark"] .btn-primary {
-    background-color: var(--ti-accent-tertiary);
-    color: var(--ti-text-primary);
+[data-theme="dark"] .btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+/* Aumentando especificidade para btn-primary para sobrescrever auto_atribuicao_pa.css */
+[data-theme="dark"] .btn-primary,
+[data-theme="dark"] .app-ti .btn-primary,
+[data-theme="dark"] body .app-ti .btn-primary,
+[data-theme="dark"] .container .btn-primary {
+    background: var(--ti-accent-tertiary) !important;
+    background-color: var(--ti-accent-tertiary) !important;
+    background-image: none !important;
+    color: var(--ti-text-primary) !important;
+    border: none !important;
+}
+
+[data-theme="dark"] .btn-primary:hover {
+    cursor: pointer;
 }
 
 [data-theme="dark"] .btn-success {
@@ -260,8 +273,17 @@
 }
 
 [data-theme="dark"] .btn-info {
-    background-color: var(--ti-accent-secondary);
-    color: var(--ti-text-primary);
+    background-color: rgba(110, 66, 193, 0.2);
+    color: var(--ti-text-secondary);
+    border: 1px solid var(--ti-border-light);
+    transition: all 0.2s ease;
+}
+
+[data-theme="dark"] .btn-info:hover {
+    background-color: rgba(110, 66, 193, 0.3);
+    transform: translateY(-2px);
+    box-shadow: 0 2px 5px rgba(110, 66, 193, 0.2);
+    color: var(--ti-text-secondary);
 }
 
 [data-theme="dark"] .btn-warning {
@@ -299,10 +321,6 @@
     font-weight: 500;
 }
 
-[data-theme="dark"] .badge.bg-success {
-    background-color: var(--ti-status-success) !important;
-}
-
 /* Título da página */
 [data-theme="dark"] .titulo-pagina {
     color: var(--ti-text-primary);
@@ -323,6 +341,19 @@
 [data-theme="dark"] .app-ti .pagination .page-item.active .page-link {
     background-color: var(--ti-accent-tertiary);
     color: var(--ti-text-primary);
+}
+
+/* PA Atual Badge - Correção de especificidade para auto_atribuicao_pa.css */
+[data-theme="dark"] .pa-atual-badge,
+[data-theme="dark"] body .pa-atual-badge,
+[data-theme="dark"] .app-ti .pa-atual-badge,
+[data-theme="dark"] .pa-atual-info .pa-atual-badge {
+    background: var(--ti-gradient-header) !important;
+    background-image: var(--ti-gradient-header) !important;
+    background-size: 400% 400% !important;
+    animation: gradientBG 15s ease infinite !important;
+    color: var(--ti-text-primary) !important;
+    box-shadow: var(--ti-shadow-none) !important;
 }
 
 /* Estilos específicos para páginas */
@@ -402,6 +433,12 @@
     background-color: var(--ti-bg-card);
     border: none;
     box-shadow: var(--ti-shadow-none);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+[data-theme="dark"] .pa-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 6px 18px rgba(110, 66, 193, 0.15);
 }
 
 /* Cabeçalho de PA */
@@ -450,7 +487,7 @@
 /* Periféricos */
 [data-theme="dark"] .pa-perifericos h6,
 [data-theme="dark"] .pa-computadores h6 {
-    color: var(--color-primary-dark);
+    color: var(--ti-accent-tertiary);
 }
 
 [data-theme="dark"] .perifericos-list {
@@ -461,6 +498,13 @@
     background-color: rgba(110, 66, 193, 0.2);
     color: var(--ti-text-secondary);
     border: 1px solid var(--ti-border-light);
+    transition: all 0.2s ease;
+}
+
+[data-theme="dark"] .periferico-tag:hover {
+    background-color: rgba(110, 66, 193, 0.3);
+    transform: translateY(-2px);
+    box-shadow: 0 2px 5px rgba(110, 66, 193, 0.2);
 }
 
 /* Periféricos faltantes */
@@ -577,7 +621,7 @@
 
 /* Informações do funcionário - específico para auto_atribuicao */
 [data-theme="dark"] .funcionario-info h5 {
-    color: var(--ti-text-primary);
+    color: var(--ti-accent-tertiary);
 }
 
 [data-theme="dark"] .info-container {
@@ -590,7 +634,7 @@
 }
 
 [data-theme="dark"] .info-label {
-    color: var(--ti-text-primary);
+    color: var(--ti-text-secondary);
 }
 
 [data-theme="dark"] .info-label i {
@@ -607,7 +651,18 @@
 }
 
 [data-theme="dark"] .current-pa h5 {
-    color: var(--ti-text-primary);
+    color: var(--ti-accent-tertiary);
+}
+
+/* PA Atual Badge Override */
+[data-theme="dark"] .pa-atual-badge,
+[data-theme="dark"] .app-ti .pa-atual-badge {
+    background: var(--ti-gradient-header) !important;
+    background-image: var(--ti-gradient-header) !important;
+    background-size: 400% 400% !important;
+    animation: gradientBG 15s ease infinite !important;
+    color: var(--ti-text-primary) !important;
+    box-shadow: 0 4px 12px rgba(110, 66, 193, 0.3) !important;
 }
 
 [data-theme="dark"] .pa-atual-info {
@@ -629,7 +684,7 @@
 
 /* Formulário de seleção de PA */
 [data-theme="dark"] .pa-select-form label {
-    color: var(--ti-text-primary);
+    color: var(--ti-accent-tertiary);
 }
 
 [data-theme="dark"] .pa-select-form .form-text {
@@ -673,14 +728,80 @@
     border: none;
 }
 
+/* Classe específica para headers de modal com efeito de brilho contido */
+[data-theme="dark"] .modal-header-darkmode {
+    background: var(--ti-gradient-header) !important;
+    background-size: 400% 400% !important;
+    animation: gradientBG 15s ease infinite !important;
+    color: var(--ti-text-primary);
+    border: none;
+    position: relative;
+    overflow: hidden; /* Importante para conter o efeito de brilho */
+}
+
+[data-theme="dark"] .modal-header-darkmode::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(
+        90deg,
+        rgba(255,255,255,0) 0%,
+        rgba(255,255,255,0.05) 40%,
+        rgba(255,255,255,0.2) 50%,
+        rgba(255,255,255,0.05) 60%,
+        rgba(255,255,255,0) 100%
+    );
+    z-index: 1;
+    transition: all 0.8s ease;
+}
+
+[data-theme="dark"] .modal-header-darkmode:hover::before {
+    left: 100%;
+}
+
 [data-theme="dark"] .modal-body {
     background-color: var(--ti-bg-secondary);
-    color: var(--ti-text-secondary);
+    color: var(--ti-text-primary);
 }
 
 [data-theme="dark"] .modal-footer {
     background-color: var(--ti-bg-secondary);
     border-top: 1px solid var(--ti-border-light);
+}
+
+/* Botões de perigo com máxima especificidade para temas escuros */
+html[data-theme="dark"] body .modal-footer .btn-danger,
+[data-theme="dark"] .modal-footer button.btn-danger,
+[data-theme="dark"] .modal-footer input.btn-danger,
+[data-theme="dark"] .modal-content .modal-footer .btn-danger,
+[data-theme="dark"] .modal .modal-dialog .modal-content .modal-footer .btn-danger,
+[data-theme="dark"] div.modal-footer .btn.btn-danger {
+    background-color: rgba(220, 53, 69, 0.8) !important;
+    background: rgba(220, 53, 69, 0.8) !important;
+    border-color: rgba(220, 53, 69, 0.9) !important;
+    color: #fff !important;
+    box-shadow: 0 2px 8px rgba(220, 53, 69, 0.3) !important;
+    transition: all 0.3s ease;
+}
+
+html[data-theme="dark"] body .modal-footer .btn-danger:hover,
+html[data-theme="dark"] body .modal-footer .btn-danger:focus,
+[data-theme="dark"] .modal-footer button.btn-danger:hover,
+[data-theme="dark"] .modal-footer button.btn-danger:focus,
+[data-theme="dark"] .modal-content .modal-footer .btn-danger:hover,
+[data-theme="dark"] .modal-content .modal-footer .btn-danger:focus,
+[data-theme="dark"] .modal .modal-dialog .modal-content .modal-footer .btn-danger:hover,
+[data-theme="dark"] .modal .modal-dialog .modal-content .modal-footer .btn-danger:focus,
+[data-theme="dark"] div.modal-footer .btn.btn-danger:hover,
+[data-theme="dark"] div.modal-footer .btn.btn-danger:focus {
+    background-color: rgba(220, 53, 69, 1) !important;
+    background: rgba(220, 53, 69, 1) !important;
+    border-color: #dc3545 !important;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(220, 53, 69, 0.5) !important;
 }
 
 [data-theme="dark"] .popover {
@@ -693,7 +814,617 @@
     border: none;
 }
 
-/* Animação de gradiente */
+[data-theme="dark"] .assign-funcionario-btn {
+    cursor: pointer;
+}
+
+[data-theme="dark"] .add-periferico-btn {
+    cursor: pointer;
+}
+
+[data-theme="dark"] .assign-computador-btn-main {
+    cursor: pointer;
+}
+
+/* Status de PA */
+[data-theme="dark"] .pa-status-indicator {
+    transition: all 0.2s ease;
+}
+
+[data-theme="dark"] .pa-status-indicator:hover {
+    transform: scale(1.05);
+    filter: brightness(1.1);
+}
+
+/* Modal e componentes interativos */
+[data-theme="dark"] .modal-header .btn-close {
+    color: var(--ti-text-primary);
+    opacity: 0.8;
+    transition: all 0.2s ease;
+}
+
+[data-theme="dark"] .modal-header .btn-close:hover {
+    opacity: 1;
+    transform: rotate(90deg);
+}
+
+[data-theme="dark"] .modal-footer .btn {
+    transition: all 0.2s ease;
+}
+
+[data-theme="dark"] .modal-footer .btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+/* Computador tag */
+[data-theme="dark"] .computador-tag {
+    background-color: rgba(110, 66, 193, 0.2);
+    color: var(--ti-text-secondary);
+    border: 1px solid var(--ti-border-light);
+    transition: all 0.2s ease;
+}
+
+[data-theme="dark"] .computador-tag:hover {
+    background-color: rgba(110, 66, 193, 0.3);
+    transform: translateY(-2px);
+    box-shadow: 0 2px 5px rgba(110, 66, 193, 0.2);
+}
+
+[data-theme="dark"] .computador-tag .remove-computador-btn {
+    opacity: 0.7;
+    transition: all 0.2s ease;
+}
+
+[data-theme="dark"] .computador-tag .remove-computador-btn:hover {
+    opacity: 1;
+    color: var(--ti-status-danger);
+}
+
+/* Estilos para o dropdown de computadores */
+[data-theme="dark"] .computador-dropdown-menu {
+    background-color: var(--ti-bg-card) !important;
+    border: 1px solid var(--ti-border-light);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+    color: var(--ti-text-primary);
+    scrollbar-color: var(--ti-accent-tertiary) var(--ti-bg-secondary);
+    transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+}
+
+[data-theme="dark"] .computador-dropdown-menu:hover {
+    background-color: var(--ti-bg-card) !important;
+}
+
+[data-theme="dark"] .computador-dropdown-menu .p-2.text-muted {
+    color: var(--ti-text-muted) !important;
+}
+
+/* Estilização da scrollbar para Chrome/Edge/Safari no tema escuro */
+[data-theme="dark"] .computador-dropdown-menu::-webkit-scrollbar-track {
+    background: var(--ti-bg-secondary);
+    border-radius: 4px;
+}
+
+[data-theme="dark"] .computador-dropdown-menu::-webkit-scrollbar-thumb {
+    background-color: var(--ti-accent-tertiary);
+    border-radius: 4px;
+    border: 2px solid var(--ti-bg-secondary);
+}
+
+[data-theme="dark"] .computador-dropdown-menu::-webkit-scrollbar-thumb:hover {
+    background-color: var(--ti-accent-secondary);
+}
+
+/* Estilo do header de marca no tema escuro */
+[data-theme="dark"] .computador-marca-dropdown {
+    border-bottom: 1px solid var(--ti-border-light);
+    background-color: var(--ti-bg-secondary) !important;
+    color: var(--ti-text-primary) !important;
+    transition: all 0.2s ease;
+}
+
+[data-theme="dark"] .computador-marca-dropdown:hover {
+    background-color: var(--ti-bg-hover) !important;
+    transform: translateX(3px);
+    border-left: 3px solid var(--ti-accent-tertiary);
+    padding-left: 12px;
+}
+
+/* Estilo para itens de computador no dropdown no tema escuro */
+[data-theme="dark"] .computador-dropdown-item {
+    background-color: var(--ti-bg-card) !important;
+    border-bottom: 1px solid var(--ti-border-light);
+    color: var(--ti-text-secondary) !important;
+    transition: all 0.2s ease;
+}
+
+[data-theme="dark"] .computador-dropdown-item:hover {
+    background-color: var(--ti-bg-hover) !important;
+    transform: translateY(-2px);
+    box-shadow: 0 2px 8px rgba(110, 66, 193, 0.2);
+    color: var(--ti-text-primary) !important;
+}
+
+/* Botão de atribuir computador no dropdown */
+[data-theme="dark"] .atribuir-computador-btn {
+    background-color: rgba(110, 66, 193, 0.2) !important;
+    color: var(--ti-text-secondary) !important;
+    border: 1px solid var(--ti-border-light);
+    transition: all 0.2s ease;
+    cursor: pointer;
+}
+
+[data-theme="dark"] .atribuir-computador-btn:hover {
+    background-color: var(--ti-accent-tertiary) !important;
+    color: var(--ti-text-primary) !important;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 5px rgba(110, 66, 193, 0.3);
+}
+
+/* Botão de atribuir ou remover computador */
+[data-theme="dark"] .assign-computador-btn,
+[data-theme="dark"] .remove-computador-btn {
+    transition: all 0.2s ease;
+    cursor: pointer;
+    opacity: 0.8;
+}
+
+[data-theme="dark"] .assign-computador-btn:hover,
+[data-theme="dark"] .remove-computador-btn:hover {
+    opacity: 1;
+    transform: scale(1.1);
+}
+
+/* Estilos para itens interativos */
+[data-theme="dark"] .atribuir-periferico-btn {
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+[data-theme="dark"] .atribuir-periferico-btn:hover {
+    background-color: var(--ti-accent-tertiary);
+    transform: translateY(-1px);
+}
+
+[data-theme="dark"] .periferico-disponivel-item {
+    transition: all 0.2s ease;
+}
+
+[data-theme="dark"] .periferico-disponivel-item:hover {
+    background-color: rgba(110, 66, 193, 0.1);
+    transform: translateY(-2px);
+}
+
+/* ==========================================
+   Modal para listar periféricos disponíveis - Modo Escuro
+   ========================================== */
+[data-theme="dark"] .perifericos-disponiveis-modal-backdrop {
+    background-color: rgba(0, 0, 0, 0.7);
+}
+
+[data-theme="dark"] .perifericos-disponiveis-modal {
+    background-color: var(--ti-bg-secondary) !important;
+    border: 1px solid var(--ti-border-light);
+    box-shadow: 0 5px 25px rgba(0, 0, 0, 0.5);
+}
+
+[data-theme="dark"] .perifericos-disponiveis-modal-header {
+    background: var(--ti-gradient-header) !important;
+    background-size: 400% 400% !important;
+    animation: gradientBG 15s ease infinite !important;
+    color: var(--ti-text-primary);
+    border-bottom: none;
+    position: relative;
+    overflow: hidden; /* Importante para conter o efeito de brilho */
+}
+
+[data-theme="dark"] .perifericos-disponiveis-modal-header::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(
+        90deg,
+        rgba(255,255,255,0) 0%,
+        rgba(255,255,255,0.05) 40%,
+        rgba(255,255,255,0.2) 50%,
+        rgba(255,255,255,0.05) 60%,
+        rgba(255,255,255,0) 100%
+    );
+    z-index: 1;
+    transition: all 0.8s ease;
+}
+
+[data-theme="dark"] .perifericos-disponiveis-modal-header:hover::before {
+    left: 100%;
+}
+
+[data-theme="dark"] .perifericos-disponiveis-modal-header h5 {
+    color: var(--ti-text-primary);
+}
+
+[data-theme="dark"] .perifericos-disponiveis-modal-close {
+    color: var(--ti-text-primary);
+    opacity: 0.8;
+    transition: all 0.2s ease;
+}
+
+[data-theme="dark"] .perifericos-disponiveis-modal-close:hover {
+    opacity: 1;
+    transform: rotate(90deg);
+}
+
+[data-theme="dark"] .perifericos-disponiveis-modal-body {
+    background-color: var(--ti-bg-secondary);
+    color: var(--ti-text-secondary);
+    scrollbar-color: var(--ti-accent-tertiary) var(--ti-bg-secondary);
+}
+
+/* Estilização da scrollbar para Chrome/Edge/Safari no tema escuro */
+[data-theme="dark"] .perifericos-disponiveis-modal-body::-webkit-scrollbar {
+    width: 8px;
+}
+
+[data-theme="dark"] .perifericos-disponiveis-modal-body::-webkit-scrollbar-track {
+    background: var(--ti-bg-secondary);
+    border-radius: 4px;
+}
+
+[data-theme="dark"] .perifericos-disponiveis-modal-body::-webkit-scrollbar-thumb {
+    background-color: var(--ti-accent-tertiary);
+    border-radius: 4px;
+    border: 2px solid var(--ti-bg-secondary);
+}
+
+[data-theme="dark"] .perifericos-disponiveis-modal-body::-webkit-scrollbar-thumb:hover {
+    background-color: var(--ti-accent-secondary);
+}
+
+[data-theme="dark"] .perifericos-disponiveis-list {
+    color: var(--ti-text-secondary);
+}
+
+[data-theme="dark"] .periferico-disponivel-item {
+    background-color: var(--ti-bg-card) !important;
+    border: 1px solid var(--ti-border-light);
+    color: var(--ti-text-secondary) !important;
+    transition: all 0.2s ease;
+}
+
+[data-theme="dark"] .periferico-disponivel-item:hover {
+    background-color: var(--ti-bg-hover) !important;
+    transform: translateY(-2px);
+    box-shadow: 0 2px 8px rgba(110, 66, 193, 0.2);
+}
+
+[data-theme="dark"] .periferico-disponivel-marca {
+    color: var(--ti-text-primary) !important;
+}
+
+[data-theme="dark"] .periferico-disponivel-modelo {
+    color: var(--ti-text-muted) !important;
+}
+
+[data-theme="dark"] .perifericos-disponiveis-modal-footer {
+    background-color: var(--ti-bg-secondary);
+    border-top: 1px solid var(--ti-border-light);
+    color: var(--ti-text-secondary);
+}
+
+/* ==========================================
+   Container e Dropdown de Funcionários - Modo Escuro
+   ========================================== */
+[data-theme="dark"] .funcionario-dropdown-menu {
+    background-color: var(--ti-bg-card) !important;
+    border: 1px solid var(--ti-border-light);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+    color: var(--ti-text-primary);
+    transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+}
+
+[data-theme="dark"] .funcionario-dropdown-menu:hover {
+    background-color: var(--ti-bg-card) !important;
+}
+
+[data-theme="dark"] .funcionario-dropdown-item {
+    background-color: var(--ti-bg-card) !important;
+    border-bottom: 1px solid var(--ti-border-light);
+    color: var(--ti-text-secondary) !important;
+    transition: all 0.2s ease;
+}
+
+[data-theme="dark"] .funcionario-dropdown-item:hover {
+    background-color: var(--ti-bg-hover) !important;
+    transform: translateY(-2px);
+    box-shadow: 0 2px 8px rgba(110, 66, 193, 0.2);
+    color: var(--ti-text-primary) !important;
+}
+
+[data-theme="dark"] .funcionario-dropdown-item:last-child {
+    border-bottom: none;
+}
+
+[data-theme="dark"] .funcionario-dropdown-item .nome {
+    color: var(--ti-text-primary) !important;
+}
+
+[data-theme="dark"] .ramal-inline {
+    color: var(--ti-accent-tertiary) !important;
+}
+
+[data-theme="dark"] .funcionario-dropdown-item .ramal {
+    color: var(--ti-text-muted) !important;
+}
+
+[data-theme="dark"] .funcionario-dropdown-item.no-ramal .ramal {
+    color: var(--ti-text-muted) !important;
+    font-style: italic;
+}
+
+[data-theme="dark"] .funcionario-dropdown-item.desatribuir-item {
+    background-color: rgba(220, 53, 69, 0.1) !important;
+    color: var(--ti-status-danger) !important;
+    border-bottom: 1px solid var(--ti-border-light);
+}
+
+[data-theme="dark"] .funcionario-dropdown-item.desatribuir-item:hover {
+    background-color: rgba(220, 53, 69, 0.2) !important;
+    transform: translateY(-2px);
+    box-shadow: 0 2px 8px rgba(220, 53, 69, 0.2);
+}
+
+/* ==========================================
+   Menu de Ações para Periféricos - Modo Escuro
+   ========================================== */
+[data-theme="dark"] .periferico-action-menu {
+    background-color: var(--ti-bg-card) !important;
+    border: 1px solid var(--ti-border-light);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+    color: var(--ti-text-primary);
+    transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+    z-index: 9999;
+}
+
+[data-theme="dark"] .periferico-action-menu:hover {
+    background-color: var(--ti-bg-card) !important;
+}
+
+[data-theme="dark"] .periferico-action-item {
+    background-color: var(--ti-bg-card) !important;
+    border-bottom: 1px solid var(--ti-border-light);
+    color: var(--ti-text-primary) !important;
+    transition: all 0.2s ease;
+    padding: 10px 15px;
+    cursor: pointer;
+}
+
+[data-theme="dark"] .periferico-action-item:hover,
+[data-theme="dark"] body .periferico-action-item:hover,
+[data-theme="dark"] .periferico-action-menu .periferico-action-item:hover,
+[data-theme="dark"] div.periferico-action-item:hover {
+    background-color: var(--ti-bg-hover) !important;
+    transform: translateY(-2px);
+    box-shadow: 0 2px 8px rgba(110, 66, 193, 0.2);
+    color: var(--ti-text-primary) !important;
+}
+
+[data-theme="dark"] .periferico-action-item:last-child {
+    border-bottom: none;
+}
+
+[data-theme="dark"] .periferico-action-item.remove-action {
+    background-color: rgba(220, 53, 69, 0.1) !important;
+    color: var(--ti-status-danger) !important;
+}
+
+[data-theme="dark"] .periferico-action-item.remove-action:hover,
+[data-theme="dark"] body .periferico-action-item.remove-action:hover,
+[data-theme="dark"] .periferico-action-menu .periferico-action-item.remove-action:hover,
+[data-theme="dark"] div.periferico-action-item.remove-action:hover {
+    background-color: rgba(220, 53, 69, 0.2) !important;
+    transform: translateY(-2px);
+    box-shadow: 0 2px 8px rgba(220, 53, 69, 0.2);
+    color: var(--ti-status-danger) !important;
+}
+
+[data-theme="dark"] .periferico-action-item i {
+    color: var(--ti-accent-tertiary) !important;
+    margin-right: 8px;
+}
+
+[data-theme="dark"] .periferico-action-item.remove-action i {
+    color: var(--ti-status-danger) !important;
+}
+
+/* ==========================================
+   Menu de Ações para Computadores - Modo Escuro
+   ========================================== */
+[data-theme="dark"] .computador-action-menu,
+html[data-theme="dark"] body .computador-action-menu,
+[data-theme="dark"] div.computador-action-menu {
+    background-color: var(--ti-bg-card) !important;
+    border: 1px solid var(--ti-border-light) !important;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4) !important;
+    color: var(--ti-text-primary) !important;
+    transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+    z-index: 9999;
+}
+
+[data-theme="dark"] .computador-action-option,
+html[data-theme="dark"] body .computador-action-option,
+[data-theme="dark"] div.computador-action-option {
+    background-color: var(--ti-bg-card) !important;
+    border-bottom: 1px solid var(--ti-border-light);
+    color: var(--ti-text-primary) !important;
+    transition: all 0.2s ease;
+}
+
+[data-theme="dark"] .computador-action-option:hover,
+[data-theme="dark"] .computador-action-option.hover,
+html[data-theme="dark"] body .computador-action-option:hover,
+html[data-theme="dark"] body .computador-action-option.hover {
+    background-color: var(--ti-bg-hover) !important;
+    transform: translateY(-2px);
+    box-shadow: 0 2px 8px rgba(110, 66, 193, 0.2);
+    color: var(--ti-text-primary) !important;
+}
+
+[data-theme="dark"] .computador-action-option:last-child {
+    border-bottom: none;
+}
+
+[data-theme="dark"] .computador-action-option.remove-action {
+    background-color: rgba(220, 53, 69, 0.1) !important;
+    color: var(--ti-status-danger) !important;
+}
+
+[data-theme="dark"] .computador-action-option.remove-action:hover,
+[data-theme="dark"] .computador-action-option.remove-action.hover {
+    background-color: rgba(220, 53, 69, 0.2) !important;
+    transform: translateY(-2px);
+    box-shadow: 0 2px 8px rgba(220, 53, 69, 0.2);
+}
+
+[data-theme="dark"] .computador-action-option i {
+    color: var(--ti-accent-tertiary) !important;
+    margin-right: 8px;
+}
+
+[data-theme="dark"] .computador-action-option.remove-action i {
+    color: var(--ti-status-danger) !important;
+}
+
+/* Menu de Status de Computadores - Modo Escuro
+   ========================================== */
+[data-theme="dark"] .computador-status-menu,
+html[data-theme="dark"] body .computador-status-menu {
+    background-color: var(--ti-bg-card) !important;
+    border: 1px solid var(--ti-border-light) !important;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4) !important;
+    color: var(--ti-text-primary) !important;
+}
+
+[data-theme="dark"] .computador-status-header,
+html[data-theme="dark"] body .computador-status-header {
+    color: var(--ti-text-primary) !important;
+    border-bottom: 1px solid var(--ti-border-light) !important;
+    background: var(--ti-gradient-header) !important;
+    background-size: 400% 400% !important;
+    animation: gradientBG 15s ease infinite !important;
+    position: relative;
+    overflow: hidden;
+}
+
+[data-theme="dark"] .computador-status-header::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(
+        90deg,
+        rgba(255,255,255,0) 0%,
+        rgba(255,255,255,0.05) 40%,
+        rgba(255,255,255,0.2) 50%,
+        rgba(255,255,255,0.05) 60%,
+        rgba(255,255,255,0) 100%
+    );
+    z-index: 1;
+    transition: all 0.8s ease;
+}
+
+[data-theme="dark"] .computador-status-header:hover::before {
+    left: 100%;
+}
+
+[data-theme="dark"] .computador-status-item,
+html[data-theme="dark"] body .computador-status-item {
+    color: var(--ti-text-primary) !important;
+    background-color: var(--ti-bg-card) !important;
+    border-bottom: 1px solid var(--ti-border-light);
+}
+
+[data-theme="dark"] .computador-status-item:last-child {
+    border-bottom: none;
+}
+
+[data-theme="dark"] .computador-status-item:hover,
+[data-theme="dark"] .computador-status-item.hover,
+html[data-theme="dark"] body .computador-status-item:hover,
+html[data-theme="dark"] body .computador-status-item.hover {
+    background-color: var(--ti-bg-hover) !important;
+    transform: translateY(-2px);
+    box-shadow: 0 2px 8px rgba(110, 66, 193, 0.2);
+    color: var(--ti-text-primary) !important;
+}
+
+/* ==========================================
+   Menu de Status de Periféricos - Modo Escuro
+   ========================================== */
+[data-theme="dark"] .periferico-status-menu {
+    background-color: var(--ti-bg-card) !important;
+    border: 1px solid var(--ti-border-light) !important;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4) !important;
+    color: var(--ti-text-primary) !important;
+}
+
+[data-theme="dark"] .periferico-status-header {
+    color: var(--ti-text-primary) !important;
+    border-bottom: 1px solid var(--ti-border-light) !important;
+    background: var(--ti-gradient-header) !important;
+    background-size: 400% 400% !important;
+    animation: gradientBG 15s ease infinite !important;
+    position: relative;
+    overflow: hidden;
+}
+
+[data-theme="dark"] .periferico-status-header::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(
+        90deg,
+        rgba(255,255,255,0) 0%,
+        rgba(255,255,255,0.05) 40%,
+        rgba(255,255,255,0.2) 50%,
+        rgba(255,255,255,0.05) 60%,
+        rgba(255,255,255,0) 100%
+    );
+    z-index: 1;
+    transition: all 0.8s ease;
+}
+
+[data-theme="dark"] .periferico-status-header:hover::before {
+    left: 100%;
+}
+
+[data-theme="dark"] .periferico-status-item {
+    color: var(--ti-text-secondary) !important;
+    background-color: var(--ti-bg-card) !important;
+    border-bottom: 1px solid var(--ti-border-light);
+}
+
+[data-theme="dark"] .periferico-status-item:last-child {
+    border-bottom: none;
+}
+
+[data-theme="dark"] .periferico-status-item:hover,
+[data-theme="dark"] .periferico-status-item.hover {
+    background-color: var(--ti-bg-hover) !important;
+    transform: translateY(-2px);
+    box-shadow: 0 2px 8px rgba(110, 66, 193, 0.2);
+    color: var(--ti-text-primary) !important;
+}
+
+/* ==========================================
+   Animação de gradiente
+   ========================================== */
 @keyframes gradientBG {
     0% {
         background-position: 0% 50%;

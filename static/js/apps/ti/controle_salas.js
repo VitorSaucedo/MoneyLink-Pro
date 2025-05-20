@@ -700,11 +700,7 @@ $(document).ready(function() {
     const targetPane = document.querySelector(targetSelector);
     
     if (!container || !currentPane || !targetPane) {
-      // console.error('Elementos não encontrados para animação:', {
-      //   container: containerSelector,
-      //   currentPane: currentSelector,
-      //   targetPane: targetSelector
-      // });
+      console.error('Elementos não encontrados para animação');
       return;
     }
     
@@ -728,59 +724,58 @@ $(document).ready(function() {
     });
     
     // Preparar os elementos para animação tipo slider
-    // Configuração do container para a animação
     container.style.position = 'relative';
     container.style.overflow = 'hidden';
     
-    // Em vez de usar position:absolute que pode causar bugs de layout,
-    // vamos usar um wrapper para o efeito de slide
-    
     // Criar um wrapper temporário para a animação
     const sliderWrapper = document.createElement('div');
+    sliderWrapper.className = 'slider-wrapper';
     sliderWrapper.style.display = 'flex';
     sliderWrapper.style.width = '200%';
     sliderWrapper.style.transition = 'transform 0.5s ease-in-out';
     
-    // Remover os painéis do container e adicioná-los ao wrapper
+    // Adicionar os painéis ao wrapper
+    sliderWrapper.appendChild(currentPane);
+    sliderWrapper.appendChild(targetPane);
     container.appendChild(sliderWrapper);
     
-    // Preparar o painel atual
+    // Preparar os painéis
     currentPane.style.width = '50%';
     currentPane.style.flexShrink = '0';
-    currentPane.classList.add('show', 'active');
-    
-    // Preparar o painel alvo
-    targetPane.style.width = '50%'; 
+    targetPane.style.width = '50%';
     targetPane.style.flexShrink = '0';
     
-    // Adicionar os painéis ao wrapper na ordem correta dependendo da direção
-    if (direction === 'right') {
-      sliderWrapper.appendChild(currentPane);
-      sliderWrapper.appendChild(targetPane);
-      // Iniciar com o primeiro painel visível
-      sliderWrapper.style.transform = 'translateX(0)';
-    } else {
-      sliderWrapper.appendChild(targetPane);
-      sliderWrapper.appendChild(currentPane);
-      // Iniciar com o segundo painel visível
-      sliderWrapper.style.transform = 'translateX(-50%)';
-    }
+    // Iniciar a animação
+    // Configuração inicial: painel atual à esquerda, painel alvo à direita
+    sliderWrapper.style.transform = 'translateX(0)';
     
     // Forçar repaint
     void sliderWrapper.offsetWidth;
     
-    // Iniciar animação deslizante
+    // Animar na direção apropriada
     if (direction === 'right') {
-      // Deslizar para a esquerda para mostrar o segundo painel
+      // Deslizar para a esquerda (mostra o segundo painel)
       sliderWrapper.style.transform = 'translateX(-50%)';
     } else {
-      // Deslizar para a direita para mostrar o primeiro painel
+      // Para animação para a direita, precisamos reorganizar os painéis
+      sliderWrapper.style.transition = 'none';
+      sliderWrapper.insertBefore(targetPane, currentPane);
+      sliderWrapper.style.transform = 'translateX(-50%)';
+      
+      // Forçar repaint novamente
+      void sliderWrapper.offsetWidth;
+      
+      // Restaurar transição e animar
+      sliderWrapper.style.transition = 'transform 0.5s ease-in-out';
       sliderWrapper.style.transform = 'translateX(0)';
     }
     
     // Após o término da animação
     setTimeout(() => {
-      // Restaurar os elementos para o DOM normal
+      // Restaurar os painéis ao DOM normal
+      while (sliderWrapper.firstChild) {
+        container.appendChild(sliderWrapper.firstChild);
+      }
       container.removeChild(sliderWrapper);
       
       // Restaurar estilos originais
@@ -789,29 +784,26 @@ $(document).ready(function() {
       targetPane.style.width = '';
       targetPane.style.flexShrink = '';
       
-      // Restaurar classes e visibilidade
+      // Atualizar classes e visibilidade
       currentPane.classList.remove('show', 'active');
       currentPane.style.display = 'none';
-      
       targetPane.classList.add('show', 'active');
       targetPane.style.display = 'block';
       
-      container.appendChild(currentPane);
-      container.appendChild(targetPane);
+      // Disparar evento personalizado
+      $(document).trigger('tabTransitionComplete', [targetSelector]);
       
-      // Deixar o container com altura automática após a transição completar
+      // Remover a altura mínima após um pequeno atraso para permitir que a renderização ocorra
       setTimeout(() => {
-        container.style.minHeight = '';
+        // Definir para 'auto' permite que o container se ajuste ao conteúdo exibido
+        container.style.minHeight = 'auto';
         container.style.position = '';
         container.style.overflow = '';
         
-        // Disparar evento personalizado para que outros scripts possam reagir à conclusão da transição
-        $(document).trigger('tabTransitionComplete', [targetSelector]);
-        
-        // Organizar as PAs após a animação com um pequeno atraso para garantir renderização
-        setTimeout(organizarLayoutPAs, 50);
+        // Organizar as PAs com o layout correto
+        organizarLayoutPAs();
       }, 50);
-    }, 500); // Tempo da animação
+    }, 500); // Tempo igual à duração da animação
   }
   
   /**
@@ -965,13 +957,24 @@ $(document).ready(function() {
     const paId = paCard.data('pa-id');
     const perifericoNomeCompleto = perifericoTag.text().trim(); // ex: "Teclado Dell"
     const perifericoTipo = perifericoTag.data('periferico-tipo') || perifericoNomeCompleto.split(' ')[0]; // Tenta pegar o tipo específico
+    
+    // Verificar se estamos no tema escuro
+    const isDarkTheme = document.documentElement.getAttribute('data-theme') === 'dark';
+    
+    // Definir cores com base no tema
+    const bgColor = isDarkTheme ? '#202534' : 'white';
+    const borderColor = isDarkTheme ? '#404758' : '#ccc';
+    const textColor = isDarkTheme ? '#E1E2E6' : 'inherit';
+    const shadowColor = isDarkTheme ? 'rgba(0,0,0,0.4)' : 'rgba(0,0,0,0.15)';
+    const hoverBgColor = isDarkTheme ? '#343B4E' : '#f5f5f5';
+    const removeTextColor = isDarkTheme ? '#EF6D7A' : '#dc3545';
 
     const menuHtml = `
-      <div class="periferico-action-menu" style="position: absolute; z-index: 1050; background-color: white; border: 1px solid #ccc; border-radius: 6px; box-shadow: 0 3px 10px rgba(0,0,0,0.15); padding: 5px 0; min-width: 180px;">
-        <div class="periferico-action-option" data-action="update-status" style="padding: 8px 12px; cursor: pointer;">
+      <div class="periferico-action-menu">
+        <div class="periferico-action-item" data-action="update-status">
           <i class='bx bx-edit-alt me-2'></i>Atualizar Status
         </div>
-        <div class="periferico-action-option" data-action="remove" style="padding: 8px 12px; cursor: pointer; color: #dc3545;">
+        <div class="periferico-action-item remove-action" data-action="remove">
           <i class='bx bx-trash me-2'></i>Remover da PA
         </div>
       </div>
@@ -986,18 +989,18 @@ $(document).ready(function() {
       left: (rect.left + window.scrollX) + 'px',
     });
 
-    activePerifericoActionMenu.find('.periferico-action-option').hover(
-      function() { $(this).css('background-color', '#f5f5f5'); },
-      function() { $(this).css('background-color', 'white'); }
+    activePerifericoActionMenu.find('.periferico-action-item').hover(
+      function() { $(this).addClass('hover'); },
+      function() { $(this).removeClass('hover'); }
     );
 
-    activePerifericoActionMenu.find('[data-action="update-status"]').on('click', function(event) {
+    activePerifericoActionMenu.find('.periferico-action-item[data-action="update-status"]').on('click', function(event) {
       event.stopPropagation(); // IMPEDE PROPAGAÇÃO
       fecharMenusPerifericoAtivos();
       abrirMenuAtualizarStatusPeriferico(perifericoId, perifericoNomeCompleto, perifericoTipo, paId, perifericoTag);
     });
 
-    activePerifericoActionMenu.find('[data-action="remove"]').on('click', function(event) {
+    activePerifericoActionMenu.find('.periferico-action-item[data-action="remove"]').on('click', function(event) {
       event.stopPropagation(); // IMPEDE PROPAGAÇÃO
       fecharMenusPerifericoAtivos();
       abrirModalConfirmacao(perifericoId, paId, perifericoNomeCompleto, perifericoTag);
@@ -1016,15 +1019,29 @@ $(document).ready(function() {
     console.log('[LOG] abrirMenuAtualizarStatusPeriferico INICIADA para periférico:', perifericoNome, 'ID:', perifericoId, 'PA ID:', paId);
     fecharMenusPerifericoAtivos(); // Fecha action menu e qualquer status menu anterior
 
+    // Verificar se estamos no tema escuro
+    const isDarkTheme = document.documentElement.getAttribute('data-theme') === 'dark';
+    
+    // Definir cores com base no tema
+    const bgColor = isDarkTheme ? '#202534' : 'white';
+    const borderColor = isDarkTheme ? '#404758' : '#ccc';
+    const textColor = isDarkTheme ? '#E1E2E6' : 'inherit';
+    const shadowColor = isDarkTheme ? 'rgba(0,0,0,0.4)' : 'rgba(0,0,0,0.15)';
+    const headerBorderColor = isDarkTheme ? '#404758' : '#eee';
+    
+    // Cores dos status permanecem iguais para manter a semântica das cores
+    const manutencaoColor = '#ffc107'; // Amarelo para manutenção
+    const disponivelColor = '#198754'; // Verde para disponível
+
     // Os status são: 'Em Uso', 'Em Manutenção', 'Livre' (Disponível no backend)
     const menuHtml = `
-      <div class="periferico-status-menu" style="position: absolute; z-index: 1050; background-color: white; border: 1px solid #ccc; border-radius: 6px; box-shadow: 0 3px 10px rgba(0,0,0,0.15); padding: 5px 0; min-width: 200px;">
-        <div style="padding: 8px 12px; font-weight: bold; border-bottom: 1px solid #eee; margin-bottom: 5px;">Atualizar Status: ${perifericoNome}</div>
-        <div class="periferico-status-option" data-status="manutencao" style="padding: 8px 12px; cursor: pointer;">
-          <span style="width: 10px; height: 10px; border-radius: 50%; display: inline-block; margin-right: 8px; background-color: #ffc107;"></span>Em Manutenção
+      <div class="periferico-status-menu">
+        <div class="periferico-status-header">Atualizar Status: ${perifericoNome}</div>
+        <div class="periferico-status-item" data-status="manutencao">
+          <span class="status-indicator status-manutencao"></span>Em Manutenção
         </div>
-        <div class="periferico-status-option" data-status="disponivel" style="padding: 8px 12px; cursor: pointer;">
-          <span style="width: 10px; height: 10px; border-radius: 50%; display: inline-block; margin-right: 8px; background-color: #198754;"></span>Livre (Disponível)
+        <div class="periferico-status-item" data-status="disponivel">
+          <span class="status-indicator status-disponivel"></span>Livre (Disponível)
         </div>
       </div>
     `;
@@ -1047,12 +1064,12 @@ $(document).ready(function() {
 
     console.log('[LOG] Menu de status do periférico posicionado e tornado visível.');
 
-    activePerifericoStatusMenu.find('.periferico-status-option').hover(
-      function() { $(this).css('background-color', '#f5f5f5'); },
-      function() { $(this).css('background-color', 'white'); }
+    activePerifericoStatusMenu.find('.periferico-status-item').hover(
+      function() { $(this).addClass('hover'); },
+      function() { $(this).removeClass('hover'); }
     );
 
-    activePerifericoStatusMenu.find('.periferico-status-option').on('click', function(event) {
+    activePerifericoStatusMenu.find('.periferico-status-item').on('click', function(event) {
       event.stopPropagation(); // IMPEDE PROPAGAÇÃO
       const novoStatus = $(this).data('status');
       fecharMenusPerifericoAtivos();
@@ -1816,11 +1833,11 @@ $(document).ready(function() {
     const paCard = computadorTag.closest('.pa-card');
 
     const menuHtml = `
-      <div class="computador-action-menu" style="position: absolute; z-index: 1050; background-color: white; border: 1px solid #ccc; border-radius: 6px; box-shadow: 0 3px 10px rgba(0,0,0,0.15); padding: 5px 0; min-width: 180px;">
-        <div class="computador-action-option" data-action="update-status" style="padding: 8px 12px; cursor: pointer;">
+      <div class="computador-action-menu">
+        <div class="computador-action-option" data-action="update-status">
           <i class='bx bx-edit-alt me-2'></i>Atualizar Status
         </div>
-        <div class="computador-action-option" data-action="remove" style="padding: 8px 12px; cursor: pointer; color: #dc3545;">
+        <div class="computador-action-option remove-action" data-action="remove">
           <i class='bx bx-trash me-2'></i>Remover da PA
         </div>
       </div>
@@ -1836,8 +1853,8 @@ $(document).ready(function() {
     }).show();
 
     activeComputadorActionMenu.find('.computador-action-option').hover(
-      function() { $(this).css('background-color', '#f5f5f5'); },
-      function() { $(this).css('background-color', 'white'); }
+      function() { $(this).addClass('hover'); },
+      function() { $(this).removeClass('hover'); }
     );
 
     activeComputadorActionMenu.find('[data-action="update-status"]').on('click', function(event) {
@@ -1865,13 +1882,13 @@ $(document).ready(function() {
   function abrirMenuAtualizarStatusComputador(computadorId, computadorNome, paId, computadorTagElement) {
     fecharMenusComputadorAtivos();
     const menuHtml = `
-      <div class="computador-status-menu" style="position: absolute; z-index: 1050; background-color: white; border: 1px solid #ccc; border-radius: 6px; box-shadow: 0 3px 10px rgba(0,0,0,0.15); padding: 5px 0; min-width: 200px;">
-        <div style="padding: 8px 12px; font-weight: bold; border-bottom: 1px solid #eee; margin-bottom: 5px;">Atualizar Status: ${computadorNome}</div>
-        <div class="computador-status-option" data-status="manutencao" style="padding: 8px 12px; cursor: pointer;">
-          <span style="width: 10px; height: 10px; border-radius: 50%; display: inline-block; margin-right: 8px; background-color: #ffc107;"></span>Em Manutenção
+      <div class="computador-status-menu">
+        <div class="computador-status-header">Atualizar Status: ${computadorNome}</div>
+        <div class="computador-status-item" data-status="manutencao">
+          <span class="status-indicator status-manutencao"></span>Em Manutenção
         </div>
-        <div class="computador-status-option" data-status="disponivel" style="padding: 8px 12px; cursor: pointer;">
-          <span style="width: 10px; height: 10px; border-radius: 50%; display: inline-block; margin-right: 8px; background-color: #198754;"></span>Livre (Disponível)
+        <div class="computador-status-item" data-status="disponivel">
+          <span class="status-indicator status-disponivel"></span>Livre (Disponível)
         </div>
       </div>
     `;
@@ -1885,12 +1902,12 @@ $(document).ready(function() {
       left: (rect.left + window.scrollX) + 'px',
     }).show();
 
-    activeComputadorStatusMenu.find('.computador-status-option').hover(
-      function() { $(this).css('background-color', '#f5f5f5'); },
-      function() { $(this).css('background-color', 'white'); }
+    activeComputadorStatusMenu.find('.computador-status-item').hover(
+      function() { $(this).addClass('hover'); },
+      function() { $(this).removeClass('hover'); }
     );
 
-    activeComputadorStatusMenu.find('.computador-status-option').on('click', function(event) {
+    activeComputadorStatusMenu.find('.computador-status-item').on('click', function(event) {
       event.stopPropagation();
       const novoStatus = $(this).data('status');
       fecharMenusComputadorAtivos();

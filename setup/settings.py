@@ -17,7 +17,7 @@ SECRET_KEY = str(os.getenv('SECRET_KEY'))
 DEBUG = True
 
 # Hosts permitidos durante o desenvolvimento
-ALLOWED_HOSTS = ['168.231.97.235', '127.0.0.1', '0.0.0.0', '192.168.18.236', '192.168.18.223', '192.168.18.171', '192.168.18.246', '192.168.18.246:8000', 'borealpoa.dyndns.org', 'borealpoa.dyndns.org:8000', '186.214.123.244', 'money.local', 'local.host', 'sistema.moneypromotora.com.br', '192.168.18.167']
+ALLOWED_HOSTS = ['168.231.97.235', '127.0.0.1', '0.0.0.0', '192.168.18.236', '192.168.18.223', '192.168.18.171', '192.168.18.246', '192.168.18.246:8000', 'borealpoa.dyndns.org', 'borealpoa.dyndns.org:8000', '186.214.123.244', 'money.local', 'local.host', 'sistema.moneypromotora.com.br', '192.168.18.167', '192.168.18.89']
 
 CSRF_TRUSTED_ORIGINS = [
     'https://192.168.18.246',

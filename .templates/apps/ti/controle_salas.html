@@ -417,11 +417,11 @@ TI - Controle de Salas, Ilhas e PAs
 </div>
 
 {# --- Modal de Confirmação de Remoção de Periférico --- #}
-<div class="modal-backdrop" id="confirm-remove-periferico-backdrop" style="display: none;"></div>
-<div class="modal" id="confirm-remove-periferico-modal" tabindex="-1" style="display: none;">
+<div class="modal-backdrop d-none" id="confirm-remove-periferico-backdrop"></div>
+<div class="modal d-none" id="confirm-remove-periferico-modal" tabindex="-1">
   <div class="modal-dialog modal-dialog-centered">
     <div class="modal-content">
-      <div class="modal-header">
+      <div class="modal-header modal-header-darkmode modal-header-lightmode">
         <h5 class="modal-title"><i class='bx bx-trash text-danger me-2'></i> Confirmar Remoção</h5>
         <button type="button" class="btn-close" aria-label="Close" id="modal-close-btn"></button>
       </div>
@@ -440,11 +440,11 @@ TI - Controle de Salas, Ilhas e PAs
 {# --- Fim do Modal --- #}
 
 {# --- Modal para Observações de Manutenção --- #}
-<div class="modal-backdrop" id="manutencao-obs-backdrop" style="display: none;"></div>
-<div class="modal" id="manutencao-obs-modal" tabindex="-1" style="display: none;">
+<div class="modal-backdrop d-none" id="manutencao-obs-backdrop"></div>
+<div class="modal d-none" id="manutencao-obs-modal" tabindex="-1">
   <div class="modal-dialog modal-dialog-centered">
     <div class="modal-content">
-      <div class="modal-header">
+      <div class="modal-header modal-header-darkmode modal-header-lightmode">
         <h5 class="modal-title"><i class='bx bx-comment-edit text-warning me-2'></i> Observações da Manutenção</h5>
         <button type="button" class="btn-close" aria-label="Close" id="manutencao-obs-modal-close-btn"></button>
       </div>
@@ -462,9 +462,9 @@ TI - Controle de Salas, Ilhas e PAs
 {# --- Fim do Modal de Observações --- #}
 
 {# --- Modal para Periféricos Disponíveis --- #}
-<div class="perifericos-disponiveis-modal-backdrop" id="perifericos-disponiveis-backdrop" style="display: none;"></div>
-<div class="perifericos-disponiveis-modal" id="perifericos-disponiveis-modal" style="display: none;">
-  <div class="perifericos-disponiveis-modal-header">
+<div class="perifericos-disponiveis-modal-backdrop d-none" id="perifericos-disponiveis-backdrop"></div>
+<div class="perifericos-disponiveis-modal d-none" id="perifericos-disponiveis-modal">
+  <div class="perifericos-disponiveis-modal-header modal-header-lightmode">
     <h5><i class='bx bx-devices me-2'></i> <span id="modal-tipo-nome">Periféricos</span> Disponíveis</h5>
     <button type="button" class="perifericos-disponiveis-modal-close" aria-label="Close" id="perifericos-disponiveis-close">×</button>
   </div>
@@ -475,12 +475,12 @@ TI - Controle de Salas, Ilhas e PAs
       </div>
       <p class="mt-2">Carregando periféricos disponíveis...</p>
     </div>
-    <div id="perifericos-disponiveis-empty" class="text-center py-4" style="display: none;">
-      <i class='bx bx-package' style="font-size: 2rem; color: #999;"></i>
+    <div id="perifericos-disponiveis-empty" class="perifericos-disponiveis-empty text-center py-4 d-none">
+      <i class='bx bx-package perifericos-icon-empty'></i>
       <p class="mt-2">Nenhum periférico disponível deste tipo.</p>
     </div>
-    <div id="perifericos-disponiveis-error" class="text-center py-4 text-danger" style="display: none;">
-      <i class='bx bx-error-circle' style="font-size: 2rem;"></i>
+    <div id="perifericos-disponiveis-error" class="perifericos-disponiveis-error text-center py-4 text-danger d-none">
+      <i class='bx bx-error-circle perifericos-icon-error'></i>
       <p class="mt-2">Erro ao carregar periféricos disponíveis.</p>
       <p id="perifericos-disponiveis-error-message" class="small"></p>
     </div>
