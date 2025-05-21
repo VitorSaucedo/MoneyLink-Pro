@@ -43,18 +43,8 @@ def controle_estoque(request):
     """
     View para exibir o controle de estoque de periféricos por sala e ilha.
     Mostra uma tabela com a contagem de periféricos de cada tipo em cada sala/ilha.
-    Permite filtrar por loja (Sede, Cachoeirinha, São Leopoldo, Santa Maria).
     """
-    # Obter a loja selecionada pelo usuário (padrão: sede)
-    loja_selecionada = request.GET.get('loja', 'sede')
-    
-    # Lista de lojas disponíveis para o formulário de seleção
-    lojas = [
-        {'value': 'sede', 'display': 'Sede'},
-        {'value': 'cachoeirinha', 'display': 'Cachoeirinha'},
-        {'value': 'sao_leopoldo', 'display': 'São Leopoldo'},
-        {'value': 'santa_maria', 'display': 'Santa Maria'}
-    ]
+
     
     # Obter todas as salas com ilhas pré-carregadas
     salas = Sala.objects.all().prefetch_related(
@@ -85,11 +75,9 @@ def controle_estoque(request):
             # Para cada PA, buscar e contar os periféricos atribuídos
             for pa in posicoes_atendimento_ilha:
                 # Buscar atribuições ativas de periféricos para esta PA usando select_related
-                # e filtrar por loja selecionada
                 atribuicoes_ativas = AtribuicaoPerifericoPA.objects.filter(
                     posicao_atendimento=pa,
-                    ativo=True,
-                    periferico__loja=loja_selecionada  # Filtrar por loja selecionada
+                    ativo=True
                 ).select_related('periferico__tipo')
                 
                 # Contar periféricos por tipo
@@ -99,18 +87,17 @@ def controle_estoque(request):
                         perifericos_por_sala_ilha[sala.id][ilha.id][tipo_id] += 1
                         total_geral_perifericos += 1
     
-    # Obter contagem de computadores cadastrados de forma otimizada, filtrados por loja
-    computadores_cadastrados_total = Computador.objects.filter(loja=loja_selecionada).count()
+    # Obter contagem de computadores cadastrados de forma otimizada
+    computadores_cadastrados_total = Computador.objects.all().count()
 
     # Contagem de computadores em uso por sala/ilha - abordagem mais eficiente
     computadores_em_uso_por_sala_ilha = {}
     computadores_em_uso_total_geral = 0
     
     # Pré-calcular contagens de computadores por ilha usando agregação
-    # Filtrado por loja
     contagens_computadores_por_ilha = (
         AtribuicaoComputadorPA.objects
-        .filter(ativo=True, computador__loja=loja_selecionada)
+        .filter(ativo=True)
         .values('posicao_atendimento__ilha')
         .annotate(count=Count('computador', distinct=True))
     )
@@ -128,17 +115,15 @@ def controle_estoque(request):
             computadores_em_uso_por_sala_ilha[sala.id][ilha.id] = contagem_ilha_atual
             computadores_em_uso_total_geral += contagem_ilha_atual
 
-    # Computadores em uso - Query mais eficiente, filtrados por loja
+    # Computadores em uso - Query mais eficiente
     ids_computadores_em_uso = AtribuicaoComputadorPA.objects.filter(
-        ativo=True,
-        computador__loja=loja_selecionada
+        ativo=True
     ).values_list('computador_id', flat=True)\
         .distinct()
     
-    # Computadores disponíveis - Query mais eficiente, filtrados por loja
+    # Computadores disponíveis - Query mais eficiente
     computadores_disponiveis_total = Computador.objects.filter(
-        status='disponivel',
-        loja=loja_selecionada
+        status='disponivel'
     ).exclude(id__in=Subquery(ids_computadores_em_uso))\
         .count()
 
@@ -146,14 +131,12 @@ def controle_estoque(request):
     # ids_computadores_em_uso já foi definido acima
     
     # 1. Obter todas as marcas distintas cadastradas de computadores (para garantir que todas apareçam na lista)
-    # Filtrando por loja
-    todas_as_marcas_cadastradas = Computador.objects.filter(loja=loja_selecionada).values_list('marca', flat=True).distinct().order_by('marca')
+    todas_as_marcas_cadastradas = Computador.objects.all().values_list('marca', flat=True).distinct().order_by('marca')
     
     # 2. Obter a contagem de computadores REALMENTE disponíveis por marca
     #    (status='disponivel' E não estão em uso)
     contagem_disponiveis_raw = Computador.objects.filter(
-        status='disponivel',
-        loja=loja_selecionada
+        status='disponivel'
     ).exclude(
         id__in=ids_computadores_em_uso
     ).values('marca').annotate(
@@ -280,8 +263,7 @@ def controle_estoque(request):
         'computadores_disponiveis_total': computadores_disponiveis_total,
         'computadores_disponiveis_por_marca_list': computadores_disponiveis_por_marca_list,
         'itens_por_pagina': itens_por_pagina,
-        'lojas': lojas,  # Adiciona a lista de lojas ao contexto
-        'loja_selecionada': loja_selecionada,  # Adiciona a loja selecionada ao contexto
+
     }
     
     return render(request, 'apps/ti/controle_estoque.html', context)
@@ -1446,8 +1428,7 @@ def atribuir_funcionario_pa(request):
                 'ramal': novo_funcionario.ramal,
                 'cargo': novo_funcionario.cargo.nome if novo_funcionario.cargo else None,
                 'departamento': novo_funcionario.departamento.nome if novo_funcionario.departamento else None,
-                'empresa': novo_funcionario.empresa.nome if novo_funcionario.empresa else None,
-                'loja': novo_funcionario.loja.nome if novo_funcionario.loja else None
+                'empresa': novo_funcionario.empresa.nome if novo_funcionario.empresa else None
             }
         
         # 6. Preparar dados de resposta

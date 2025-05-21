@@ -16,13 +16,6 @@ class TipoPeriferico(models.Model):
         verbose_name_plural = 'Tipos de Periféricos'
 
 class Periferico(models.Model):
-    LOJA_CHOICES = [
-        ('sede', 'Sede'),
-        ('cachoeirinha', 'Cachoeirinha'),
-        ('sao_leopoldo', 'São Leopoldo'),
-        ('santa_maria', 'Santa Maria')
-    ]
-    loja = models.CharField(max_length=20, choices=LOJA_CHOICES, default='sede', verbose_name='Loja')
     tipo = models.ForeignKey(TipoPeriferico, on_delete=models.CASCADE)
     marca = models.CharField(max_length=100)
     modelo = models.CharField(max_length=100)
@@ -46,13 +39,6 @@ class Periferico(models.Model):
         verbose_name_plural = 'Periféricos'
 
 class Computador(models.Model):
-    LOJA_CHOICES = [
-        ('sede', 'Sede'),
-        ('cachoeirinha', 'Cachoeirinha'),
-        ('sao_leopoldo', 'São Leopoldo'),
-        ('santa_maria', 'Santa Maria')
-    ]
-    loja = models.CharField(max_length=20, choices=LOJA_CHOICES, default='sede', verbose_name='Loja')
     marca = models.CharField(max_length=100)
     quantidade = models.PositiveIntegerField(default=1)
     status_choices = [

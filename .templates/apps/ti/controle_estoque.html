@@ -8,7 +8,7 @@
 
 {% block addcss_extra %}
 <link rel="stylesheet" href="{% static 'css/apps/ti/controle_estoque.css' %}">
-<link rel="stylesheet" href="{% static 'css/apps/ti/loja_selector.css' %}">
+
 <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
 <link rel="stylesheet" href="{% static 'css/darkmode.css' %}">
 <link rel="stylesheet" href="{% static 'css/apps/ti/ti-dark-mode.css' %}">
@@ -37,22 +37,14 @@ Controle de Estoque - TI
   <div class="d-flex justify-content-between align-items-center mb-4">
     <h1 class="titulo-pagina mb-0"><i class='bx bx-archive me-2'></i>Controle de Estoque de TI</h1>
     
-    <!-- Seletor de Loja -->
-    <form method="get" action="{% url 'ti:controle_estoque' %}" class="d-flex align-items-center" id="loja-form">
-      <label for="loja-selector" class="me-2 mb-0"><i class='bx bx-store me-1'></i>Loja:</label>
-      <select id="loja-selector" name="loja" class="form-select form-select-sm" style="width: 160px;" onchange="this.form.submit()">
-        {% for loja in lojas %}
-          <option value="{{ loja.value }}" {% if loja.value == loja_selecionada %}selected{% endif %}>{{ loja.display }}</option>
-        {% endfor %}
-      </select>
-    </form>
+
   </div>
   <div class="row">
     <div class="col-12">
       
-      <div class="card" id="card-estoque" data-current-store="{{ loja_selecionada }}">
+      <div class="card" id="card-estoque">
         <div class="card-header">
-          <i class='bx bx-boxes'></i> Estoque de Periféricos por Sala e Ilha - <span id="current-store-display">{% for loja in lojas %}{% if loja.value == loja_selecionada %}{{ loja.display }}{% endif %}{% endfor %}</span>
+          <i class='bx bx-boxes'></i> Estoque de Periféricos por Sala e Ilha
         </div>
         <div class="card-body">
           <div class="table-responsive">

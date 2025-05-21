@@ -139,17 +139,7 @@ Admin TI - Cadastros<span class="produto-text"></span>
                 <option value="inativo">Inativo</option>
               </select>
             </div>
-            <div class="mb-3">
-              <label for="loja_computador" class="form-label">
-                <i class='bx bx-store me-2'></i>Loja *
-              </label>
-              <select id="loja_computador" name="loja" class="form-select" required>
-                <option value="">-- Selecione uma Loja --</option>
-                {% for loja in lojas_list %}
-                  <option value="{{ loja.id }}">{{ loja.nome }}</option>
-                {% endfor %}
-              </select>
-            </div>
+
             <div class="mb-3">
               <label for="observacoes_computador" class="form-label">
                 <i class='bx bx-align-left me-2'></i>Observações
@@ -296,19 +286,7 @@ Admin TI - Cadastros<span class="produto-text"></span>
           <form method="post" action="{% url 'ti:periferico_create' %}">
             {% csrf_token %}
             
-            <div class="mb-3">
-              <label for="{{ form_periferico.loja.id_for_label }}" class="form-label">
-                <i class='bx bx-store me-2'></i>{{ form_periferico.loja.label }} *
-              </label>
-              {{ form_periferico.loja }}
-              {% if form_periferico.loja.errors %}
-                <div class="text-danger mt-1">
-                  {% for error in form_periferico.loja.errors %}
-                    <small><i class='bx bx-error-circle me-1'></i>{{ error }}</small><br>
-                  {% endfor %}
-                </div>
-              {% endif %}
-            </div>
+
             
             <div class="mb-3">
               <label for="{{ form_periferico.tipo.id_for_label }}" class="form-label">
