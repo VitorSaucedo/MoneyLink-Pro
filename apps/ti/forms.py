@@ -9,10 +9,22 @@ from .models import (
     Sala,
     Ilha,
     Computador,
-    AtribuicaoComputadorPA
+    AtribuicaoComputadorPA,
+    Loja
 )
 from apps.funcionarios.models import Funcionario
 from .utils import atribuir_item_pa, desatribuir_item_pa, verificar_disponibilidade_periferico, verificar_disponibilidade_computador
+
+
+class LojaForm(forms.ModelForm):
+    class Meta:
+        model = Loja
+        fields = ['nome', 'empresa', 'status']
+        widgets = {
+            'nome': forms.TextInput(attrs={'class': 'form-control'}),
+            'empresa': forms.Select(attrs={'class': 'form-select'}),
+            'status': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+        }
 
 class TipoPerifericoForm(forms.ModelForm):
     class Meta:
@@ -26,7 +38,7 @@ class TipoPerifericoForm(forms.ModelForm):
 class PerifericoForm(forms.ModelForm):
     class Meta:
         model = Periferico
-        fields = ['tipo', 'marca', 'modelo', 'data_aquisicao', 'quantidade', 'observacoes']
+        fields = ['tipo', 'marca', 'modelo', 'data_aquisicao', 'quantidade', 'loja', 'observacoes']
         widgets = {
 
             'tipo': forms.Select(attrs={'class': 'form-control'}),
@@ -34,6 +46,7 @@ class PerifericoForm(forms.ModelForm):
             'modelo': forms.TextInput(attrs={'class': 'form-control'}),
             'data_aquisicao': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
             'quantidade': forms.NumberInput(attrs={'class': 'form-control', 'min': 0}),
+            'loja': forms.Select(attrs={'class': 'form-control'}),
             'observacoes': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
         }
 
@@ -158,10 +171,11 @@ class AtribuicaoPerifericoPAForm(forms.ModelForm):
 class ComputadorForm(forms.ModelForm):
     class Meta:
         model = Computador
-        fields = ['marca', 'quantidade', 'status', 'observacoes']
+        fields = ['marca', 'quantidade', 'loja', 'status', 'observacoes']
         widgets = {
             'marca': forms.TextInput(attrs={'class': 'form-control'}),
             'quantidade': forms.NumberInput(attrs={'class': 'form-control', 'min': 1}),
+            'loja': forms.Select(attrs={'class': 'form-control'}),
             'status': forms.Select(attrs={'class': 'form-control'}),
             'observacoes': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
         }

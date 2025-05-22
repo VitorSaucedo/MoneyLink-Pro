@@ -6,13 +6,162 @@
  */
 
 $(document).ready(function() {
-  // console.log('Document ready e controle_salas.js carregado.'); // Log de inicialização
+  // Armazenador de periféricos pendentes para atribuição
+  let perifericosPendentes = [];
+  
+  // Lista global para rastrear periféricos pendentes por tipo
+  // Estrutura: { tipoId: [perifericoId1, perifericoId2, ...] }
+  let perifericosPendentesPorTipo = {};
+  
+  // Variáveis para rastrear estado
+  let paAtual = null;
+  
+  // Função para atualizar a contagem de atribuições pendentes
+  function atualizarContadorAtribuicoesPendentes() {
+    const contador = perifericosPendentes.length;
+    if (contador > 0) {
+      // Atualizar o HTML completo para incluir o botão cancelar
+      const saveButtonHTML = `
+        <div class="pending-count">${contador}</div>
+        <div class="btn-group">
+          <button type="button" class="btn btn-primary save-all-changes-btn">
+            <i class='bx bx-save me-2'></i> Salvar Alterações
+          </button>
+          <button type="button" class="btn btn-outline-secondary cancel-all-changes-btn" title="Cancelar todas as alterações">
+            <i class='bx bx-x'></i>
+          </button>
+        </div>
+      `;
+      
+      const $saveButton = $('#save-changes-button');
+      $saveButton.html(saveButtonHTML);
+      $saveButton.removeClass('d-none');
+    } else {
+      $('#save-changes-button').addClass('d-none');
+    }
+  }
+  
+  // Evento de clique no botão de salvar alterações
+  $(document).on('click', '.save-all-changes-btn', function() {
+    if (perifericosPendentes.length === 0) return;
+    
+    // Desabilitar o botão e mostrar loading
+    const $button = $(this);
+    const originalHtml = $button.html();
+    $button.prop('disabled', true).html('<i class="bx bx-loader-alt bx-spin me-2"></i> Salvando...');
+    
+    // Mostrar mensagem informativa
+    mostrarMensagem('Salvando ' + perifericosPendentes.length + ' atribuições de periféricos...', 'info');
+    
+    // Preparar os dados para envio em lote
+    const dadosLote = perifericosPendentes.map(atribuicao => {
+      // Obter a data/hora atual no formato ISO para o Django
+      const agora = new Date();
+      const dataHoraFormatada = agora.toISOString().replace('Z', '');
+      
+      return {
+        periferico: atribuicao.perifericoId,
+        posicao_atendimento: atribuicao.paId,
+        data_atribuicao: dataHoraFormatada
+      };
+    });
+    
+    // Fazer uma única requisição em lote
+    $.ajax({
+      url: '/ti/atribuicoes-perifericos/cadastrar-lote/', // Endpoint para processamento em lote
+      method: 'POST',
+      headers: {
+        'X-CSRFToken': $('[name=csrfmiddlewaretoken]').val(),
+        'X-Requested-With': 'XMLHttpRequest',
+        'Content-Type': 'application/json'
+      },
+      data: JSON.stringify({ atribuicoes: dadosLote }),
+      success: function(response) {
+        // Limpar a lista de pendências imediatamente para evitar reprocessamento acidental
+        perifericosPendentes = [];
+        perifericosPendentesPorTipo = {};
+        
+        // Exibir mensagem de sucesso (breve)
+        mostrarMensagem('Alterações salvas com sucesso!', 'success');
+        
+        // Recarregar a página imediatamente
+        window.location.reload();
+      },
+      error: function(jqXHR) {
+        console.error('Erro ao processar periféricos em lote:', jqXHR.responseText);
+        
+        // Restaurar o botão e mostrar mensagem de erro
+        $button.prop('disabled', false).html(originalHtml);
+        mostrarMensagem('Erro ao salvar alterações. Tente novamente ou recarregue a página.', 'error');
+      }
+    });
+  });
+  
+  // Nova função para processamento de requisições separadas (fallback)
+  function processarRequisicoesSeparadas($button, originalHtml) {
+    let requisicoesConcluidas = 0;
+    const totalRequisicoes = perifericosPendentes.length;
+    let sucessos = 0;
+    let falhas = 0;
 
-  // Teste: Listener genérico de clique no documento
-  // $(document).on('click', function(event) {
-  //  console.log('Clique detectado no documento:', event.target);
-  // });
-  // Fim do Teste
+    // Para cada atribuição pendente
+    perifericosPendentes.forEach(function(atribuicao) {
+      // Obter a data/hora atual no formato ISO para o Django
+      const agora = new Date();
+      const dataHoraFormatada = agora.toISOString();
+
+      $.ajax({
+        url: '/ti/atribuicoes-perifericos/cadastrar/',
+        method: 'POST',
+        headers: {
+          'X-CSRFToken': $('[name=csrfmiddlewaretoken]').val()
+        },
+        data: {
+          periferico: atribuicao.perifericoId,
+          posicao_atendimento: atribuicao.paId,
+          data_atribuicao: dataHoraFormatada
+        },
+        success: function() {
+          sucessos++;
+        },
+        error: function() {
+          falhas++;
+        },
+        complete: function() {
+          requisicoesConcluidas++;
+          
+          // Atualizar progresso no botão
+          const percentual = Math.round((requisicoesConcluidas / totalRequisicoes) * 100);
+          $button.html(`<i class="bx bx-loader-alt bx-spin me-2"></i> ${percentual}%`);
+          
+          // Verificar se todas as requisições foram concluídas
+          if (requisicoesConcluidas === totalRequisicoes) {
+            // Restaurar o botão
+            $button.prop('disabled', false).html(originalHtml).removeClass('saving');
+            
+            // Exibir mensagem de conclusão
+            if (falhas === 0) {
+              mostrarMensagem('Todas as atribuições foram salvas com sucesso!', 'success');
+            } else {
+              mostrarMensagem(`${sucessos} atribuições salvas com sucesso e ${falhas} falharam.`, 'warning');
+            }
+            
+            // Limpar a lista de pendências
+            perifericosPendentes = [];
+            perifericosPendentesPorTipo = {}; // Limpar também o rastreamento por tipo
+            atualizarContadorAtribuicoesPendentes();
+            
+            // Recarregar a página para mostrar os novos dados - tempo reduzido
+            setTimeout(function() {
+              window.location.reload();
+            }, 500);
+          }
+        }
+      });
+    });
+  }
+
+  // console.log('Document ready e controle_salas.js carregado.'); // Log de inicialização
 
   // Armazenar IDs ativos
   let currentSalaId = null;
@@ -708,14 +857,6 @@ $(document).ready(function() {
     currentPane.style.display = 'block';
     targetPane.style.display = 'block';
     
-    // Calcular a altura máxima entre os dois painéis antes de iniciar a animação
-    const currentHeight = currentPane.offsetHeight;
-    const targetHeight = targetPane.offsetHeight;
-    const maxHeight = Math.max(currentHeight, targetHeight) + 50; // Adicionar margem extra
-    
-    // Definir altura mínima para o container para evitar redimensionamento durante a transição
-    container.style.minHeight = `${maxHeight}px`;
-    
     // Ocultar todos os painéis não envolvidos na transição
     document.querySelectorAll(`${containerSelector} > .tab-pane`).forEach(pane => {
       if (pane !== currentPane && pane !== targetPane) {
@@ -793,10 +934,8 @@ $(document).ready(function() {
       // Disparar evento personalizado
       $(document).trigger('tabTransitionComplete', [targetSelector]);
       
-      // Remover a altura mínima após um pequeno atraso para permitir que a renderização ocorra
+      // Remover os estilos de posição e overflow após um pequeno atraso
       setTimeout(() => {
-        // Definir para 'auto' permite que o container se ajuste ao conteúdo exibido
-        container.style.minHeight = 'auto';
         container.style.position = '';
         container.style.overflow = '';
         
@@ -863,7 +1002,7 @@ $(document).ready(function() {
       grupoPAsDireita.forEach(pa => rightColumn.appendChild(pa.element));
     });
   }
-  
+
   // Executar a organização após o carregamento do DOM
   organizarLayoutPAs();
   
@@ -2126,8 +2265,9 @@ $(document).ready(function() {
   
   // Função para fechar o modal
   function fecharModalPerifericosDisponiveis() {
-    perifericosDisponiveisBackdrop.fadeOut(200);
-    perifericosDisponiveisModal.fadeOut(200);
+    // Remover animações para fechamento imediato
+    perifericosDisponiveisBackdrop.hide();
+    perifericosDisponiveisModal.hide();
     
     // Limpar dados
     modalDadosPa = null;
@@ -2142,7 +2282,7 @@ $(document).ready(function() {
     perifericosDisponiveisContent.empty().hide();
   }
   
-  // Função para carregar periféricos disponíveis
+  // Função para carregar periféricos disponíveis - MODIFICADA para filtrar os pendentes
   async function carregarPerifericosDisponiveis(tipoId) {
     try {
       const response = await $.ajax({
@@ -2156,9 +2296,40 @@ $(document).ready(function() {
       
       if (response.success) {
         if (response.perifericos && response.perifericos.length > 0) {
-          // Renderizar lista de periféricos
-          renderizarPerifericosDisponiveis(response.perifericos);
-          perifericosDisponiveisContent.show();
+          // Filtrar periféricos que já estão na lista de pendentes
+          const perifericosPendentesDesseTipo = perifericosPendentesPorTipo[tipoId] || [];
+          const perifericosFiltrados = response.perifericos.filter(
+            periferico => !perifericosPendentesDesseTipo.includes(periferico.id)
+          );
+          
+          if (perifericosFiltrados.length > 0) {
+            // Renderizar lista de periféricos filtrada
+            renderizarPerifericosDisponiveis(perifericosFiltrados);
+            perifericosDisponiveisContent.show();
+            
+            // Se há periféricos pendentes, mostrar uma notificação
+            if (perifericosPendentesDesseTipo.length > 0) {
+              const notificacaoHTML = `
+                <div class="perifericos-disponivel-note mt-2 mb-2 p-2 bg-light border-start border-warning border-4 rounded">
+                  <small><i class='bx bx-info-circle me-1 text-warning'></i> Há ${perifericosPendentesDesseTipo.length} periférico(s) deste tipo na lista de pendências.</small>
+                </div>
+              `;
+              perifericosDisponiveisContent.prepend(notificacaoHTML);
+            }
+          } else {
+            // Se após a filtragem não sobrou nenhum periférico, mostrar mensagem de vazio
+            // E verificar se existem periféricos pendentes
+            if (perifericosPendentesDesseTipo.length > 0) {
+              // Substituir a mensagem padrão por uma que explica a situação
+              perifericosDisponiveisEmpty.html(`
+                <i class='bx bx-package perifericos-icon-empty'></i>
+                <p class="mt-2">Não há periféricos disponíveis deste tipo.</p>
+                <p class="small text-warning"><i class='bx bx-info-circle me-1'></i> Há ${perifericosPendentesDesseTipo.length} periférico(s) pendente(s) na sua lista de alterações.</p>
+                <p class="small">Clique em "Salvar Alterações" para confirmar ou recarregue a página para cancelar.</p>
+              `);
+            }
+            perifericosDisponiveisEmpty.show();
+          }
         } else {
           // Mostrar mensagem de vazio
           perifericosDisponiveisEmpty.show();
@@ -2204,90 +2375,27 @@ $(document).ready(function() {
     
     const button = $(this);
     const perifericoId = button.data('periferico-id');
-    
-    // Desabilitar o botão e mostrar indicador de carregamento
-    button.prop('disabled', true).html('<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Atribuindo...');
+    const perifericoMarca = button.closest('.periferico-disponivel-item').find('.periferico-disponivel-marca').text();
+    const perifericoModelo = button.closest('.periferico-disponivel-item').find('.periferico-disponivel-modelo').text();
     
     // Verificar se temos os dados necessários
     if (modalDadosPa && modalDadosTipo) {
-      atribuirPerifericoAPa(perifericoId, modalDadosPa.id, button);
+      // Adicionar à lista de pendências em vez de salvar imediatamente
+      adicionarAtribuicaoPendente(perifericoId, modalDadosPa.id, perifericoMarca, perifericoModelo, modalDadosTipo.nome, modalDadosTipo.id);
+      
+      // Feedback visual no item - SIMPLIFICADO
+      button.prop('disabled', true).html('<i class="bx bx-check me-1"></i>');
+      
+      // Fechar o modal IMEDIATAMENTE para resposta rápida
+      fecharModalPerifericosDisponiveis();
+      
+      // Mostrar mensagem de adição pendente
+      mostrarMensagem(`${modalDadosTipo.nome} ${perifericoMarca} adicionado à lista de pendências.`, 'info');
     } else {
       console.error('Dados incompletos para atribuição de periférico');
       mostrarMensagem('Erro: Dados incompletos para atribuição', 'error');
       // Restaurar o botão
       button.prop('disabled', false).html('<i class="bx bx-link me-1"></i> Atribuir');
-    }
-  });
-  
-  // Função para atribuir periférico à PA
-  async function atribuirPerifericoAPa(perifericoId, paId, button) {
-    try {
-      // Mostrar loader no modal
-      perifericosDisponiveisContent.hide();
-      perifericosDisponiveisLoading.show();
-      
-      // Obter a data/hora atual no formato ISO para o Django
-      const agora = new Date();
-      const dataHoraFormatada = agora.toISOString().replace('Z', '');
-      
-      console.log('Enviando dados para atribuição:', {
-        periferico: perifericoId,
-        posicao_atendimento: paId,
-        data_atribuicao: dataHoraFormatada
-      });
-      
-      const response = await $.ajax({
-        url: atribuirPerifericoApiUrl,
-        method: 'POST',
-        headers: {
-          'X-CSRFToken': $('[name=csrfmiddlewaretoken]').val(),
-          'X-Requested-With': 'XMLHttpRequest'
-        },
-        data: {
-          periferico: perifericoId,
-          posicao_atendimento: paId,
-          data_atribuicao: dataHoraFormatada // Formato correto para DateTime no Django
-        }
-      });
-      
-      console.log('Resposta do servidor:', response);
-      
-      // Fechar modal
-      fecharModalPerifericosDisponiveis();
-      
-      // Mostrar mensagem de sucesso
-      mostrarMensagem('Periférico atribuído com sucesso!', 'success');
-      
-      // Recarregar a página para atualizar os dados
-      setTimeout(() => {
-        window.location.reload();
-      }, 1500);
-      
-    } catch (error) {
-      console.error('Erro ao atribuir periférico:', error);
-      console.error('Detalhes do erro:', error.responseText);
-      
-      // Restaurar a interface do modal
-      perifericosDisponiveisLoading.hide();
-      perifericosDisponiveisContent.show();
-      
-      // Restaurar o botão
-      if (button) {
-        button.prop('disabled', false).html('<i class="bx bx-link me-1"></i> Atribuir');
-      }
-      
-      // Mostrar mensagem de erro
-      perifericosDisponiveisErrorMessage.text(error.responseJSON?.error || error.statusText || error.message || 'Erro ao comunicar com o servidor');
-      perifericosDisponiveisError.show();
-    }
-  }
-  
-  // Event Listeners para o modal
-  perifericosDisponiveisClose.on('click', fecharModalPerifericosDisponiveis);
-  perifericosDisponiveisCancel.on('click', fecharModalPerifericosDisponiveis);
-  perifericosDisponiveisBackdrop.on('click', function(e) {
-    if (e.target === this) {
-      fecharModalPerifericosDisponiveis();
     }
   });
   
@@ -2452,4 +2560,180 @@ $(document).ready(function() {
       }
     }
   }
+
+  // Evento de clique no botão de cancelar alterações
+  $(document).on('click', '.cancel-all-changes-btn', function(e) {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    if (perifericosPendentes.length === 0) return;
+    
+    // Pedir confirmação ao usuário
+    if (confirm(`Tem certeza que deseja cancelar todas as ${perifericosPendentes.length} atribuições pendentes?`)) {
+      // Remover todas as tags visuais de periféricos pendentes
+      $('.periferico-tag.pendente').fadeOut(200, function() {
+        $(this).remove();
+      });
+      
+      // Limpar as listas de pendências
+      perifericosPendentes = [];
+      perifericosPendentesPorTipo = {};
+      
+      // Atualizar o contador
+      atualizarContadorAtribuicoesPendentes();
+      
+      // Mostrar mensagem
+      mostrarMensagem('Todas as atribuições pendentes foram canceladas.', 'info');
+      
+      // Recarregar a página para restaurar estado original
+      setTimeout(function() {
+        window.location.reload();
+      }, 300);
+    }
+  });
+
+  // Nova função para adicionar à lista de pendências
+  function adicionarAtribuicaoPendente(perifericoId, paId, marca, modelo, tipo, tipoId) {
+    // Verificar se já existe uma pendência igual
+    const existente = perifericosPendentes.find(p => p.perifericoId === perifericoId && p.paId === paId);
+    if (existente) {
+      mostrarMensagem('Este periférico já está pendente para atribuição.', 'warning');
+      return;
+    }
+    
+    // Usar o tipoId fornecido ou tentar recuperar do modalDadosTipo
+    const tipoIdFinal = tipoId || (modalDadosTipo ? modalDadosTipo.id : null);
+    if (!tipoIdFinal) {
+      console.error('Erro: tipoId não fornecido');
+      return;
+    }
+    
+    // Adicionar à lista de pendências
+    perifericosPendentes.push({
+      perifericoId: perifericoId,
+      paId: paId,
+      marca: marca,
+      modelo: modelo,
+      tipo: tipo,
+      tipoId: tipoIdFinal
+    });
+    
+    // Adicionar o periférico ao rastreamento por tipo
+    if (!perifericosPendentesPorTipo[tipoIdFinal]) {
+      perifericosPendentesPorTipo[tipoIdFinal] = [];
+    }
+    perifericosPendentesPorTipo[tipoIdFinal].push(perifericoId);
+    
+    // Atualizar visualmente
+    atualizarContadorAtribuicoesPendentes();
+    
+    // Adicionar visualmente o periférico à PA como pendente
+    adicionarPerifericoPendenteVisualmente(paId, perifericoId, tipo, marca, modelo);
+  }
+
+  // Função para adicionar visualmente um periférico pendente à PA
+  function adicionarPerifericoPendenteVisualmente(paId, perifericoId, tipo, marca, modelo) {
+    const paCard = $(`.pa-card[data-pa-id="${paId}"]`);
+    if (!paCard.length) return;
+    
+    const perifericosList = paCard.find('.perifericos-list');
+    
+    // Remover mensagem "Nenhum periférico atribuído" se existir
+    if (perifericosList.text().trim() === 'Nenhum periférico atribuído') {
+      perifericosList.empty();
+    }
+    
+    // Criar tag visual para o periférico pendente
+    const perifericoTagHTML = `
+      <span class="periferico-tag pendente" data-periferico-id="pendente-${perifericoId}" data-periferico-tipo="${tipo}">
+        ${tipo} ${marca} ${modelo ? `(${modelo})` : ''} 
+        <i class="bx bx-time-five ms-1" title="Pendente de salvar"></i>
+      </span>
+    `;
+    
+    perifericosList.append(perifericoTagHTML);
+    
+    // Remover o item da lista de periféricos faltantes, se existir
+    paCard.find(`.periferico-faltante-item:contains("${tipo}")`).fadeOut(300, function() {
+      $(this).remove();
+      
+      // Se não houver mais itens faltantes, ocultar a seção
+      if (paCard.find('.periferico-faltante-item').length === 0) {
+        paCard.find('.perifericos-faltantes').fadeOut(300);
+      }
+    });
+  }
+
+  // Função para atribuir periférico à PA - MODIFICADA para ser chamada apenas pelo botão de salvar
+  async function atribuirPerifericoAPa(perifericoId, paId, button) {
+    try {
+      // Obter a data/hora atual no formato ISO para o Django
+      const agora = new Date();
+      const dataHoraFormatada = agora.toISOString().replace('Z', '');
+      
+      console.log('Enviando dados para atribuição:', {
+        periferico: perifericoId,
+        posicao_atendimento: paId,
+        data_atribuicao: dataHoraFormatada
+      });
+      
+      const response = await $.ajax({
+        url: atribuirPerifericoApiUrl,
+        method: 'POST',
+        headers: {
+          'X-CSRFToken': $('[name=csrfmiddlewaretoken]').val(),
+          'X-Requested-With': 'XMLHttpRequest'
+        },
+        data: {
+          periferico: perifericoId,
+          posicao_atendimento: paId,
+          data_atribuicao: dataHoraFormatada
+        }
+      });
+      
+      console.log('Resposta do servidor:', response);
+      
+      return true;
+    } catch (error) {
+      console.error('Erro ao atribuir periférico:', error);
+      console.error('Detalhes do erro:', error.responseText);
+      return false;
+    }
+  }
+
+  // Função otimizada para abrir modal de periféricos disponíveis
+  $(document).on('click', '.abrir-perifericos-disponiveis-btn', function(e) {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    const $btn = $(this);
+    const tipoId = $btn.data('tipo-id');
+    const tipoNome = $btn.data('tipo-nome');
+    const paId = $btn.closest('.pa-card').data('pa-id');
+    
+    // Guardar dados do PA para uso posterior
+    modalDadosPa = {
+      id: paId,
+      elemento: $btn.closest('.pa-card')
+    };
+    
+    // Guardar dados do tipo para uso posterior
+    modalDadosTipo = {
+      id: tipoId,
+      nome: tipoNome
+    };
+    
+    // Preparar e mostrar o modal imediatamente
+    resetarModalPerifericosDisponiveis();
+    
+    // Definir o título do modal
+    perifericosDisponiveisTitulo.text(`${tipoNome}s Disponíveis`);
+    
+    // Mostrar o modal instantaneamente
+    perifericosDisponiveisModal.show();
+    perifericosDisponiveisBackdrop.show();
+    
+    // Carregar os dados em seguida
+    carregarPerifericosDisponiveis(tipoId);
+  });
 }); 

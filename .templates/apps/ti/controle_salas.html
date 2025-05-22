@@ -414,6 +414,19 @@ TI - Controle de Salas, Ilhas e PAs
       </a>
     </div>
   {% endif %}
+  
+  <!-- Botão flutuante Salvar Alterações - oculto por padrão -->
+  <div id="save-changes-button" class="save-changes-container d-none">
+    <div class="pending-count">0</div>
+    <div class="btn-group">
+      <button type="button" class="btn btn-primary save-all-changes-btn">
+        <i class='bx bx-save me-2'></i> Salvar Alterações
+      </button>
+      <button type="button" class="btn btn-outline-secondary cancel-all-changes-btn" title="Cancelar todas as alterações">
+        <i class='bx bx-x'></i>
+      </button>
+    </div>
+  </div>
 </div>
 
 {# --- Modal de Confirmação de Remoção de Periférico --- #}
@@ -518,51 +531,6 @@ TI - Controle de Salas, Ilhas e PAs
       $('button[data-bs-toggle="tab"]').on('click', function(e) {
         e.preventDefault();
         return false;
-      });
-      
-      // Ajustar tamanho do container para evitar saltos durante as transições
-      function ajustarAlturaTabContent() {
-        $('.tab-content').each(function() {
-          var alturaMaxima = 0;
-          $(this).find('.tab-pane').each(function() {
-            // Temporariamente tornar visível para medir altura real
-            var displayOriginal = $(this).css('display');
-            $(this).css('display', 'block');
-            $(this).css('visibility', 'hidden');
-            
-            var altura = $(this).outerHeight(true);
-            if (altura > alturaMaxima) {
-              alturaMaxima = altura;
-            }
-            
-            // Restaurar visibilidade original
-            $(this).css('display', displayOriginal);
-            $(this).css('visibility', 'visible');
-          });
-          
-          if (alturaMaxima > 0) {
-            $(this).css('min-height', alturaMaxima + 50 + 'px'); // Adicionar margem extra para segurança
-          }
-        });
-      }
-      
-      // Executar ajuste inicial
-      setTimeout(ajustarAlturaTabContent, 100); // Pequeno delay para garantir que o DOM foi renderizado
-      
-      // Ajustar ao redimensionar a janela
-      $(window).resize(function() {
-        ajustarAlturaTabContent();
-      });
-      
-      // Força o recálculo quando um tab é clicado
-      $('.nav-tabs .nav-link').on('click', function() {
-        // Ajustar após um pequeno delay para permitir que a transição ocorra
-        setTimeout(ajustarAlturaTabContent, 600);
-      });
-      
-      // Reajustar quando a transição estiver completa
-      $(document).on('tabTransitionComplete', function() {
-        ajustarAlturaTabContent();
       });
       
       // Adicionar classe para identificar que a página foi carregada e inicializada

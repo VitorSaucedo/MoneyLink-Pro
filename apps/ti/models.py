@@ -1,8 +1,9 @@
 from django.db import models
-from apps.funcionarios.models import Funcionario
+from apps.funcionarios.models import *
 from django.utils import timezone
 
 # Create your models here.
+# Nota: A classe Loja agora é importada de apps.funcionarios.models
 
 class TipoPeriferico(models.Model):
     nome = models.CharField(max_length=100)
@@ -22,6 +23,7 @@ class Periferico(models.Model):
     numero_serie = models.CharField(max_length=100, blank=True, null=True)
     data_aquisicao = models.DateField(blank=True, null=True)
     quantidade = models.PositiveIntegerField(default=1)
+    loja = models.ForeignKey(Loja, on_delete=models.CASCADE, related_name='perifericos')
     status_choices = [
         ('disponivel', 'Disponível'),
         ('em_uso', 'Em Uso'),
@@ -41,6 +43,7 @@ class Periferico(models.Model):
 class Computador(models.Model):
     marca = models.CharField(max_length=100)
     quantidade = models.PositiveIntegerField(default=1)
+    loja = models.ForeignKey(Loja, on_delete=models.CASCADE, null=True, blank=True, related_name='computadores')
     status_choices = [
         ('disponivel', 'Disponível'),
         ('em_uso', 'Em Uso'),

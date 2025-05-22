@@ -25,6 +25,10 @@ document.addEventListener('DOMContentLoaded', function() {
   // Carregar ilhas com base na sala selecionada
   const salaSelect = document.getElementById('sala');
   const ilhaSelect = document.getElementById('ilha');
+  const quantidadePasInput = document.getElementById('quantidade_pas');
+  
+  // Objeto para armazenar informações das ilhas
+  const ilhasInfo = {};
   
   if (salaSelect && ilhaSelect) {
     salaSelect.addEventListener('change', function() {
@@ -37,16 +41,57 @@ document.addEventListener('DOMContentLoaded', function() {
           .then(response => response.json())
           .then(data => {
             // Adicionar as novas opções
-            data.forEach(ilha => {
-              const option = document.createElement('option');
-              option.value = ilha.id;
-              option.textContent = ilha.nome;
-              ilhaSelect.appendChild(option);
-            });
+            if (data.ilhas && Array.isArray(data.ilhas)) {
+              data.ilhas.forEach(ilha => {
+                const option = document.createElement('option');
+                option.value = ilha.id;
+                option.textContent = ilha.nome;
+                ilhaSelect.appendChild(option);
+                
+                // Armazenar a quantidade de PAs para cada ilha
+                if (ilha.quantidade_pas) {
+                  ilhasInfo[ilha.id] = ilha.quantidade_pas;
+                }
+              });
+            }
           })
           .catch(error => console.error('Erro ao carregar ilhas:', error));
       }
     });
+    
+    // Atualizar o valor máximo do campo quantidade com base na ilha selecionada
+    if (ilhaSelect && quantidadePasInput) {
+      ilhaSelect.addEventListener('change', function() {
+        const ilhaId = this.value;
+        if (ilhaId && ilhasInfo[ilhaId]) {
+          // Obter informações detalhadas sobre a ilha selecionada
+          fetch(`/ti/api/ilha-info/${ilhaId}/`)
+            .then(response => response.json())
+            .then(data => {
+              if (data.success && data.ilha) {
+                const capacidadeDisponivel = data.ilha.pas_disponiveis || 1;
+                quantidadePasInput.max = capacidadeDisponivel;
+                quantidadePasInput.value = Math.min(quantidadePasInput.value, capacidadeDisponivel);
+                
+                // Atualizar texto informativo
+                const infoText = document.getElementById('quantidade-pas-info');
+                if (infoText) {
+                  infoText.textContent = `Máximo disponível: ${capacidadeDisponivel} PAs`;
+                }
+              }
+            })
+            .catch(error => {
+              console.error('Erro ao obter informações da ilha:', error);
+              quantidadePasInput.max = 1;
+              quantidadePasInput.value = 1;
+            });
+        } else {
+          // Se nenhuma ilha estiver selecionada, limitar para 1
+          quantidadePasInput.max = 1;
+          quantidadePasInput.value = 1;
+        }
+      });
+    }
   }
 
   // Validação do formulário de ramal

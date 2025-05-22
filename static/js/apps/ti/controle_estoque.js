@@ -6,6 +6,16 @@
 document.addEventListener('DOMContentLoaded', function() {
     console.log('Controle de Estoque - TI carregado com sucesso');
     
+    // Configurar o seletor de lojas
+    const lojaSeletor = document.getElementById('loja-selector');
+    if (lojaSeletor) {
+        lojaSeletor.addEventListener('change', function() {
+            const lojaId = this.value;
+            // Redirecionar para a mesma página com o parâmetro de loja
+            window.location.href = `${window.location.pathname}?loja=${lojaId}`;
+        });
+    }
+    
     // Função para alternar destaque nas linhas da tabela ao passar o mouse
     function configurarDestaqueTabelaEstoque() {
         const linhasTabela = document.querySelectorAll('#card-estoque table tbody tr');
@@ -86,17 +96,13 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
     
-    // Função para métodos relacionados a loja estão desativados 
-    // porque usamos agora uma abordagem baseada no servidor
-    
-    // Funções relacionadas a carregamento de dados das lojas foram removidas
-    // porque agora usamos uma abordagem baseada no servidor
-    
-    // Função para atualização da tabela com dados simulados foi removida
-    // porque agora usamos uma abordagem baseada no servidor
-    
-    // Função para atualização de computadores disponíveis foi removida
-    // porque agora usamos uma abordagem baseada no servidor
+    // Funções para manipulação do seletor de lojas
+    function atualizarTabelaPorLoja(lojaId) {
+        // Esta função é chamada quando o usuário seleciona uma loja
+        // Nesta implementação, a atualização é feita via redirecionamento da página
+        // com parâmetro de loja, por isso o código específico está no handler do evento change acima
+        console.log(`Atualizando tabela para loja ID: ${lojaId}`);
+    }
 
     // Inicializa as funcionalidades
     configurarDestaqueTabelaEstoque();

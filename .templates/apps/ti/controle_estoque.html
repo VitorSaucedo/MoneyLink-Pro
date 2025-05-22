@@ -36,15 +36,32 @@ Controle de Estoque - TI
 <div class="container mt-4">
   <div class="d-flex justify-content-between align-items-center mb-4">
     <h1 class="titulo-pagina mb-0"><i class='bx bx-archive me-2'></i>Controle de Estoque de TI</h1>
-    
-
+    <div class="d-flex align-items-center">
+      <div class="form-group mb-0 me-2">
+        <select id="loja-selector" class="form-select">
+          <option value="">Todas as Lojas</option>
+          {% for loja in lojas %}
+            <option value="{{ loja.id }}" {% if loja_selecionada == loja.id %}selected{% endif %}>{{ loja.nome }}</option>
+          {% endfor %}
+        </select>
+      </div>
+    </div>
   </div>
   <div class="row">
     <div class="col-12">
       
       <div class="card" id="card-estoque">
-        <div class="card-header">
-          <i class='bx bx-boxes'></i> Estoque de Periféricos por Sala e Ilha
+        <div class="card-header d-flex justify-content-between align-items-center">
+          <div>
+            <i class='bx bx-boxes'></i> Estoque de Periféricos por Sala e Ilha
+          </div>
+          <div class="loja-info">
+            {% if loja_selecionada %}
+              <span class="badge bg-primary">Loja: {{ loja_atual.nome }}</span>
+            {% else %}
+              <span class="badge bg-secondary">Exibindo todas as lojas</span>
+            {% endif %}
+          </div>
         </div>
         <div class="card-body">
           <div class="table-responsive">

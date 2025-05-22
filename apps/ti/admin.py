@@ -6,7 +6,10 @@ from .models import (
     AtribuicaoFuncionarioPA, 
     AtribuicaoPerifericoPA,
     Sala,
-    Ilha
+    Ilha,
+    Loja,
+    Computador,
+    AtribuicaoComputadorPA
 )
 
 # Register your models here.
@@ -51,3 +54,17 @@ class AtribuicaoPerifericoPAAdmin(admin.ModelAdmin):
     list_display = ('periferico', 'posicao_atendimento', 'data_atribuicao', 'data_remocao', 'ativo')
     list_filter = ('ativo', 'posicao_atendimento')
     search_fields = ('periferico__modelo', 'posicao_atendimento__numero')
+
+# Removida a administração da Loja, pois já está definida no app funcionarios
+
+@admin.register(Computador)
+class ComputadorAdmin(admin.ModelAdmin):
+    list_display = ('marca', 'quantidade', 'loja', 'status')
+    list_filter = ('status', 'loja', 'marca')
+    search_fields = ('marca', 'observacoes')
+
+@admin.register(AtribuicaoComputadorPA)
+class AtribuicaoComputadorPAAdmin(admin.ModelAdmin):
+    list_display = ('computador', 'posicao_atendimento', 'data_atribuicao', 'data_remocao', 'ativo')
+    list_filter = ('ativo', 'posicao_atendimento')
+    search_fields = ('computador__marca', 'posicao_atendimento__numero')

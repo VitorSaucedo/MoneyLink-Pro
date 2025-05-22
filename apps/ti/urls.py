@@ -18,6 +18,7 @@ urlpatterns = [
     
     # URLs para API
     path('api/ilhas-por-sala/<int:sala_id>/', views.api_ilhas_por_sala, name='api_ilhas_por_sala'),
+    path('api/ilha-info/<int:ilha_id>/', views.api_ilha_info, name='api_ilha_info'),
     path('atualizar_status_pa/', views.atualizar_status_pa, name='atualizar_status_pa'),
     path('remover_periferico_pa/', views.remover_periferico_pa, name='remover_periferico_pa'),
     path('api/controle-salas-dados/', views.api_controle_salas, name='api_controle_salas'),
@@ -34,6 +35,13 @@ urlpatterns = [
     path('perifericos/editar/<int:pk>/', views.periferico_update, name='periferico_update'),
     path('perifericos/excluir/<int:pk>/', views.periferico_delete, name='periferico_delete'),
     
+    # URLs para Ramais
+    path('ramais/', views.ramal_list, name='ramal_list'),
+    path('ramais/cadastrar/', views.ramal_create, name='ramal_create'),
+    path('ramais/atualizar/', views.ramal_update, name='ramal_update'),
+    path('ramais/editar/<int:pk>/', views.ramal_edit, name='ramal_edit'),
+    path('ramais/excluir/<int:pk>/', views.ramal_delete, name='ramal_delete'),
+    
     # URLs para Computadores
     path('computadores/cadastrar/', views.computador_create, name='computador_create'),
     path('computadores/atribuir/', views.atribuicao_computador_pa_create, name='atribuicao_computador_pa_create'),
@@ -43,6 +51,8 @@ urlpatterns = [
     path('salas/cadastrar/', views.sala_create, name='sala_create'),
     path('salas/editar/<int:pk>/', views.sala_update, name='sala_update'),
     path('salas/excluir/<int:pk>/', views.sala_delete, name='sala_delete'),
+    
+    # URLs para Lojas removidas - funcionalidade já existe em outro módulo
     
     # URLs para Ilhas
     path('ilhas/', views.ilha_list, name='ilha_list'),
@@ -82,6 +92,9 @@ urlpatterns = [
     path('api/perifericos-disponiveis-por-tipo/<int:tipo_id>/', views.api_listar_perifericos_disponiveis_por_tipo, name='api_listar_perifericos_disponiveis_por_tipo'),
     
     # URLs para gerenciamento de ramais
-    path('ramal/update/', views.ramal_update, name='ramal_update'),
-    path('api/verificar-ramal/', views.api_verificar_ramal, name='api_verificar_ramal'),
+    # path('ramal/update/', views.ramal_update, name='ramal_update'),
+    # path('api/verificar-ramal/', views.api_verificar_ramal, name='api_verificar_ramal'),
+
+    # Nova rota para atribuições em lote
+    path('atribuicoes-perifericos/cadastrar-lote/', views.cadastrar_atribuicoes_perifericos_lote, name='cadastrar_atribuicoes_lote'),
 ] 

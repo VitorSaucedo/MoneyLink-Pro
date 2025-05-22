@@ -118,7 +118,7 @@ Admin TI - Cadastros<span class="produto-text"></span>
             {% csrf_token %}
             <div class="mb-3">
               <label for="marca_computador" class="form-label">
-                <i class='bx bx-purchase-tag me-2'></i>Marca *
+                <i class='bx bx-label me-2'></i>Marca do Computador *
               </label>
               <input type="text" id="marca_computador" name="marca" class="form-control" required>
             </div>
@@ -129,8 +129,19 @@ Admin TI - Cadastros<span class="produto-text"></span>
               <input type="number" id="quantidade_computador" name="quantidade" class="form-control" min="1" value="1" required>
             </div>
             <div class="mb-3">
+              <label for="loja_computador" class="form-label">
+                <i class='bx bx-store me-2'></i>Loja
+              </label>
+              <select id="loja_computador" name="loja" class="form-select">
+                <option value="">-- Selecione uma Loja --</option>
+                {% for loja in lojas_list %}
+                  <option value="{{ loja.id }}">{{ loja.nome }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="mb-3">
               <label for="status_computador" class="form-label">
-                <i class='bx bx-slider me-2'></i>Status *
+                <i class='bx bx-stats me-2'></i>Status *
               </label>
               <select id="status_computador" name="status" class="form-select" required>
                 <option value="disponivel">Disponível</option>
@@ -154,6 +165,8 @@ Admin TI - Cadastros<span class="produto-text"></span>
           </form>
         </div>
       </div>
+
+      <!-- Card de Loja removido - funcionalidade já existe em outro módulo -->
     </div>
 
     <!-- Coluna 2 -->
@@ -191,6 +204,14 @@ Admin TI - Cadastros<span class="produto-text"></span>
               </label>
               <input type="text" id="numero" name="numero" class="form-control">
               <small class="text-muted">Deixe em branco para numeração automática baseada na ilha.</small>
+            </div>
+            <div class="mb-3">
+              <label for="quantidade_pas" class="form-label">
+                <i class='bx bx-calculator me-2'></i>Quantidade de PAs a criar
+              </label>
+              <input type="number" id="quantidade_pas" name="quantidade_pas" class="form-control" min="1" value="1" max="1">
+              <small class="text-muted">Número de PAs a serem criadas de uma vez.</small>
+              <small id="quantidade-pas-info" class="text-info d-block mt-1">Selecione uma ilha para ver o máximo disponível</small>
             </div>
             <div class="mb-3">
               <label for="status_pa" class="form-label">
@@ -338,6 +359,20 @@ Admin TI - Cadastros<span class="produto-text"></span>
               {% if form_periferico.data_aquisicao.errors %}
                 <div class="text-danger mt-1">
                   {% for error in form_periferico.data_aquisicao.errors %}
+                    <small><i class='bx bx-error-circle me-1'></i>{{ error }}</small><br>
+                  {% endfor %}
+                </div>
+              {% endif %}
+            </div>
+
+            <div class="mb-3">
+              <label for="{{ form_periferico.loja.id_for_label }}" class="form-label">
+                <i class='bx bx-store me-2'></i>{{ form_periferico.loja.label }} *
+              </label>
+              {{ form_periferico.loja }}
+              {% if form_periferico.loja.errors %}
+                <div class="text-danger mt-1">
+                  {% for error in form_periferico.loja.errors %}
                     <small><i class='bx bx-error-circle me-1'></i>{{ error }}</small><br>
                   {% endfor %}
                 </div>
