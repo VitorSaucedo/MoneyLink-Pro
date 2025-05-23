@@ -8,8 +8,8 @@ Admin TI - Cadastros<span class="produto-text"></span>
   <label class="theme-switch" for="checkbox">
     <input type="checkbox" id="checkbox" />
     <div class="slider">
-      <i class="bx bx-sun fa-sun"></i>
-      <i class="bx bx-moon fa-moon"></i>
+      <i class="bx bx-sun"></i>
+      <i class="bx bx-moon"></i>
     </div>
   </label>
 </div>
@@ -18,10 +18,12 @@ Admin TI - Cadastros<span class="produto-text"></span>
 {% block addcss_extra %}
   {# Boxicons para ícones usados no formulário #}
   <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+  {# CSS global para dark mode #}
+  <link rel="stylesheet" href="{% static 'css/darkmode.css' %}">
   {# Adicionar estilos personalizados para a página #}
   <link rel="stylesheet" href="{% static 'css/apps/ti/admin.css' %}">
   {# Adicionar CSS do modo escuro #}
-  <link rel="stylesheet" href="{% static 'css/darkmode.css' %}">
+  <link rel="stylesheet" href="{% static 'css/apps/ti/ti-dark-mode.css' %}">
 {% endblock %}
 
 {% block pre_content %}
@@ -29,7 +31,7 @@ Admin TI - Cadastros<span class="produto-text"></span>
 {% endblock %}
 
 {% block content %}
-<div class="container my-4">
+<div class="container my-4 app-ti">
   <div class="d-flex justify-content-between align-items-center mb-4 header-container">
     <h1 class="titulo-pagina"><i class='bx bxs-cog me-2'></i>Cadastros de TI</h1>
   </div>
@@ -40,25 +42,25 @@ Admin TI - Cadastros<span class="produto-text"></span>
       <!-- Card Sala -->
       <div class="card mb-4" id="card-sala">
         <div class="card-header">
-          <i class='bx bx-door-open me-2'></i> Cadastrar Nova Sala
+          <i class='bx bx-door-open'></i> Cadastrar Nova Sala
         </div>
         <div class="card-body">
           <form method="post" action="{% url 'ti:sala_create' %}">
             {% csrf_token %}
             <div class="mb-3">
               <label for="nome_sala" class="form-label">
-                <i class='bx bx-label me-2'></i>Nome da Sala *
+                <i class='bx bx-label'></i>Nome da Sala *
               </label>
               <input type="text" id="nome_sala" name="nome" class="form-control" required>
             </div>
             <div class="mb-3">
               <label for="descricao_sala" class="form-label">
-                <i class='bx bx-align-left me-2'></i>Descrição
+                <i class='bx bx-align-left'></i>Descrição
               </label>
               <textarea id="descricao_sala" name="descricao" class="form-control" rows="3"></textarea>
             </div>
             <button type="submit" class="btn btn-primary w-100">
-              <i class='bx bx-save me-2'></i> Salvar Sala
+              <i class='bx bx-save'></i> Salvar Sala
             </button>
           </form>
         </div>
@@ -67,20 +69,20 @@ Admin TI - Cadastros<span class="produto-text"></span>
       <!-- Card Ilha -->
       <div class="card mb-4" id="card-ilha">
         <div class="card-header">
-          <i class='bx bx-grid-alt me-2'></i> Cadastrar Nova Ilha
+          <i class='bx bx-grid-alt'></i> Cadastrar Nova Ilha
         </div>
         <div class="card-body">
           <form method="post" action="{% url 'ti:ilha_create' %}">
             {% csrf_token %}
             <div class="mb-3">
               <label for="nome_ilha" class="form-label">
-                <i class='bx bx-label me-2'></i>Nome da Ilha *
+                <i class='bx bx-label'></i>Nome da Ilha *
               </label>
               <input type="text" id="nome_ilha" name="nome" class="form-control" required>
             </div>
             <div class="mb-3">
               <label for="sala_ilha" class="form-label">
-                <i class='bx bx-door-open me-2'></i>Sala *
+                <i class='bx bx-door-open'></i>Sala *
               </label>
               <select id="sala_ilha" name="sala" class="form-select" required>
                 <option value="">-- Selecione uma Sala --</option>
@@ -91,18 +93,18 @@ Admin TI - Cadastros<span class="produto-text"></span>
             </div>
             <div class="mb-3">
               <label for="quantidade_pas" class="form-label">
-                <i class='bx bx-calculator me-2'></i>Quantidade de PAs *
+                <i class='bx bx-calculator'></i>Quantidade de PAs *
               </label>
               <input type="number" id="quantidade_pas" name="quantidade_pas" class="form-control" min="1" value="1" required>
             </div>
             <div class="mb-3">
               <label for="descricao_ilha" class="form-label">
-                <i class='bx bx-align-left me-2'></i>Descrição
+                <i class='bx bx-align-left'></i>Descrição
               </label>
               <textarea id="descricao_ilha" name="descricao" class="form-control" rows="3"></textarea>
             </div>
             <button type="submit" class="btn btn-primary w-100">
-              <i class='bx bx-save me-2'></i> Salvar Ilha
+              <i class='bx bx-save'></i> Salvar Ilha
             </button>
           </form>
         </div>
@@ -111,26 +113,26 @@ Admin TI - Cadastros<span class="produto-text"></span>
       <!-- Card Computador -->
       <div class="card mb-4" id="card-computador">
         <div class="card-header">
-          <i class='bx bx-laptop me-2'></i> Cadastrar Computador
+          <i class='bx bx-laptop'></i> Cadastrar Computador
         </div>
         <div class="card-body">
           <form method="post" action="{% url 'ti:computador_create' %}">
             {% csrf_token %}
             <div class="mb-3">
               <label for="marca_computador" class="form-label">
-                <i class='bx bx-label me-2'></i>Marca do Computador *
+                <i class='bx bx-label'></i>Marca do Computador *
               </label>
               <input type="text" id="marca_computador" name="marca" class="form-control" required>
             </div>
             <div class="mb-3">
               <label for="quantidade_computador" class="form-label">
-                <i class='bx bx-calculator me-2'></i>Quantidade *
+                <i class='bx bx-calculator'></i>Quantidade *
               </label>
               <input type="number" id="quantidade_computador" name="quantidade" class="form-control" min="1" value="1" required>
             </div>
             <div class="mb-3">
               <label for="loja_computador" class="form-label">
-                <i class='bx bx-store me-2'></i>Loja
+                <i class='bx bx-store'></i>Loja
               </label>
               <select id="loja_computador" name="loja" class="form-select">
                 <option value="">-- Selecione uma Loja --</option>
@@ -141,7 +143,7 @@ Admin TI - Cadastros<span class="produto-text"></span>
             </div>
             <div class="mb-3">
               <label for="status_computador" class="form-label">
-                <i class='bx bx-stats me-2'></i>Status *
+                <i class='bx bx-stats'></i>Status *
               </label>
               <select id="status_computador" name="status" class="form-select" required>
                 <option value="disponivel">Disponível</option>
@@ -153,13 +155,13 @@ Admin TI - Cadastros<span class="produto-text"></span>
 
             <div class="mb-3">
               <label for="observacoes_computador" class="form-label">
-                <i class='bx bx-align-left me-2'></i>Observações
+                <i class='bx bx-align-left'></i>Observações
               </label>
               <textarea id="observacoes_computador" name="observacoes" class="form-control" rows="3"></textarea>
             </div>
             <div class="d-flex justify-content-start">
               <button type="submit" class="btn btn-primary">
-                <i class='bx bx-save me-2'></i> Salvar Computador
+                <i class='bx bx-save'></i> Salvar Computador
               </button>
             </div>
           </form>
@@ -174,14 +176,14 @@ Admin TI - Cadastros<span class="produto-text"></span>
       <!-- Card PA -->
       <div class="card mb-4" id="card-posicao-atendimento">
         <div class="card-header">
-          <i class='bx bx-desktop me-2'></i> Cadastrar nova PA
+          <i class='bx bx-desktop'></i> Cadastrar nova PA
         </div>
         <div class="card-body">
           <form method="post" action="{% url 'ti:posicao_atendimento_create' %}">
             {% csrf_token %}
             <div class="mb-3">
               <label for="sala" class="form-label">
-                <i class='bx bx-door-open me-2'></i>Sala *
+                <i class='bx bx-door-open'></i>Sala *
               </label>
               <select id="sala" name="sala" class="form-select" required>
                 <option value="">-- Selecione uma Sala --</option>
@@ -192,7 +194,7 @@ Admin TI - Cadastros<span class="produto-text"></span>
             </div>
             <div class="mb-3">
               <label for="ilha" class="form-label">
-                <i class='bx bx-grid-alt me-2'></i>Ilha *
+                <i class='bx bx-grid-alt'></i>Ilha *
               </label>
               <select id="ilha" name="ilha" class="form-select" required>
                 <option value="">-- Selecione uma Ilha --</option>
@@ -200,14 +202,14 @@ Admin TI - Cadastros<span class="produto-text"></span>
             </div>
             <div class="mb-3">
               <label for="numero" class="form-label">
-                <i class='bx bx-hash me-2'></i>Número da PA
+                <i class='bx bx-hash'></i>Número da PA
               </label>
               <input type="text" id="numero" name="numero" class="form-control">
               <small class="text-muted">Deixe em branco para numeração automática baseada na ilha.</small>
             </div>
             <div class="mb-3">
               <label for="quantidade_pas" class="form-label">
-                <i class='bx bx-calculator me-2'></i>Quantidade de PAs a criar
+                <i class='bx bx-calculator'></i>Quantidade de PAs a criar
               </label>
               <input type="number" id="quantidade_pas" name="quantidade_pas" class="form-control" min="1" value="1" max="1">
               <small class="text-muted">Número de PAs a serem criadas de uma vez.</small>
@@ -215,7 +217,7 @@ Admin TI - Cadastros<span class="produto-text"></span>
             </div>
             <div class="mb-3">
               <label for="status_pa" class="form-label">
-                <i class='bx bx-info-circle me-2'></i>Status *
+                <i class='bx bx-info-circle'></i>Status *
               </label>
               <select id="status_pa" name="status" class="form-select" required>
                 <option value="livre">Livre</option>
@@ -226,12 +228,12 @@ Admin TI - Cadastros<span class="produto-text"></span>
             </div>
             <div class="mb-3 full-width">
               <label for="observacoes_pa" class="form-label">
-                <i class='bx bx-comment-detail me-2'></i>Observações
+                <i class='bx bx-comment-detail'></i>Observações
               </label>
               <textarea id="observacoes_pa" name="observacoes" class="form-control" rows="3"></textarea>
             </div>
             <button type="submit" class="btn btn-primary w-100">
-              <i class='bx bx-save me-2'></i> Salvar PA
+              <i class='bx bx-save'></i> Salvar PA
             </button>
           </form>
         </div>
@@ -240,25 +242,25 @@ Admin TI - Cadastros<span class="produto-text"></span>
       <!-- Card Tipo de Periférico -->
       <div class="card mb-4" id="card-tipo-periferico">
         <div class="card-header">
-          <i class='bx bx-tag me-2'></i> Cadastrar Novo Tipo de Periférico
+          <i class='bx bx-tag'></i> Cadastrar Novo Tipo de Periférico
         </div>
         <div class="card-body">
           <form method="post" action="{% url 'ti:tipo_periferico_create' %}">
             {% csrf_token %}
             <div class="mb-3 full-width">
               <label for="nome_tipo" class="form-label">
-                <i class='bx bx-label me-2'></i>Nome do Tipo *
+                <i class='bx bx-label'></i>Nome do Tipo *
               </label>
               <input type="text" id="nome_tipo" name="nome" class="form-control" required>
             </div>
             <div class="mb-3 full-width">
               <label for="descricao_tipo" class="form-label">
-                <i class='bx bx-align-left me-2'></i>Descrição
+                <i class='bx bx-align-left'></i>Descrição
               </label>
               <textarea id="descricao_tipo" name="descricao" class="form-control" rows="3"></textarea>
             </div>
             <button type="submit" class="btn btn-primary w-100">
-              <i class='bx bx-save me-2'></i> Salvar Tipo de Periférico
+              <i class='bx bx-save'></i> Salvar Tipo de Periférico
             </button>
           </form>
         </div>
@@ -267,14 +269,14 @@ Admin TI - Cadastros<span class="produto-text"></span>
       <!-- Card Cadastro de Ramal -->
       <div class="card mb-4" id="card-ramal">
         <div class="card-header">
-          <i class='bx bx-phone me-2'></i> Cadastrar Ramal
+          <i class='bx bx-phone'></i> Cadastrar Ramal
         </div>
         <div class="card-body">
           <form method="post" action="{% url 'ti:ramal_update' %}" id="form-ramal">
             {% csrf_token %}
             <div class="mb-3 full-width">
               <label for="funcionario_ramal" class="form-label">
-                <i class='bx bx-user me-2'></i>Funcionário *
+                <i class='bx bx-user'></i>Funcionário *
               </label>
               <select id="funcionario_ramal" name="funcionario_id" class="form-select" required>
                 <option value="">-- Selecione um Funcionário --</option>
@@ -285,14 +287,14 @@ Admin TI - Cadastros<span class="produto-text"></span>
             </div>
             <div class="mb-3 full-width">
               <label for="numero_ramal" class="form-label">
-                <i class='bx bx-phone me-2'></i>Número do Ramal *
+                <i class='bx bx-phone'></i>Número do Ramal *
               </label>
               <input type="text" id="numero_ramal" name="ramal" class="form-control" maxlength="4" pattern="[0-9]{4}" title="O ramal deve ter 4 dígitos numéricos" placeholder="Exemplo: 1000" required>
               <small class="text-muted">O ramal deve ter 4 dígitos e começar a partir do 1000</small>
               <div id="ramal-feedback" class="invalid-feedback"></div>
             </div>
             <button type="submit" class="btn btn-primary w-100">
-              <i class='bx bx-save me-2'></i> Salvar Ramal
+              <i class='bx bx-save'></i> Salvar Ramal
             </button>
           </form>
         </div>
@@ -301,23 +303,24 @@ Admin TI - Cadastros<span class="produto-text"></span>
       <!-- Card Cadastrar Novo Periférico (Migrado de atribuicao_periferico.html) -->
       <div class="card mb-4" id="card-periferico">
         <div class="card-header">
-          <i class='bx bx-devices me-2'></i> Cadastrar Novo Periférico
+          <i class='bx bx-devices'></i> Cadastrar Novos Periféricos
         </div>
         <div class="card-body">
-          <form method="post" action="{% url 'ti:periferico_create' %}">
+          <form method="post" action="{% url 'ti:periferico_create' %}" id="perifericos-form-inputs" novalidate>
             {% csrf_token %}
-            
-
-            
             <div class="mb-3">
               <label for="{{ form_periferico.tipo.id_for_label }}" class="form-label">
-                <i class='bx bx-category-alt me-2'></i>{{ form_periferico.tipo.label }} *
+                <i class='bx bx-category-alt'></i>{{ form_periferico.tipo.label }} *
               </label>
-              {{ form_periferico.tipo }}
+              <select name="{{ form_periferico.tipo.html_name }}" id="{{ form_periferico.tipo.id_for_label }}" class="form-select">
+                {% for value, text in form_periferico.tipo.field.choices %}
+                  <option value="{{ value }}" {% if form_periferico.tipo.value == value %}selected{% endif %}>{{ text }}</option>
+                {% endfor %}
+              </select>
               {% if form_periferico.tipo.errors %}
                 <div class="text-danger mt-1">
                   {% for error in form_periferico.tipo.errors %}
-                    <small><i class='bx bx-error-circle me-1'></i>{{ error }}</small><br>
+                    <small><i class='bx bx-error-circle'></i>{{ error }}</small><br>
                   {% endfor %}
                 </div>
               {% endif %}
@@ -325,13 +328,13 @@ Admin TI - Cadastros<span class="produto-text"></span>
 
             <div class="mb-3">
               <label for="{{ form_periferico.marca.id_for_label }}" class="form-label">
-                <i class='bx bx-building me-2'></i>{{ form_periferico.marca.label }} *
+                <i class='bx bx-building'></i>{{ form_periferico.marca.label }} *
               </label>
-              {{ form_periferico.marca }}
+              <input type="text" name="{{ form_periferico.marca.html_name }}" id="{{ form_periferico.marca.id_for_label }}" class="form-control" value="{{ form_periferico.marca.value|default:'' }}" required>
               {% if form_periferico.marca.errors %}
                 <div class="text-danger mt-1">
                   {% for error in form_periferico.marca.errors %}
-                    <small><i class='bx bx-error-circle me-1'></i>{{ error }}</small><br>
+                    <small><i class='bx bx-error-circle'></i>{{ error }}</small><br>
                   {% endfor %}
                 </div>
               {% endif %}
@@ -339,13 +342,13 @@ Admin TI - Cadastros<span class="produto-text"></span>
 
             <div class="mb-3">
               <label for="{{ form_periferico.modelo.id_for_label }}" class="form-label">
-                <i class='bx bx-info-circle me-2'></i>{{ form_periferico.modelo.label }} *
+                <i class='bx bx-info-circle'></i>{{ form_periferico.modelo.label }} *
               </label>
-              {{ form_periferico.modelo }}
+              <input type="text" name="{{ form_periferico.modelo.html_name }}" id="{{ form_periferico.modelo.id_for_label }}" class="form-control" value="{{ form_periferico.modelo.value|default:'' }}" required>
               {% if form_periferico.modelo.errors %}
                 <div class="text-danger mt-1">
                   {% for error in form_periferico.modelo.errors %}
-                    <small><i class='bx bx-error-circle me-1'></i>{{ error }}</small><br>
+                    <small><i class='bx bx-error-circle'></i>{{ error }}</small><br>
                   {% endfor %}
                 </div>
               {% endif %}
@@ -353,13 +356,13 @@ Admin TI - Cadastros<span class="produto-text"></span>
 
             <div class="mb-3">
               <label for="{{ form_periferico.data_aquisicao.id_for_label }}" class="form-label">
-                <i class='bx bx-calendar me-2'></i>{{ form_periferico.data_aquisicao.label }}
+                <i class='bx bx-calendar'></i>{{ form_periferico.data_aquisicao.label }}
               </label>
-              {{ form_periferico.data_aquisicao }}
+              <input type="date" name="{{ form_periferico.data_aquisicao.html_name }}" id="{{ form_periferico.data_aquisicao.id_for_label }}" class="form-control" value="{{ form_periferico.data_aquisicao.value|default:'' }}">
               {% if form_periferico.data_aquisicao.errors %}
                 <div class="text-danger mt-1">
                   {% for error in form_periferico.data_aquisicao.errors %}
-                    <small><i class='bx bx-error-circle me-1'></i>{{ error }}</small><br>
+                    <small><i class='bx bx-error-circle'></i>{{ error }}</small><br>
                   {% endfor %}
                 </div>
               {% endif %}
@@ -367,13 +370,17 @@ Admin TI - Cadastros<span class="produto-text"></span>
 
             <div class="mb-3">
               <label for="{{ form_periferico.loja.id_for_label }}" class="form-label">
-                <i class='bx bx-store me-2'></i>{{ form_periferico.loja.label }} *
+                <i class='bx bx-store'></i>{{ form_periferico.loja.label }} *
               </label>
-              {{ form_periferico.loja }}
+              <select name="{{ form_periferico.loja.html_name }}" id="{{ form_periferico.loja.id_for_label }}" class="form-select">
+                {% for value, text in form_periferico.loja.field.choices %}
+                  <option value="{{ value }}" {% if form_periferico.loja.value == value %}selected{% endif %}>{{ text }}</option>
+                {% endfor %}
+              </select>
               {% if form_periferico.loja.errors %}
                 <div class="text-danger mt-1">
                   {% for error in form_periferico.loja.errors %}
-                    <small><i class='bx bx-error-circle me-1'></i>{{ error }}</small><br>
+                    <small><i class='bx bx-error-circle'></i>{{ error }}</small><br>
                   {% endfor %}
                 </div>
               {% endif %}
@@ -381,29 +388,71 @@ Admin TI - Cadastros<span class="produto-text"></span>
 
             <div class="mb-3">
               <label for="{{ form_periferico.quantidade.id_for_label }}" class="form-label">
-                <i class='bx bx-hash me-2'></i>{{ form_periferico.quantidade.label }} *
+                <i class='bx bx-hash'></i>{{ form_periferico.quantidade.label }} *
               </label>
-              {{ form_periferico.quantidade }}
+              <input type="number" name="{{ form_periferico.quantidade.html_name }}" id="{{ form_periferico.quantidade.id_for_label }}" class="form-control" value="{{ form_periferico.quantidade.value|default:'1' }}" min="1" required>
               {% if form_periferico.quantidade.errors %}
                 <div class="text-danger mt-1">
                   {% for error in form_periferico.quantidade.errors %}
-                    <small><i class='bx bx-error-circle me-1'></i>{{ error }}</small><br>
+                    <small><i class='bx bx-error-circle'></i>{{ error }}</small><br>
                   {% endfor %}
                 </div>
               {% endif %}
             </div>
             
-            <button type="submit" name="submit_periferico" class="btn btn-primary w-100">
-              <i class='bx bx-save me-2'></i> Salvar Periférico
-            </button>
+            <div class="d-flex justify-content-start">
+              <button type="button" id="add-to-list-btn" class="btn btn-primary">
+                <i class='bx bx-plus-circle'></i> Adicionar à Lista
+              </button>
+            </div>
           </form>
+          
+          <form method="post" action="{% url 'ti:periferico_create' %}" id="perifericos-form" class="d-none">
+            {% csrf_token %}
+            <input type="hidden" name="perifericos_lote" id="perifericos-lote-input" value="[]">
+          </form>
+          
+          <div class="perifericos-pendentes-container mt-4">
+            <h5 class="mb-3"><i class='bx bx-list-check'></i>Periféricos Pendentes</h5>
+            <div class="table-responsive">
+              <table class="table table-striped table-hover" id="perifericos-pendentes-table">
+                <thead>
+                  <tr>
+                    <th>Tipo</th>
+                    <th>Marca</th>
+                    <th>Modelo</th>
+                    <th>Quantidade</th>
+                    <th>Loja</th>
+                    <th>Ações</th>
+                  </tr>
+                </thead>
+                <tbody id="perifericos-pendentes-body">
+                  <!-- Periféricos pendentes serão adicionados aqui via JS -->
+                  <tr id="empty-state-row">
+                    <td colspan="6" class="text-center py-3">
+                      <i class='bx bx-info-circle'></i>Nenhum periférico adicionado à lista
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            
+            <div class="d-flex justify-content-end mt-3">
+              <button type="button" id="limpar-lista-btn" class="btn btn-outline-danger me-2" disabled>
+                <i class='bx bx-trash'></i> Limpar Lista
+              </button>
+              <button type="submit" form="perifericos-form" name="submit_perifericos_lote" id="save-all-btn" class="btn btn-primary" disabled>
+                <i class='bx bx-save'></i> Salvar Todos (<span id="contagem-pendentes">0</span>)
+              </button>
+            </div>
+          </div>
         </div>
       </div>
       
       <!-- Card Cadastrar Periférico a PA (Migrado de atribuicao_periferico.html) -->
       <div class="card mb-4">
         <div class="card-header">
-          <i class='bx bx-plug me-2'></i> Cadastrar Periférico a PA
+          <i class='bx bx-plug'></i> Cadastrar Periférico a PA
         </div>
         <div class="card-body">
           <form method="post" action="{% url 'ti:atribuicao_periferico' %}" name="formAtribuicaoPa">
@@ -411,13 +460,13 @@ Admin TI - Cadastros<span class="produto-text"></span>
 
             <div class="mb-3">
               <label for="{{ form_atribuicao_pa.periferico.id_for_label }}" class="form-label">
-                <i class='bx bx-devices me-2'></i>{{ form_atribuicao_pa.periferico.label }} *
+                <i class='bx bx-devices'></i>{{ form_atribuicao_pa.periferico.label }} *
               </label>
               {{ form_atribuicao_pa.periferico }}
               {% if form_atribuicao_pa.periferico.errors %}
                 <div class="text-danger mt-1">
                   {% for error in form_atribuicao_pa.periferico.errors %}
-                    <small><i class='bx bx-error-circle me-1'></i>{{ error }}</small><br>
+                    <small><i class='bx bx-error-circle'></i>{{ error }}</small><br>
                   {% endfor %}
                 </div>
               {% endif %}
@@ -425,13 +474,13 @@ Admin TI - Cadastros<span class="produto-text"></span>
 
             <div class="mb-3">
               <label for="{{ form_atribuicao_pa.posicao_atendimento.id_for_label }}" class="form-label">
-                <i class='bx bx-desktop me-2'></i>{{ form_atribuicao_pa.posicao_atendimento.label }} *
+                <i class='bx bx-desktop'></i>{{ form_atribuicao_pa.posicao_atendimento.label }} *
               </label>
               {{ form_atribuicao_pa.posicao_atendimento }}
               {% if form_atribuicao_pa.posicao_atendimento.errors %}
                 <div class="text-danger mt-1">
                   {% for error in form_atribuicao_pa.posicao_atendimento.errors %}
-                    <small><i class='bx bx-error-circle me-1'></i>{{ error }}</small><br>
+                    <small><i class='bx bx-error-circle'></i>{{ error }}</small><br>
                   {% endfor %}
                 </div>
               {% endif %}
@@ -440,12 +489,12 @@ Admin TI - Cadastros<span class="produto-text"></span>
             <div class="mb-3 form-check"> {# Campo Ativo - checkbox #}
               {{ form_atribuicao_pa.ativo }}
               <label for="{{ form_atribuicao_pa.ativo.id_for_label }}" class="form-check-label ms-1">
-                <i class='bx bx-toggle-on me-1'></i>{{ form_atribuicao_pa.ativo.label }}
+                <i class='bx bx-toggle-on'></i>{{ form_atribuicao_pa.ativo.label }}
               </label>
               {% if form_atribuicao_pa.ativo.errors %}
                 <div class="text-danger mt-1">
                   {% for error in form_atribuicao_pa.ativo.errors %}
-                    <small><i class='bx bx-error-circle me-1'></i>{{ error }}</small><br>
+                    <small><i class='bx bx-error-circle'></i>{{ error }}</small><br>
                   {% endfor %}
                 </div>
               {% endif %}
@@ -453,7 +502,7 @@ Admin TI - Cadastros<span class="produto-text"></span>
 
             <div class="d-flex justify-content-start">
               <button type="submit" name="submit_atribuicao_pa" class="btn btn-primary">
-                <i class='bx bx-save me-2'></i>Cadastrar Atribuição
+                <i class='bx bx-save'></i>Cadastrar Atribuição
               </button>
             </div>
           </form>
@@ -525,6 +574,234 @@ document.addEventListener('DOMContentLoaded', function() {
         if (!perifericoSelect) console.error('Select de periférico não encontrado.');
         if (!paSelect) console.error('Select de PA não encontrado.');
     }
+});
+</script>
+
+<!-- Script para cadastro em lote de periféricos -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Elementos do DOM
+    const addToListBtn = document.getElementById('add-to-list-btn');
+    const perifericos_form = document.getElementById('perifericos-form');
+    const perifericos_lote_input = document.getElementById('perifericos-lote-input');
+    const perifericos_pendentes_body = document.getElementById('perifericos-pendentes-body');
+    const empty_state_row = document.getElementById('empty-state-row');
+    const limpar_lista_btn = document.getElementById('limpar-lista-btn');
+    const save_all_btn = document.getElementById('save-all-btn');
+    const contagem_pendentes = document.getElementById('contagem-pendentes');
+    
+    // Formulário de inputs
+    const perifericos_form_inputs = document.getElementById('perifericos-form-inputs');
+    
+    // Inputs para adicionar novos periféricos
+    const tipo_input = document.querySelector('#perifericos-form-inputs [name="tipo"]');
+    const marca_input = document.querySelector('#perifericos-form-inputs [name="marca"]');
+    const modelo_input = document.querySelector('#perifericos-form-inputs [name="modelo"]');
+    const data_aquisicao_input = document.querySelector('#perifericos-form-inputs [name="data_aquisicao"]');
+    const loja_input = document.querySelector('#perifericos-form-inputs [name="loja"]');
+    const quantidade_input = document.querySelector('#perifericos-form-inputs [name="quantidade"]');
+    
+    // Prevenir submit do formulário de inputs (que deve apenas adicionar à lista)
+    if (perifericos_form_inputs) {
+        perifericos_form_inputs.addEventListener('submit', function(event) {
+            event.preventDefault();
+            adicionarPerifericos();
+            return false;
+        });
+    }
+    
+    // Lista de periféricos pendentes
+    let perifericos_pendentes = [];
+    
+    // Função para atualizar o contador e estado dos botões
+    function atualizarContador() {
+        const total = perifericos_pendentes.length;
+        contagem_pendentes.textContent = total.toString();
+        
+        // Atualizar estado dos botões
+        save_all_btn.disabled = total === 0;
+        limpar_lista_btn.disabled = total === 0;
+        
+        // Mostrar ou esconder a linha de estado vazio
+        if (total === 0) {
+            empty_state_row.style.display = 'table-row';
+        } else {
+            empty_state_row.style.display = 'none';
+        }
+    }
+    
+    // Função para atualizar o campo hidden com a lista de periféricos
+    function atualizarCampoHidden() {
+        perifericos_lote_input.value = JSON.stringify(perifericos_pendentes);
+    }
+    
+    // Função para validar os inputs do formulário
+    function validarInputs() {
+        if (!tipo_input.value) {
+            alert('Por favor, selecione o tipo de periférico.');
+            tipo_input.focus();
+            return false;
+        }
+        
+        if (!marca_input.value) {
+            alert('Por favor, informe a marca do periférico.');
+            marca_input.focus();
+            return false;
+        }
+        
+        if (!modelo_input.value) {
+            alert('Por favor, informe o modelo do periférico.');
+            modelo_input.focus();
+            return false;
+        }
+        
+        if (!loja_input.value) {
+            alert('Por favor, selecione a loja.');
+            loja_input.focus();
+            return false;
+        }
+        
+        if (!quantidade_input.value || parseInt(quantidade_input.value) < 1) {
+            alert('Por favor, informe uma quantidade válida (maior que zero).');
+            quantidade_input.focus();
+            return false;
+        }
+        
+        return true;
+    }
+    
+    // Função para obter o texto do elemento selecionado
+    function getSelectedOptionText(selectElement) {
+        if (!selectElement.value) return '';
+        return selectElement.options[selectElement.selectedIndex].text;
+    }
+    
+    // Função para adicionar um periférico à lista de pendentes
+    function adicionarPerifericos() {
+        if (!validarInputs()) return;
+        
+        const novo_periferico = {
+            tipo_id: parseInt(tipo_input.value),
+            tipo_nome: getSelectedOptionText(tipo_input),
+            marca: marca_input.value,
+            modelo: modelo_input.value,
+            data_aquisicao: data_aquisicao_input.value || null,
+            loja_id: parseInt(loja_input.value),
+            loja_nome: getSelectedOptionText(loja_input),
+            quantidade: parseInt(quantidade_input.value)
+        };
+        
+        // Adicionar à lista
+        perifericos_pendentes.push(novo_periferico);
+        
+        // Atualizar tabela
+        renderizarPerifericos();
+        
+        // Atualizar contador e campo hidden
+        atualizarContador();
+        atualizarCampoHidden();
+        
+        // Limpar inputs (exceto loja que pode ser a mesma)
+        // tipo_input.value = '';
+        marca_input.value = '';
+        modelo_input.value = '';
+        // data_aquisicao_input.value = '';
+        quantidade_input.value = '1';
+        
+        // Focar no tipo para próximo cadastro
+        tipo_input.focus();
+    }
+    
+    // Função para renderizar os periféricos na tabela
+    function renderizarPerifericos() {
+        // Limpar tbody (mantendo a linha de estado vazio)
+        const rows = perifericos_pendentes_body.querySelectorAll('tr:not(#empty-state-row)');
+        rows.forEach(row => row.remove());
+        
+        // Adicionar os periféricos pendentes
+        perifericos_pendentes.forEach((periferico, index) => {
+            const tr = document.createElement('tr');
+            tr.classList.add('periferico-row');
+            
+            // Adicionar classe para highlight temporário se for o último adicionado
+            if (index === perifericos_pendentes.length - 1) {
+                tr.classList.add('periferico-row-highlight');
+            }
+            
+            tr.innerHTML = `
+                <td>${periferico.tipo_nome}</td>
+                <td>${periferico.marca}</td>
+                <td>${periferico.modelo}</td>
+                <td>${periferico.quantidade}</td>
+                <td>${periferico.loja_nome}</td>
+                <td>
+                    <button type="button" class="btn-remover-periferico" data-index="${index}">
+                        <i class='bx bx-trash'></i> Remover
+                    </button>
+                </td>
+            `;
+            
+            perifericos_pendentes_body.appendChild(tr);
+        });
+        
+        // Adicionar event listeners aos botões de remover
+        const btns_remover = document.querySelectorAll('.btn-remover-periferico');
+        btns_remover.forEach(btn => {
+            btn.addEventListener('click', function() {
+                const index = parseInt(this.getAttribute('data-index'));
+                removerPerifericos(index);
+            });
+        });
+    }
+    
+    // Função para remover um periférico da lista
+    function removerPerifericos(index) {
+        if (index >= 0 && index < perifericos_pendentes.length) {
+            perifericos_pendentes.splice(index, 1);
+            renderizarPerifericos();
+            atualizarContador();
+            atualizarCampoHidden();
+        }
+    }
+    
+    // Função para limpar toda a lista
+    function limparLista() {
+        if (confirm('Tem certeza que deseja limpar toda a lista de periféricos pendentes?')) {
+            perifericos_pendentes = [];
+            renderizarPerifericos();
+            atualizarContador();
+            atualizarCampoHidden();
+        }
+    }
+    
+    // Event Listeners para os botões
+    if (addToListBtn) {
+        addToListBtn.addEventListener('click', function(event) {
+            event.preventDefault();
+            adicionarPerifericos();
+        });
+    }
+    
+    if (limpar_lista_btn) {
+        limpar_lista_btn.addEventListener('click', limparLista);
+    }
+    
+    // Validação do formulário de envio da lista
+    if (perifericos_form) {
+        perifericos_form.addEventListener('submit', function(event) {
+            if (perifericos_pendentes.length === 0) {
+                event.preventDefault();
+                alert('Não há periféricos para salvar.');
+                return false;
+            }
+            
+            // A lista já foi verificada e está pronta para envio
+            return true;
+        });
+    }
+    
+    // Inicialização
+    atualizarContador();
 });
 </script>
 {% endblock %} 

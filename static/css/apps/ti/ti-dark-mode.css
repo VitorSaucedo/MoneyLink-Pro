@@ -27,7 +27,7 @@
     --ti-text-muted: #9991a9;        /* Texto desativado/mudo */
     
     /* Cores de destaque */
-    --ti-accent-primary: #70f611;    /* Verde do TI */
+    --ti-accent-primary: #0066cc;    /* Azul padrão usado nas outras páginas */
     --ti-accent-secondary: #0bd5f0;  /* Azul claro (ciano) */
     --ti-accent-tertiary: #6e42c1;   /* Roxo para destaques */
     
@@ -122,7 +122,7 @@
 [data-theme="dark"] .card-body,
 [data-theme="dark"] .panel-body,
 [data-theme="dark"] .list-group-item {
-    background-color: var(--ti-bg-secondary);
+    background-color: var(--ti-bg-card);
     border: none !important;
 }
 
@@ -140,7 +140,7 @@
 
 [data-theme="dark"] td {
     background-color: transparent;
-    color: var(--ti-text-secondary);
+    color: var(--ti-text-primary);
     border-color: var(--ti-border-light) !important;
 }
 

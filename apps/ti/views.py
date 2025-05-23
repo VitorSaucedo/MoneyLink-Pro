@@ -226,6 +226,15 @@ def controle_estoque(request):
     # Obter todos os tipos de periféricos
     tipos_perifericos = TipoPeriferico.objects.all().order_by('nome')
     
+    # Calcular o total de periféricos por tipo (independentemente de atribuição)
+    perifericos_totais_por_tipo = {}
+    filtro_loja = {'loja_id': loja_selecionada} if loja_selecionada else {}
+    
+    for tipo in tipos_perifericos:
+        # Contar todos os periféricos deste tipo, independente de estarem atribuídos a PAs
+        total_tipo = Periferico.objects.filter(tipo=tipo, **filtro_loja).count()
+        perifericos_totais_por_tipo[tipo.id] = total_tipo
+    
     # Inicializar dicionário para contagem de periféricos por sala/ilha/tipo
     perifericos_por_sala_ilha = {}
     total_geral_perifericos = 0
@@ -444,6 +453,7 @@ def controle_estoque(request):
         'tipos_perifericos': tipos_perifericos,
         'perifericos_por_sala_ilha': perifericos_por_sala_ilha,
         'total_geral_perifericos': total_geral_perifericos,
+        'perifericos_totais_por_tipo': perifericos_totais_por_tipo,
         'historico_page_obj': page_obj, # Passa o objeto da página para o template
         'pagination_data': pagination_data, # Adiciona metadados de paginação
         'data_ultima_atualizacao_real': data_ultima_atualizacao_real, # Adiciona a data ao contexto
@@ -1306,6 +1316,103 @@ def atribuicao_funcionario_pa_update(request, pk):
         'atribuicao': atribuicao
     }
     return render(request, 'apps/ti/atribuicao_funcionario_pa_form.html', context)
+
+
+# Views para Periféricos
+@login_required
+def periferico_list(request):
+    perifericos = Periferico.objects.all()
+    context = {
+        'perifericos': perifericos
+    }
+    return render(request, 'apps/ti/periferico_list.html', context)
+
+@login_required
+def periferico_create(request):
+    if request.method == 'POST':
+        # Verificar se é um envio em lote
+        if 'perifericos_lote' in request.POST:
+            try:
+                perifericos_lote = json.loads(request.POST.get('perifericos_lote', '[]'))
+                if not perifericos_lote:
+                    messages.warning(request, 'Nenhum periférico para cadastrar.')
+                    return redirect('ti:admin')
+                
+                # Contadores para feedback
+                total_cadastrados = 0
+                erros = []
+                
+                # Processar cada periférico do lote
+                for item in perifericos_lote:
+                    try:
+                        # Criar cada periférico com base nos dados do lote
+                        tipo_id = item.get('tipo_id')
+                        marca = item.get('marca', '').strip()
+                        modelo = item.get('modelo', '').strip()
+                        data_aquisicao = item.get('data_aquisicao')
+                        loja_id = item.get('loja_id')
+                        quantidade = item.get('quantidade', 1)
+                        
+                        # Validar dados obrigatórios
+                        if not (tipo_id and marca and modelo and loja_id):
+                            erros.append(f"Dados incompletos para periférico: {marca} {modelo}")
+                            continue
+                        
+                        # Converter data se necessário
+                        if data_aquisicao:
+                            try:
+                                data_aquisicao = timezone.datetime.strptime(data_aquisicao, '%Y-%m-%d').date()
+                            except (ValueError, TypeError):
+                                data_aquisicao = None
+                        
+                        # Criar periférico
+                        periferico = Periferico(
+                            tipo_id=tipo_id,
+                            marca=marca,
+                            modelo=modelo,
+                            data_aquisicao=data_aquisicao,
+                            loja_id=loja_id,
+                            quantidade=quantidade,
+                            status='disponivel'
+                        )
+                        periferico.save()
+                        total_cadastrados += 1
+                    except Exception as e:
+                        erros.append(f"Erro ao cadastrar {marca} {modelo}: {str(e)}")
+                
+                # Feedback para o usuário
+                if total_cadastrados > 0:
+                    if total_cadastrados == 1:
+                        messages.success(request, f'1 periférico cadastrado com sucesso!')
+                    else:
+                        messages.success(request, f'{total_cadastrados} periféricos cadastrados com sucesso!')
+                
+                if erros:
+                    for erro in erros[:5]:  # Limitar a quantidade de erros exibidos
+                        messages.error(request, erro)
+                    
+                    if len(erros) > 5:
+                        messages.error(request, f'...e mais {len(erros) - 5} erros.')
+                
+                return redirect('ti:admin')
+            
+            except json.JSONDecodeError:
+                messages.error(request, 'Formato de dados inválido para cadastro em lote.')
+                return redirect('ti:admin')
+            
+        # Processo normal (formulário individual)
+        form = PerifericoForm(request.POST)
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'Periférico cadastrado com sucesso!')
+            return redirect('ti:admin')
+    else:
+        form = PerifericoForm()
+    
+    context = {
+        'form': form
+    }
+    return render(request, 'apps/ti/periferico_form.html', context)
 
 
 # Importar funções extras do arquivo views_extras.py

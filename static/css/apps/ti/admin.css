@@ -1,12 +1,16 @@
 /**
  * admin.css - Estilos para a página de administração do módulo TI
+ * ATENÇÃO: Este arquivo contém APENAS os estilos para o tema CLARO (padrão).
+ * Os estilos para o tema escuro (dark mode) estão no arquivo ti-dark-mode.css
  */
 
 /* ---------- Variáveis de Cores e Sombreamentos ---------- */
 :root {
+    /* Cores primárias - Compatíveis com o tema escuro */
     --color-primary-dark: #142650; /* Azul escuro */
     --color-secondary: #70f611; /* Verde */
     --color-tertiary: #0bd5f0; /* Azul claro (ciano) */
+    --color-accent: #6e42c1; /* Roxo - para compatibilidade com dark mode */
     --color-white: #fff;
     --color-gray: #ddd;
     --color-light-gray: #f0f0f0;
@@ -14,6 +18,31 @@
     --color-text-light: #666;
     --color-danger: #dc3545;
     --color-success: #198754; /* Verde escuro para sucesso */
+    --color-warning: #ffc107;
+    --color-info: #0dcaf0;
+
+    /* Variáveis equivalentes ao dark mode para consistência */
+    --ti-bg-primary: #ffffff;
+    --ti-bg-secondary: #f8f9fa;
+    --ti-bg-card: #ffffff;
+    --ti-bg-hover: #f0f0f0;
+    --ti-bg-input: #ffffff;
+    
+    --ti-text-primary: var(--color-text-dark);
+    --ti-text-secondary: var(--color-text-light);
+    --ti-text-muted: #6c757d;
+    
+    --ti-accent-primary: var(--color-secondary);
+    --ti-accent-secondary: var(--color-tertiary);
+    --ti-accent-tertiary: var(--color-accent);
+    
+    --ti-status-success: var(--color-success);
+    --ti-status-warning: var(--color-warning);
+    --ti-status-danger: var(--color-danger);
+    --ti-status-info: var(--color-info);
+    
+    --ti-border-color: var(--color-gray);
+    --ti-border-light: rgba(220, 220, 220, 0.5);
 
     --box-shadow-light: 0 2px 6px rgba(0,0,0,0.05);
     --box-shadow-medium: 0 4px 12px rgba(0,0,0,0.1);
@@ -23,51 +52,12 @@
     --gradient-primary-green: linear-gradient(135deg, var(--color-secondary) 0%, var(--color-primary-dark) 100%);
     --gradient-secondary-green: linear-gradient(135deg, var(--color-secondary) 0%, var(--color-tertiary) 50%, var(--color-secondary) 100%);
     --gradient-card-header: linear-gradient(-45deg, var(--color-secondary), #5cb85c, var(--color-primary-dark), var(--color-secondary)); /* Verde, verde mais escuro, azul, verde */
+    
+    /* Variável de gradiente compatível com dark mode */
+    --ti-gradient-header: var(--gradient-card-header);
 
     /* Animação do Gradiente */
     --gradient-animation: gradientBG 12s ease infinite;
-}
-
-/* Dark Mode - Variáveis para o tema escuro */
-[data-theme="dark"] {
-    --color-primary-dark: #1e1e2f; /* Fundo principal muito escuro (quase preto azulado) */
-    --color-secondary: #6e42c1; /* Roxo para elementos secundários */
-    --color-tertiary: #29e3ff; /* Ciano mais brilhante */
-    --color-white: #1a1625; /* Fundo escuro */
-    --color-gray: #3d3450; /* Cinza escuro */
-    --color-light-gray: #2d2438; /* Cinza claro escuro */
-    --color-text-dark: #ffffff; /* Texto branco */
-    --color-text-light: #b8b5c0; /* Texto cinza claro */
-    
-    --box-shadow-light: none;
-    --box-shadow-medium: none;
-    --box-shadow-card-hover: none;
-    
-    /* Gradientes escuros */
-    --gradient-primary-green: linear-gradient(135deg, #8659d4 0%, #213a77 100%);
-    --gradient-secondary-green: linear-gradient(135deg, #8659d4 0%, #29e3ff 50%, #8659d4 100%);
-    --gradient-card-header: linear-gradient(-45deg, #6e42c1, #8659d4, #3a4c8a, #6e42c1);
-}
-
-/* Alternativas de cores para os headers no modo escuro */
-[data-theme="dark"] .card .card-header {
-    /* Opção 1: Gradiente roxo-azul (tema mais escuro e elegante) */
-    background: linear-gradient(-45deg, #6e42c1, #8659d4, #3a4c8a, #6e42c1) !important;
-    color: #ffffff !important;
-    text-shadow: 0 1px 2px rgba(0,0,0,0.2);
-}
-
-/* Seletor para ativar cores alternativas */
-.alt-dark-header-1 .card .card-header {
-    background: linear-gradient(-45deg, #6e42c1, #8659d4, #3a4c8a, #6e42c1) !important;
-}
-
-.alt-dark-header-2 .card .card-header {
-    background: linear-gradient(-45deg, #5c3aad, #7354c4, #2d3970, #5c3aad) !important;
-}
-
-.alt-dark-header-3 .card .card-header {
-    background: linear-gradient(-45deg, #462a84, #5e41a5, #203156, #462a84) !important;
 }
 
 /* Ajustes para o toggle de tema no cabeçalho */
@@ -98,12 +88,8 @@ header .slider i {
 
 /* Estilos Gerais da Página */
 body {
-    background-color: var(--color-light-gray);
+    background-color: var(--ti-bg-primary);
     transition: background-color 0.3s ease;
-}
-
-[data-theme="dark"] body {
-    background-color: #1a1625; /* Cor de fundo muito escura */
 }
 
 .container {
@@ -123,21 +109,15 @@ body {
     display: flex;
     flex-direction: column;
     gap: 1rem;
-    background-color: var(--color-white);
+    background-color: var(--ti-bg-card);
     transition: background-color 0.3s ease;
     border-bottom: none !important;
     box-shadow: none !important;
 }
 
-[data-theme="dark"] .card .card-body {
-    background-color: #1e1e2f;
-    color: var(--color-text-dark);
-    border: none;
-}
-
-/* Título da página com correção de background para o modo escuro */
+/* Título da página */
 .titulo-pagina {
-    color: var(--color-primary-dark);
+    color: var(--ti-text-primary);
     font-weight: 600;
     border: none;
     padding-bottom: 0.5rem;
@@ -148,15 +128,8 @@ body {
 }
 
 .titulo-pagina i {
-    color: var(--color-secondary);
+    color: var(--ti-accent-primary);
     transition: color 0.3s ease;
-}
-
-[data-theme="dark"] .titulo-pagina {
-    color: var(--color-text-dark);
-    border: none;
-    background-color: transparent; 
-    box-shadow: none;
 }
 
 /* Container do título */
@@ -173,19 +146,9 @@ body {
     outline: none !important;
 }
 
-[data-theme="dark"] .header-container {
-    background-color: #1a1625;
-    border: none;
-    box-shadow: none;
-}
-
-[data-theme="dark"] .titulo-pagina i {
-    color: #8659d4; /* Roxo mais claro para o ícone de engrenagem */
-}
-
 /* Estilos dos Cards */
 .card {
-    background-color: var(--color-white);
+    background-color: var(--ti-bg-card);
     border: none !important;
     border-radius: 10px;
     box-shadow: none !important;
@@ -200,25 +163,13 @@ body {
     position: relative;
 }
 
-[data-theme="dark"] .card {
-    background-color: #1e1e2f;
-    border: none;
-    box-shadow: none;
-}
-
 .card:hover {
     transform: none;
     box-shadow: none;
 }
 
-/* Removida sombra para o hover no tema escuro */
-[data-theme="dark"] .card:hover {
-    box-shadow: none;
-    border-color: transparent;
-}
-
 .card .card-header {
-    background: var(--gradient-card-header) !important;
+    background: var(--ti-gradient-header) !important;
     background-size: 400% 400% !important;
     animation: var(--gradient-animation) !important;
     color: var(--color-white) !important;
@@ -234,11 +185,6 @@ body {
     z-index: 1;
     transition: color 0.3s ease;
     overflow: hidden; /* Importante para conter o efeito de brilho */
-}
-
-[data-theme="dark"] .card .card-header {
-    color: #ffffff !important;
-    text-shadow: 0 1px 2px rgba(0,0,0,0.2);
 }
 
 .card .card-header i {
@@ -273,26 +219,13 @@ body {
     left: 150%;
 }
 
-[data-theme="dark"] .col-md-6 {
-    background-color: #1a1625;
-}
-
-[data-theme="dark"] .row {
-    background-color: #1a1625;
-}
-
 .card .card-body {
     padding: 1.25rem;
     display: flex;
     flex-direction: column;
     gap: 1rem;
-    background: linear-gradient(135deg, rgba(255, 255, 255, 1) 0%, rgba(245, 255, 245, 0.8) 100%);
+    background-color: var(--ti-bg-card);
     transition: background 0.3s ease;
-}
-
-[data-theme="dark"] .card .card-body {
-    background: linear-gradient(135deg, rgba(45, 36, 56, 1) 0%, rgba(26, 22, 37, 0.8) 100%);
-    color: var(--color-text-dark);
 }
 
 /* Estilos dos Formulários */
@@ -317,70 +250,48 @@ body {
     display: flex;
     align-items: center;
     font-weight: 600;
-    color: var(--color-primary-dark);
+    color: var(--ti-text-primary);
     margin-bottom: 0.5rem;
     font-size: 0.95rem;
     transition: color 0.3s ease;
 }
 
-[data-theme="dark"] .card form .form-label {
-    color: var(--color-secondary);
-}
-
 .card form .form-label i {
     margin-right: 0.5rem;
-    color: var(--color-secondary);
+    color: var(--ti-accent-primary);
     font-size: 1.1rem;
     transition: color 0.3s ease;
 }
 
-[data-theme="dark"] .card form .form-label i {
-    color: #9c80e0; /* Roxo claro para os ícones dos formulários */
-}
-
 .card form .form-control,
 .card form .form-select {
-    border: 2px solid var(--color-gray);
+    border: 2px solid var(--ti-border-color);
     border-radius: 8px;
     padding: 0.75rem 1rem;
     font-size: 1rem;
     transition: border-color 0.3s ease, box-shadow 0.3s ease, background-color 0.3s ease, color 0.3s ease;
-    background-color: var(--color-white);
+    background-color: var(--ti-bg-input);
     width: 100%;
-    color: var(--color-text-dark);
-}
-
-[data-theme="dark"] .card form .form-control,
-[data-theme="dark"] .card form .form-select {
-    background-color: var(--color-white);
-    border-color: var(--color-gray);
-    color: var(--color-text-dark);
+    color: var(--ti-text-primary);
 }
 
 .card form .form-control:focus,
 .card form .form-select:focus {
-    border-color: var(--color-secondary);
+    border-color: var(--ti-accent-primary);
     box-shadow: 0 0 0 3px rgba(112, 246, 17, 0.15);
-    background-color: #fafffa;
+    background-color: var(--ti-bg-input);
     outline: none;
 }
 
-[data-theme="dark"] .card form .form-control:focus,
-[data-theme="dark"] .card form .form-select:focus {
-    border-color: var(--color-secondary);
-    box-shadow: 0 0 0 3px rgba(110, 66, 193, 0.2);
-    background-color: #2a2235;
-    color: var(--color-text-dark);
-}
-
 /* Botão de Submissão */
-.card form button[type="submit"] {
+.card form button[type="submit"],
+.btn-primary {
     background: var(--gradient-secondary-green) !important;
     background-size: 300% 300% !important;
     animation: gradientBGButton 10s ease infinite !important;
     border: none;
     border-radius: 8px;
-    color: var(--color-text-dark);
+    color: var(--ti-text-primary);
     font-weight: 600;
     text-transform: uppercase;
     letter-spacing: 0.5px;
@@ -394,24 +305,16 @@ body {
     gap: 0.5rem;
 }
 
-[data-theme="dark"] .card form button[type="submit"] {
-    background: linear-gradient(135deg, #6e42c1, #7e56d1, #4b6dd4, #6e42c1) !important;
-    background-size: 300% 300% !important;
-    color: #ffffff;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
-}
-
-.card form button[type="submit"]:hover {
+.card form button[type="submit"]:hover,
+.btn-primary:hover {
     transform: translateY(-2px);
     box-shadow: 0 6px 12px rgba(112, 246, 17, 0.2);
 }
 
-[data-theme="dark"] .card form button[type="submit"]:hover {
-    box-shadow: 0 6px 12px rgba(110, 66, 193, 0.4);
-}
-
 .card form button[type="submit"]:disabled,
-.card form button[type="submit"].disabled {
+.card form button[type="submit"].disabled,
+.btn-primary:disabled,
+.btn-primary.disabled {
     background: linear-gradient(135deg, #cccccc, #999999) !important;
     color: #666666;
     cursor: not-allowed;
@@ -420,20 +323,18 @@ body {
     transform: none;
 }
 
-[data-theme="dark"] .card form button[type="submit"]:disabled,
-[data-theme="dark"] .card form button[type="submit"].disabled {
-    background: linear-gradient(135deg, #444444, #333333) !important;
-    color: #888888;
-}
-
 .card form button[type="submit"]:disabled:hover,
-.card form button[type="submit"].disabled:hover {
+.card form button[type="submit"].disabled:hover,
+.btn-primary:disabled:hover,
+.btn-primary.disabled:hover {
     transform: none;
     box-shadow: none;
 }
 
-.card form button[type="submit"] i {
+.card form button[type="submit"] i,
+.btn-primary i {
     font-size: 1.2rem;
+    margin-right: 0.5rem;
 }
 
 /* Animações */
@@ -483,27 +384,16 @@ body {
     max-width: 300px;
 }
 
-[data-theme="dark"] .btn-listagem {
-    background-color: #3a2b70; /* Roxo escuro mais adequado */
-    color: #ffffff;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.25);
-}
-
 .btn-listagem:hover {
     background-color: var(--color-primary-dark);
     transform: translateY(-2px);
     box-shadow: 0 6px 12px rgba(20, 38, 80, 0.2);
-    color: var(--color-secondary);
-}
-
-[data-theme="dark"] .btn-listagem:hover {
-    background-color: #4d3991; /* Roxo escuro ligeiramente mais claro */
-    box-shadow: 0 6px 12px rgba(58, 43, 112, 0.4);
-    color: #a48edf; /* Roxo claro para contraste */
+    color: var(--ti-accent-primary);
 }
 
 .btn-listagem i {
     font-size: 1.2rem;
+    margin-right: 0.5rem;
 }
 
 /* Estilos para validação de formulários */
@@ -514,12 +404,8 @@ body {
     background-size: 20px;
 }
 
-[data-theme="dark"] .is-loading {
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24'%3E%3Cpath fill='%23b8b5c0' d='M12,4a8,8,0,0,1,7.89,6.7A1.53,1.53,0,0,0,21.38,12h0a1.5,1.5,0,0,0,1.48-1.75,11,11,0,0,0-21.72,0A1.5,1.5,0,0,0,2.62,12h0a1.53,1.53,0,0,0,1.49-1.3A8,8,0,0,1,12,4Z'%3E%3CanimateTransform attributeName='transform' dur='0.75s' repeatCount='indefinite' type='rotate' values='0 12 12;360 12 12'/%3E%3C/path%3E%3C/svg%3E");
-}
-
 .is-valid {
-    border-color: var(--color-success) !important;
+    border-color: var(--ti-status-success) !important;
     background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24'%3E%3Cpath fill='%23198754' d='M9,16.17L4.83,12l-1.42,1.41L9,19L21,7l-1.41-1.41L9,16.17z'/%3E%3C/svg%3E");
     background-repeat: no-repeat;
     background-position: right 10px center;
@@ -528,17 +414,13 @@ body {
 
 .invalid-feedback {
     display: none;
-    color: var(--color-danger);
+    color: var(--ti-status-danger);
     font-size: 0.875rem;
     margin-top: 0.25rem;
 }
 
-[data-theme="dark"] .invalid-feedback {
-    color: #ff6b6b;
-}
-
 .form-control.is-invalid {
-    border-color: var(--color-danger);
+    border-color: var(--ti-status-danger);
     padding-right: calc(1.5em + 0.75rem);
     background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24'%3E%3Cpath fill='%23dc3545' d='M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z'/%3E%3C/svg%3E");
     background-repeat: no-repeat;
@@ -572,4 +454,137 @@ body,
     .btn-listagem {
         max-width: 100%;
     }
+}
+
+/* Estilos para Cadastro em Lote de Periféricos */
+.perifericos-pendentes-container {
+    background-color: var(--ti-bg-secondary);
+    border-radius: 8px;
+    padding: 1.25rem;
+    margin-top: 1.5rem;
+    border: 1px solid var(--ti-border-color);
+    transition: background-color 0.3s ease;
+}
+
+.perifericos-pendentes-container h5 {
+    color: var(--ti-text-primary);
+    font-weight: 600;
+    font-size: 1.1rem;
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+}
+
+.perifericos-pendentes-container h5 i {
+    color: var(--ti-accent-primary);
+    font-size: 1.3rem;
+    margin-right: 0.5rem;
+}
+
+/* Tabela de periféricos pendentes */
+#perifericos-pendentes-table {
+    margin-bottom: 0;
+}
+
+#perifericos-pendentes-table thead th {
+    background-color: var(--color-primary-dark);
+    color: var(--color-white);
+    font-weight: 600;
+    border: none;
+    padding: 0.75rem 1rem;
+    font-size: 0.9rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+#perifericos-pendentes-table tbody tr:nth-child(even) {
+    background-color: rgba(112, 246, 17, 0.05);
+}
+
+#perifericos-pendentes-table tbody tr:hover {
+    background-color: rgba(112, 246, 17, 0.1);
+}
+
+/* Animação para destacar periféricos recém-adicionados */
+@keyframes highlight-row {
+    0% { background-color: rgba(112, 246, 17, 0.3); }
+    100% { background-color: transparent; }
+}
+
+.periferico-row-highlight {
+    animation: highlight-row 1.5s ease-out;
+}
+
+/* Botão de remover periférico */
+.btn-remover-periferico {
+    padding: 0.25rem 0.5rem;
+    background-color: transparent;
+    border: 1px solid var(--ti-status-danger);
+    color: var(--ti-status-danger);
+    border-radius: 4px;
+    font-size: 0.8rem;
+    transition: all 0.2s ease;
+}
+
+.btn-remover-periferico:hover {
+    background-color: var(--ti-status-danger);
+    color: white;
+}
+
+/* Estado vazio da tabela */
+#empty-state-row td {
+    color: var(--ti-text-muted);
+    font-style: italic;
+}
+
+/* Botões de ação na parte inferior */
+#limpar-lista-btn:disabled,
+#save-all-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+/* Contador de periféricos pendentes */
+#contagem-pendentes {
+    font-weight: bold;
+}
+
+/* Divisória entre formulário e lista pendente */
+.periferico-form-container {
+    border-bottom: 1px dashed var(--ti-border-color);
+    padding-bottom: 1.5rem;
+    margin-bottom: 1rem;
+}
+
+/* Responsividade */
+@media (max-width: 992px) {
+    .card form .mb-3 {
+        flex: 1 1 100%;
+    }
+    
+    .btn-listagem {
+        max-width: 100%;
+    }
+}
+
+/* Estilos para os ícones */
+.bx {
+    margin-right: 0.5rem;
+}
+
+/* Estilo para container de periféricos pendentes */
+.perifericos-pendentes-container {
+    background-color: var(--ti-bg-secondary);
+    border-radius: 8px;
+    padding: 1.25rem;
+    margin-top: 1.5rem;
+    border: 1px solid var(--ti-border-color);
+}
+
+/* Classe app-ti para especificidade */
+.app-ti .card,
+.app-ti .form-control,
+.app-ti .form-select,
+.app-ti .btn {
+    transition: all 0.3s ease;
 } 

@@ -69,6 +69,7 @@ Controle de Estoque - TI
               <thead>
                 <tr>
                   <th>Periférico</th>
+                  <th>Total no estoque</th>
                   {% for sala in salas %}
                     {% for ilha in sala.ilhas.all %}
                       <th>{{ sala.nome }}, {{ ilha.nome }}</th>
@@ -97,6 +98,8 @@ Controle de Estoque - TI
                       {{ tipo.nome }}
                     </td>
                     
+                    <td class="fw-bold text-primary">{{ perifericos_totais_por_tipo|get_item:tipo.id|default:0 }}</td>
+                    
                     {% with tipo_total=0 %}
                       {% for sala in salas %}
                         {% for ilha in sala.ilhas.all %}
@@ -114,6 +117,7 @@ Controle de Estoque - TI
                 <!-- Linha para computadores -->
                 <tr>
                   <td><i class='bx bx-laptop'></i> Computadores (Em Uso)</td>
+                  <td class="fw-bold text-primary">{{ computadores_cadastrados_total }}</td>
                   {% for sala_loop in salas %} {# Renomeado para evitar conflito com a var sala do loop externo #}
                     {% for ilha_loop in sala_loop.ilhas.all %} {# Renomeado para evitar conflito #}
                       {% with contagem_comp_ilha=computadores_em_uso_por_sala_ilha|get_item:sala_loop.id|get_item:ilha_loop.id %}
@@ -126,6 +130,7 @@ Controle de Estoque - TI
                 
                 <tr class="table-success">
                   <td class="fw-bold"><i class='bx bx-calculator'></i> Total por Local</td>
+                  <td class="fw-bold">-</td>
                   {% for sala_loop in salas %} {# Renomeado #}
                     {% for ilha_loop in sala_loop.ilhas.all %} {# Renomeado #}
                       {% with local_total_perifericos=perifericos_por_sala_ilha|get_item:sala_loop.id|get_item:ilha_loop.id|sum_values %}

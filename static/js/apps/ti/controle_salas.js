@@ -1002,7 +1002,7 @@ $(document).ready(function() {
       grupoPAsDireita.forEach(pa => rightColumn.appendChild(pa.element));
     });
   }
-
+  
   // Executar a organização após o carregamento do DOM
   organizarLayoutPAs();
   
@@ -2305,7 +2305,7 @@ $(document).ready(function() {
           if (perifericosFiltrados.length > 0) {
             // Renderizar lista de periféricos filtrada
             renderizarPerifericosDisponiveis(perifericosFiltrados);
-            perifericosDisponiveisContent.show();
+          perifericosDisponiveisContent.show();
             
             // Se há periféricos pendentes, mostrar uma notificação
             if (perifericosPendentesDesseTipo.length > 0) {
@@ -2395,7 +2395,7 @@ $(document).ready(function() {
       console.error('Dados incompletos para atribuição de periférico');
       mostrarMensagem('Erro: Dados incompletos para atribuição', 'error');
       // Restaurar o botão
-      button.prop('disabled', false).html('<i class="bx bx-link me-1"></i> Atribuir');
+        button.prop('disabled', false).html('<i class="bx bx-link me-1"></i> Atribuir');
     }
   });
   

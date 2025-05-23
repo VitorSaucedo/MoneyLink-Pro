@@ -2,6 +2,8 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.http import JsonResponse
+import json
+from django.utils import timezone
 
 from .models import (
     Sala, Ilha, PosicaoAtendimento, 
@@ -119,6 +121,79 @@ def periferico_list(request):
 @login_required
 def periferico_create(request):
     if request.method == 'POST':
+        # Verificar se é um envio em lote
+        if 'perifericos_lote' in request.POST:
+            try:
+                perifericos_lote = json.loads(request.POST.get('perifericos_lote', '[]'))
+                if not perifericos_lote:
+                    messages.warning(request, 'Nenhum periférico para cadastrar.')
+                    return redirect('ti:admin')
+                
+                # Contadores para feedback
+                total_cadastrados = 0
+                erros = []
+                
+                # Processar cada periférico do lote
+                for item in perifericos_lote:
+                    try:
+                        # Criar cada periférico com base nos dados do lote
+                        tipo_id = item.get('tipo_id')
+                        marca = item.get('marca', '').strip()
+                        modelo = item.get('modelo', '').strip()
+                        data_aquisicao = item.get('data_aquisicao')
+                        loja_id = item.get('loja_id')
+                        quantidade = item.get('quantidade', 1)
+                        
+                        # Validar dados obrigatórios
+                        if not (tipo_id and marca and modelo and loja_id):
+                            erros.append(f"Dados incompletos para periférico: {marca} {modelo}")
+                            continue
+                        
+                        # Converter data se necessário
+                        if data_aquisicao:
+                            try:
+                                data_aquisicao = timezone.datetime.strptime(data_aquisicao, '%Y-%m-%d').date()
+                            except (ValueError, TypeError):
+                                data_aquisicao = None
+                        
+                        # Criar periférico(s)
+                        # Para cada item do lote, criamos a quantidade especificada (cada unidade com quantidade=1)
+                        for _ in range(quantidade):
+                            periferico = Periferico(
+                                tipo_id=tipo_id,
+                                marca=marca,
+                                modelo=modelo,
+                                data_aquisicao=data_aquisicao,
+                                loja_id=loja_id,
+                                quantidade=1,  # Cada periférico tem quantidade=1 para melhor controle
+                                status='disponivel'
+                            )
+                            periferico.save()
+                            total_cadastrados += 1
+                    except Exception as e:
+                        erros.append(f"Erro ao cadastrar {marca} {modelo}: {str(e)}")
+                
+                # Feedback para o usuário
+                if total_cadastrados > 0:
+                    if total_cadastrados == 1:
+                        messages.success(request, f'1 periférico cadastrado com sucesso!')
+                    else:
+                        messages.success(request, f'{total_cadastrados} periféricos cadastrados com sucesso!')
+                
+                if erros:
+                    for erro in erros[:5]:  # Limitar a quantidade de erros exibidos
+                        messages.error(request, erro)
+                    
+                    if len(erros) > 5:
+                        messages.error(request, f'...e mais {len(erros) - 5} erros.')
+                
+                return redirect('ti:admin')
+            
+            except json.JSONDecodeError:
+                messages.error(request, 'Formato de dados inválido para cadastro em lote.')
+                return redirect('ti:admin')
+            
+        # Processo normal (formulário individual)
         form = PerifericoForm(request.POST)
         if form.is_valid():
             # Obter a quantidade a ser criada

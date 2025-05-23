@@ -4,30 +4,44 @@ document.addEventListener('DOMContentLoaded', function() {
     const containers = document.querySelectorAll('.container, .box, div, section');
     const mainElement = document.querySelector('main');
     const toggleSwitch = document.querySelector('.theme-switch input[type="checkbox"]');
+    const body = document.body;
+    const html = document.documentElement;
 
     // Função para aplicar o tema
     function applyTheme(isDark) {
         if (isDark) {
-            document.documentElement.setAttribute('data-theme', 'dark');
-            document.body.classList.add('dark-mode');
+            html.setAttribute('data-theme', 'dark');
+            body.classList.add('dark-mode');
             containers.forEach(container => container.classList.add('darkmode'));
             mainElement?.classList.add('darkmode');
             if (toggleSwitch) toggleSwitch.checked = true;
             if (checkbox) checkbox.checked = true;
+            
+            // Aplicar classes específicas para módulo TI
+            const tiElements = document.querySelectorAll('.app-ti');
+            tiElements.forEach(element => {
+                element.classList.add('dark-mode');
+            });
         } else {
-            document.documentElement.setAttribute('data-theme', 'light');
-            document.body.classList.remove('dark-mode');
+            html.setAttribute('data-theme', 'light');
+            body.classList.remove('dark-mode');
             containers.forEach(container => container.classList.remove('darkmode'));
             mainElement?.classList.remove('darkmode');
             if (toggleSwitch) toggleSwitch.checked = false;
             if (checkbox) checkbox.checked = false;
+            
+            // Remover classes específicas para módulo TI
+            const tiElements = document.querySelectorAll('.app-ti');
+            tiElements.forEach(element => {
+                element.classList.remove('dark-mode');
+            });
         }
     }
 
     // Função para alternar o tema
     function switchTheme(e) {
         const isDark = e.target.checked;
-        document.documentElement.setAttribute('data-theme', isDark ? 'dark' : 'light');
+        html.setAttribute('data-theme', isDark ? 'dark' : 'light');
         localStorage.setItem('theme', isDark ? 'dark' : 'light');
         applyTheme(isDark);
     }
@@ -35,8 +49,16 @@ document.addEventListener('DOMContentLoaded', function() {
     // Verifica preferência salva
     const currentTheme = localStorage.getItem('theme');
     if (currentTheme) {
-        document.documentElement.setAttribute('data-theme', currentTheme);
+        html.setAttribute('data-theme', currentTheme);
         applyTheme(currentTheme === 'dark');
+    } else {
+        // Verifica preferência do sistema
+        const prefersDarkScheme = window.matchMedia('(prefers-color-scheme: dark)');
+        if (prefersDarkScheme.matches) {
+            html.setAttribute('data-theme', 'dark');
+            localStorage.setItem('theme', 'dark');
+            applyTheme(true);
+        }
     }
 
     // Listeners para mudança do tema
@@ -46,14 +68,14 @@ document.addEventListener('DOMContentLoaded', function() {
 
     if (checkbox) {
         checkbox.addEventListener('change', function() {
-            document.body.classList.add('transition');
+            body.classList.add('transition');
             containers.forEach(container => container.classList.add('transition'));
 
             switchTheme({ target: { checked: this.checked } });
 
             // Remove a classe de transição após a animação
             setTimeout(() => {
-                document.body.classList.remove('transition');
+                body.classList.remove('transition');
                 containers.forEach(container => container.classList.remove('transition'));
             }, 300);
         });
