@@ -1,17 +1,32 @@
 import os
 import sys
 import django
+import time
 
 # Configurar o ambiente Django
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "setup.settings")
 django.setup()
 
-# Importar os modelos que queremos limpar
+# Importar django.apps para obter todos os modelos
+from django.apps import apps
+from django.db import connection
+from django.conf import settings
+
+# Importar os modelos específicos de TI para manter compatibilidade com a função original
 from apps.ti.models import (
     Sala, Ilha, PosicaoAtendimento, TipoPeriferico, 
     Periferico, AtribuicaoFuncionarioPA, AtribuicaoPerifericoPA,
-    Computador, AtribuicaoComputadorPA  # Adicionado novos modelos
+    Computador, AtribuicaoComputadorPA
 )
+
+# Modelos que devem ser preservados (usuários admin, permissões, etc.)
+MODELOS_PRESERVADOS = [
+    'auth.permission',
+    'auth.group',
+    'admin.logentry',
+    'sessions.session',
+    'contenttypes.contenttype',
+]
 
 def limpar_ti(confirmar=True, limpar_tudo=True, limpar_atribuicoes=False, 
              limpar_perifericos=False, limpar_computadores=False, 
@@ -113,13 +128,95 @@ def limpar_banco():
     """
     limpar_ti()
 
+
+def limpar_tudo_completo(confirmar=True, preservar_admin=True):
+    """
+    Limpa completamente o banco de dados, exceto modelos de sistema.
+    
+    Parâmetros:
+    - confirmar: Solicita confirmação antes de executar (padrão: True)
+    - preservar_admin: Preserva o usuário admin e suas permissões (padrão: True)
+    """
+    if confirmar:
+        print("\n⚠️  ATENÇÃO! ⚠️")
+        print("\n⚠️  PERIGO EXTREMO! ⚠️")
+        print("Você está prestes a excluir TODOS OS DADOS do banco.")
+        print("Esta ação é IRREVERSÍVEL e afetará TODOS OS MÓDULOS do sistema.")
+        
+        resposta = input("\nDigite 'CONFIRMO' (em maiúsculas) para continuar: ")
+        
+        if resposta != "CONFIRMO":
+            print("Operação cancelada. Banco de dados não foi alterado.")
+            return
+    
+    print("\nIniciando limpeza completa do banco de dados...")
+    print("Este processo pode demorar alguns minutos, dependendo do tamanho do banco.")
+    
+    # Obter todos os modelos registrados
+    todos_modelos = []
+    for app_config in apps.get_app_configs():
+        for model in app_config.get_models():
+            model_name = f"{model._meta.app_label}.{model._meta.model_name}"
+            
+            # Pular modelos que devem ser preservados
+            if preservar_admin and model_name in MODELOS_PRESERVADOS:
+                print(f"Preservando modelo de sistema: {model_name}")
+                continue
+                
+            # Adicionar à lista para limpeza
+            todos_modelos.append((model_name, model))
+    
+    # Ordenar modelos para evitar problemas de integridade referencial
+    # Primeiro limpar modelos que têm chaves estrangeiras para outros modelos
+    for model_name, model in sorted(todos_modelos, key=lambda x: x[0]):
+        try:
+            count = model.objects.count()
+            if count > 0:
+                print(f"Removendo {count} registros de {model_name}...")
+                # Usar SQL direto para ser mais rápido e evitar triggers/signals
+                with connection.cursor() as cursor:
+                    table_name = model._meta.db_table
+                    cursor.execute(f"DELETE FROM \"{ table_name }\";")
+                print(f"✓ {model_name} limpo")
+            else:
+                print(f"Pulando {model_name} (vazio)")
+        except Exception as e:
+            print(f"Erro ao limpar {model_name}: {e}")
+    
+    print("\nRestaurando sequências (IDs) no banco de dados...")
+    # Resetar sequências de IDs
+    with connection.cursor() as cursor:
+        if 'postgresql' in connection.vendor:
+            cursor.execute("""
+                DO $$
+                DECLARE
+                    seq_name text;
+                BEGIN
+                    FOR seq_name IN (SELECT relname FROM pg_class WHERE relkind = 'S')
+                    LOOP
+                        EXECUTE 'ALTER SEQUENCE ' || seq_name || ' RESTART WITH 1';
+                    END LOOP;
+                END $$;
+            """)
+    
+    print("\n✅ Limpeza completa do banco de dados concluída com sucesso!")
+    print("O banco de dados está agora vazio (exceto pelos modelos de sistema preservados).")
+
 if __name__ == "__main__":
     # Verificar argumentos de linha de comando
     if len(sys.argv) > 1:
-        # Modo de limpeza seletiva
+        # Nova opção para limpar todo o banco de dados
+        if "--completo" in sys.argv:
+            confirmar = "--sem-confirmar" not in sys.argv
+            limpar_tudo_completo(confirmar=confirmar)
+            sys.exit(0)
+        
+        # Modo de limpeza seletiva (apenas TI)
         if "--help" in sys.argv or "-h" in sys.argv:
             print("\nUso: python limpar_banco.py [opções]")
             print("\nOpções:")
+            print("  --completo          Limpa TODOS os dados do banco (todos os módulos)")
+            print("\nOpções para limpeza de TI apenas:")
             print("  --sem-confirmar     Executa sem pedir confirmação")
             print("  --atribuicoes       Limpa apenas atribuições")
             print("  --computadores      Limpa apenas computadores")
@@ -128,7 +225,7 @@ if __name__ == "__main__":
             print("  --ilhas             Limpa apenas ilhas")
             print("  --salas             Limpa apenas salas")
             print("  --tipos             Limpa apenas tipos de periféricos")
-            print("  --tudo              Limpa tudo (padrão)")
+            print("  --tudo              Limpa tudo do módulo TI (padrão)")
             print("  --help, -h          Mostra esta mensagem de ajuda")
             sys.exit(0)
         
@@ -153,5 +250,19 @@ if __name__ == "__main__":
             limpar_tipos="--tipos" in sys.argv
         )
     else:
-        # Modo padrão: limpar tudo com confirmação
-        limpar_ti() 
+        # Perguntar ao usuário o que deseja limpar
+        print("\nOpções de limpeza:")
+        print("1. Limpar apenas módulo TI")
+        print("2. Limpar COMPLETAMENTE o banco de dados (todos os módulos)")
+        
+        try:
+            opcao = int(input("\nEscolha uma opção (1-2): "))
+            if opcao == 1:
+                limpar_ti()
+            elif opcao == 2:
+                limpar_tudo_completo()
+            else:
+                print("Opção inválida. Operação cancelada.")
+        except ValueError:
+            print("Entrada inválida. Operação cancelada.")
+            sys.exit(1)

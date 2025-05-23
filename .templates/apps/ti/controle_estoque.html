@@ -114,10 +114,22 @@ Controle de Estoque - TI
                   </tr>
                 {% endfor %}
                 
-                <!-- Linha para computadores -->
+                <!-- Linha para computadores disponíveis no estoque -->
+                <tr>
+                  <td><i class='bx bx-laptop'></i> Computadores (Disponíveis)</td>
+                  <td class="fw-bold text-primary">{{ computadores_disponiveis_total }}</td>
+                  {% for sala_loop in salas %}
+                    {% for ilha_loop in sala_loop.ilhas.all %}
+                      <td class="text-muted">-</td>
+                    {% endfor %}
+                  {% endfor %}
+                  <td class="fw-bold">{{ computadores_disponiveis_total }}</td>
+                </tr>
+                
+                <!-- Linha para computadores em uso -->
                 <tr>
                   <td><i class='bx bx-laptop'></i> Computadores (Em Uso)</td>
-                  <td class="fw-bold text-primary">{{ computadores_cadastrados_total }}</td>
+                  <td class="fw-bold text-secondary">-</td>
                   {% for sala_loop in salas %} {# Renomeado para evitar conflito com a var sala do loop externo #}
                     {% for ilha_loop in sala_loop.ilhas.all %} {# Renomeado para evitar conflito #}
                       {% with contagem_comp_ilha=computadores_em_uso_por_sala_ilha|get_item:sala_loop.id|get_item:ilha_loop.id %}
@@ -126,6 +138,20 @@ Controle de Estoque - TI
                     {% endfor %}
                   {% endfor %}
                   <td class="fw-bold">{{ computadores_em_uso_total_geral }}</td>
+                </tr>
+                
+                <!-- Linha para total de computadores -->
+                <tr>
+                  <td><i class='bx bx-laptop'></i> Computadores (Total)</td>
+                  <td class="fw-bold text-primary">{{ computadores_cadastrados_total }}</td>
+                  {% for sala_loop in salas %}
+                    {% for ilha_loop in sala_loop.ilhas.all %}
+                      {% with contagem_comp_ilha=computadores_em_uso_por_sala_ilha|get_item:sala_loop.id|get_item:ilha_loop.id %}
+                        <td>{{ contagem_comp_ilha|default:0 }}</td>
+                      {% endwith %}
+                    {% endfor %}
+                  {% endfor %}
+                  <td class="fw-bold text-secondary">-</td>
                 </tr>
                 
                 <tr class="table-success">
@@ -140,7 +166,7 @@ Controle de Estoque - TI
                       {% endwith %}
                     {% endfor %}
                   {% endfor %}
-                  <td class="fw-bold">{{ total_geral_perifericos|add:computadores_em_uso_total_geral }}</td>
+                  <td class="fw-bold">{{ total_geral_perifericos }}</td>
                 </tr>
               </tbody>
             </table>

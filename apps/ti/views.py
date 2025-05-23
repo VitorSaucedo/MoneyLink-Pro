@@ -2,7 +2,7 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.http import JsonResponse
-from django.db.models import Count, Q, Prefetch, Subquery, OuterRef
+from django.db.models import Count, Q, Prefetch, Subquery, OuterRef, Sum
 from .utils import (atribuir_item_pa, desatribuir_item_pa, verificar_disponibilidade_periferico, 
                     verificar_disponibilidade_computador, gerar_resposta_api, listar_itens_atribuidos_pa)
 from .pagination_utils import paginate_queryset, get_pagination_data
@@ -61,7 +61,7 @@ def admin(request):
         'perifericos_list': Periferico.objects.filter(status='disponivel'),
         'posicoes_atendimento_list': PosicaoAtendimento.objects.all(),
         'computadores_list': Computador.objects.filter(status='disponivel'),
-        # 'lojas_list' removido - funcionalidade já existe em outro módulo
+        'lojas_list': Loja.objects.filter(status=True).order_by('nome'),
         'empresas_list': Empresa.objects.filter(status=True),
         # Adicionar os formulários no contexto
         'form_periferico': form_periferico,
@@ -312,10 +312,20 @@ def controle_estoque(request):
         .distinct()
     
     # Computadores disponíveis - Query mais eficiente
-    computadores_disponiveis_total = Computador.objects.filter(
-        status='disponivel'
-    ).exclude(id__in=Subquery(ids_computadores_em_uso))\
-        .count()
+    # Aplicar filtro de loja se necessário
+    computadores_query = Computador.objects.filter(status='disponivel')
+    if loja_selecionada:
+        computadores_query = computadores_query.filter(loja_id=loja_selecionada)
+    
+    computadores_disponiveis_total = computadores_query.exclude(
+        id__in=Subquery(ids_computadores_em_uso)
+    ).count()
+    
+    # Total de computadores cadastrados na loja selecionada
+    if loja_selecionada:
+        computadores_cadastrados_total = Computador.objects.filter(loja_id=loja_selecionada).count()
+    else:
+        computadores_cadastrados_total = Computador.objects.all().count()
 
     # Calcular computadores disponíveis POR MARCA (incluindo marcas com 0 disponíveis)
     # ids_computadores_em_uso já foi definido acima
@@ -325,12 +335,13 @@ def controle_estoque(request):
     
     # 2. Obter a contagem de computadores REALMENTE disponíveis por marca
     #    (status='disponivel' E não estão em uso)
+    from django.db.models import Sum
     contagem_disponiveis_raw = Computador.objects.filter(
         status='disponivel'
     ).exclude(
         id__in=ids_computadores_em_uso
     ).values('marca').annotate(
-        quantidade_disponivel=Count('id') # Assumindo que cada registro de Computador é uma unidade
+        quantidade_disponivel=Sum('quantidade') # Somar o campo quantidade para obter o total real
     ).order_by('marca')
     
     # 3. Criar um dicionário com as contagens de disponíveis para consulta rápida
@@ -1555,4 +1566,3 @@ def cadastrar_atribuicoes_perifericos_lote(request):
         return JsonResponse({'success': False, 'error': 'Formato JSON inválido'})
     except Exception as e:
         return JsonResponse({'success': False, 'error': str(e)})
-
