@@ -16,6 +16,9 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
     
+    // Corrigir a contagem total para não somar duplicado os periféricos associados a PAs
+    fixTotalInventoryCount();
+    
     // Função para alternar destaque nas linhas da tabela ao passar o mouse
     function configurarDestaqueTabelaEstoque() {
         const linhasTabela = document.querySelectorAll('#card-estoque table tbody tr');
@@ -104,6 +107,40 @@ document.addEventListener('DOMContentLoaded', function() {
         console.log(`Atualizando tabela para loja ID: ${lojaId}`);
     }
 
+    // Função para corrigir a contagem total de periféricos no estoque
+    function fixTotalInventoryCount() {
+        // Seleciona a linha de total (última linha com classe table-success)
+        const totalRow = document.querySelector('#card-estoque table tbody tr.table-success');
+        if (!totalRow) return;
+
+        // Para cada célula da linha total (exceto a primeira que é o rótulo e a última que é o total)
+        const cells = totalRow.querySelectorAll('td:not(:first-child)');
+        const lastCell = cells[cells.length - 1]; // A última célula é o total global
+        
+        if (!lastCell) return;
+        
+        // Recalcular o total correto somando apenas os periféricos não associados a PAs
+        // e os que estão no estoque (não nas salas/ilhas)
+        let newTotal = 0;
+        
+        // Pegar todas as linhas de periféricos (exceto a linha de total)
+        const rows = document.querySelectorAll('#card-estoque table tbody tr:not(.table-success)');
+        
+        // Para cada tipo de periférico
+        rows.forEach(row => {
+            // Pegar a célula de estoque (segunda célula)
+            const stockCell = row.querySelector('td:nth-child(2)');
+            if (stockCell) {
+                // Adicionar o valor do estoque ao total
+                const stockValue = parseInt(stockCell.textContent.trim(), 10) || 0;
+                newTotal += stockValue;
+            }
+        });
+        
+        // Atualizar o total global
+        lastCell.textContent = newTotal;
+    }
+    
     // Inicializa as funcionalidades
     configurarDestaqueTabelaEstoque();
     configurarTooltips();
