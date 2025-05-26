@@ -39,7 +39,6 @@ Controle de Estoque - TI
     <div class="d-flex align-items-center">
       <div class="form-group mb-0 me-2">
         <select id="loja-selector" class="form-select">
-          <option value="">Todas as Lojas</option>
           {% for loja in lojas %}
             <option value="{{ loja.id }}" {% if loja_selecionada == loja.id %}selected{% endif %}>{{ loja.nome }}</option>
           {% endfor %}
@@ -114,18 +113,6 @@ Controle de Estoque - TI
                   </tr>
                 {% endfor %}
                 
-                <!-- Linha para computadores disponíveis no estoque -->
-                <tr>
-                  <td><i class='bx bx-laptop'></i> Computadores (Disponíveis)</td>
-                  <td class="fw-bold text-primary">{{ computadores_disponiveis_total }}</td>
-                  {% for sala_loop in salas %}
-                    {% for ilha_loop in sala_loop.ilhas.all %}
-                      <td class="text-muted">-</td>
-                    {% endfor %}
-                  {% endfor %}
-                  <td class="fw-bold">{{ computadores_disponiveis_total }}</td>
-                </tr>
-                
                 <!-- Linha para computadores em uso -->
                 <tr>
                   <td><i class='bx bx-laptop'></i> Computadores (Em Uso)</td>
@@ -143,15 +130,13 @@ Controle de Estoque - TI
                 <!-- Linha para total de computadores -->
                 <tr>
                   <td><i class='bx bx-laptop'></i> Computadores (Total)</td>
-                  <td class="fw-bold text-primary">{{ computadores_cadastrados_total }}</td>
+                  <td class="fw-bold text-primary">{{ computadores_disponiveis_total }}</td>
                   {% for sala_loop in salas %}
                     {% for ilha_loop in sala_loop.ilhas.all %}
-                      {% with contagem_comp_ilha=computadores_em_uso_por_sala_ilha|get_item:sala_loop.id|get_item:ilha_loop.id %}
-                        <td>{{ contagem_comp_ilha|default:0 }}</td>
-                      {% endwith %}
+                      <td class="text-muted">-</td>
                     {% endfor %}
                   {% endfor %}
-                  <td class="fw-bold text-secondary">-</td>
+                  <td class="fw-bold text-secondary">{{ computadores_disponiveis_total }}</td>
                 </tr>
                 
                 <tr class="table-success">

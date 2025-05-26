@@ -311,15 +311,13 @@ def controle_estoque(request):
     ).values_list('computador_id', flat=True)\
         .distinct()
     
-    # Computadores disponíveis - Query mais eficiente
+    # Computadores disponíveis - Cálculo será feito abaixo após a contagem por marca
     # Aplicar filtro de loja se necessário
+    from django.db.models import Sum  # Importação explícita para evitar UnboundLocalError
+    
     computadores_query = Computador.objects.filter(status='disponivel')
     if loja_selecionada:
         computadores_query = computadores_query.filter(loja_id=loja_selecionada)
-    
-    computadores_disponiveis_total = computadores_query.exclude(
-        id__in=Subquery(ids_computadores_em_uso)
-    ).count()
     
     # Total de computadores cadastrados na loja selecionada
     if loja_selecionada:
@@ -335,7 +333,6 @@ def controle_estoque(request):
     
     # 2. Obter a contagem de computadores REALMENTE disponíveis por marca
     #    (status='disponivel' E não estão em uso)
-    from django.db.models import Sum
     contagem_disponiveis_raw = Computador.objects.filter(
         status='disponivel'
     ).exclude(
@@ -349,11 +346,18 @@ def controle_estoque(request):
     
     # 4. Montar a lista final, garantindo todas as marcas com suas respectivas quantidades (ou 0)
     computadores_disponiveis_por_marca_list = []
+    total_soma_marcas = 0  # Inicializar contador para soma total
+    
     for marca_nome in todas_as_marcas_cadastradas:
+        quantidade_marca = disponiveis_dict.get(marca_nome, 0)
+        total_soma_marcas += quantidade_marca  # Adicionar ao total
         computadores_disponiveis_por_marca_list.append({
             'marca': marca_nome,
-            'quantidade_disponivel': disponiveis_dict.get(marca_nome, 0) # Usa 0 se a marca não estiver no dict de disponíveis
+            'quantidade_disponivel': quantidade_marca # Usa 0 se a marca não estiver no dict de disponíveis
         })
+    
+    # Usar a soma calculada acima para garantir consistência
+    computadores_disponiveis_total = total_soma_marcas
 
     # --- Construção do Histórico de Movimentações de forma otimizada --- 
     
