@@ -99,17 +99,14 @@ Controle de Estoque - TI
                     
                     <td class="fw-bold text-primary">{{ perifericos_totais_por_tipo|get_item:tipo.id|default:0 }}</td>
                     
-                    {% with tipo_total=0 %}
-                      {% for sala in salas %}
-                        {% for ilha in sala.ilhas.all %}
-                          {% with contagem=perifericos_por_sala_ilha|get_count:sala.id|get_count:ilha.id|get_count:tipo.id %}
-                            <td>{{ contagem }}</td>
-                            {% with tipo_total=tipo_total|add:contagem %}{% endwith %}
-                          {% endwith %}
-                        {% endfor %}
+                    {% for sala in salas %}
+                      {% for ilha in sala.ilhas.all %}
+                        {% with contagem=perifericos_por_sala_ilha|get_count:sala.id|get_count:ilha.id|get_count:tipo.id %}
+                          <td>{{ contagem }}</td>
+                        {% endwith %}
                       {% endfor %}
-                      <td class="fw-bold">{{ tipo_total }}</td>
-                    {% endwith %}
+                    {% endfor %}
+                    <td class="fw-bold">{{ total_por_tipo_periferico|get_item:tipo.id }}</td>
                   </tr>
                 {% endfor %}
                 
@@ -151,7 +148,7 @@ Controle de Estoque - TI
                       {% endwith %}
                     {% endfor %}
                   {% endfor %}
-                  <td class="fw-bold">{{ total_geral_perifericos }}</td>
+                  <td class="fw-bold">{{ total_geral_perifericos|add:computadores_em_uso_total_geral }}</td>
                 </tr>
               </tbody>
             </table>

@@ -232,50 +232,74 @@ def controle_estoque(request):
     
     for tipo in tipos_perifericos:
         # Contar todos os periféricos deste tipo, independente de estarem atribuídos a PAs
-        total_tipo = Periferico.objects.filter(tipo=tipo, **filtro_loja).count()
+        # Usando Sum('quantidade') em vez de count() para obter o número real de unidades
+        total_tipo = Periferico.objects.filter(
+            tipo=tipo, 
+            status='disponivel',  # Apenas periféricos disponíveis
+            **filtro_loja
+        ).exclude(
+            id__in=AtribuicaoPerifericoPA.objects.filter(ativo=True).values_list('periferico_id', flat=True)
+        ).aggregate(total=Sum('quantidade'))['total'] or 0
+        
         perifericos_totais_por_tipo[tipo.id] = total_tipo
     
     # Inicializar dicionário para contagem de periféricos por sala/ilha/tipo
     perifericos_por_sala_ilha = {}
     total_geral_perifericos = 0
     
-    # Popular o dicionário com os dados
+    # Usar Sum com annotate para calcular de forma mais eficiente a quantidade de periféricos em uso
+    # Agrupar por sala, ilha e tipo de periférico
+    perifericos_em_uso = AtribuicaoPerifericoPA.objects.filter(
+        ativo=True
+    ).select_related(
+        'posicao_atendimento', 'posicao_atendimento__sala', 'posicao_atendimento__ilha', 'periferico', 'periferico__tipo'
+    )
+    
+    if loja_selecionada:
+        perifericos_em_uso = perifericos_em_uso.filter(periferico__loja_id=loja_selecionada)
+    
+    # Calcular o total geral de periféricos em uso para a coluna Total
+    total_geral_perifericos = perifericos_em_uso.aggregate(
+        total=Sum('periferico__quantidade')
+    )['total'] or 0
+    
+    # Inicializar estrutura para todas as salas e ilhas
     for sala in salas:
         perifericos_por_sala_ilha[sala.id] = {}
-        
         for ilha in sala.ilhas.all():
             perifericos_por_sala_ilha[sala.id][ilha.id] = {}
-            
             # Inicializar contador para cada tipo de periférico nesta ilha
             for tipo in tipos_perifericos:
                 perifericos_por_sala_ilha[sala.id][ilha.id][tipo.id] = 0
+    
+    # Processar cada periférico em uso
+    for atribuicao in perifericos_em_uso:
+        pa = atribuicao.posicao_atendimento
+        if not pa.sala_id or not pa.ilha_id:
+            continue  # Pular se não tiver sala ou ilha atribuída
             
-            # Obter todas as PAs desta ilha
-            posicoes_atendimento_ilha = PosicaoAtendimento.objects.filter(ilha=ilha)
+        periferico = atribuicao.periferico
+        tipo_id = periferico.tipo_id
+        quantidade = periferico.quantidade if hasattr(periferico, 'quantidade') else 1
+        
+        # Se a estrutura existir, incrementar a contagem
+        if (pa.sala_id in perifericos_por_sala_ilha and 
+            pa.ilha_id in perifericos_por_sala_ilha[pa.sala_id] and
+            tipo_id in perifericos_por_sala_ilha[pa.sala_id][pa.ilha_id]):
             
-            # Para cada PA, buscar e contar os periféricos atribuídos
-            for pa in posicoes_atendimento_ilha:
-                # Filtrar por loja, se for selecionada
-                if loja_selecionada:
-                    # Buscar atribuições ativas de periféricos para esta PA e loja selecionada
-                    atribuicoes_ativas = AtribuicaoPerifericoPA.objects.filter(
-                        posicao_atendimento=pa,
-                        ativo=True,
-                        periferico__loja_id=loja_selecionada
-                    ).select_related('periferico__tipo')
-                else:
-                    # Buscar todas as atribuições ativas de periféricos para esta PA
-                    atribuicoes_ativas = AtribuicaoPerifericoPA.objects.filter(
-                        posicao_atendimento=pa,
-                        ativo=True
-                    ).select_related('periferico__tipo')
-                
-                # Contar periféricos por tipo
-                for atribuicao in atribuicoes_ativas:
-                    tipo_id = atribuicao.periferico.tipo.id
-                    if tipo_id in perifericos_por_sala_ilha[sala.id][ilha.id]:
-                        perifericos_por_sala_ilha[sala.id][ilha.id][tipo_id] += 1
-                        total_geral_perifericos += 1
+            perifericos_por_sala_ilha[pa.sala_id][pa.ilha_id][tipo_id] += quantidade
+    
+    # Calcular o total de periféricos em uso por tipo
+    total_por_tipo_periferico = {}
+    for tipo in tipos_perifericos:
+        # Inicializar contagem para cada tipo
+        total_por_tipo_periferico[tipo.id] = 0
+        
+        # Somar para cada sala e ilha
+        for sala_id in perifericos_por_sala_ilha:
+            for ilha_id in perifericos_por_sala_ilha[sala_id]:
+                if tipo.id in perifericos_por_sala_ilha[sala_id][ilha_id]:
+                    total_por_tipo_periferico[tipo.id] += perifericos_por_sala_ilha[sala_id][ilha_id][tipo.id]
     
     # Obter contagem de computadores cadastrados de forma otimizada
     computadores_cadastrados_total = Computador.objects.all().count()
@@ -313,8 +337,6 @@ def controle_estoque(request):
     
     # Computadores disponíveis - Cálculo será feito abaixo após a contagem por marca
     # Aplicar filtro de loja se necessário
-    from django.db.models import Sum  # Importação explícita para evitar UnboundLocalError
-    
     computadores_query = Computador.objects.filter(status='disponivel')
     if loja_selecionada:
         computadores_query = computadores_query.filter(loja_id=loja_selecionada)
@@ -329,7 +351,13 @@ def controle_estoque(request):
     # ids_computadores_em_uso já foi definido acima
     
     # 1. Obter todas as marcas distintas cadastradas de computadores (para garantir que todas apareçam na lista)
-    todas_as_marcas_cadastradas = Computador.objects.all().values_list('marca', flat=True).distinct().order_by('marca')
+    todas_as_marcas_cadastradas = Computador.objects.all()
+    
+    # Aplicar filtro de loja se necessário
+    if loja_selecionada:
+        todas_as_marcas_cadastradas = todas_as_marcas_cadastradas.filter(loja_id=loja_selecionada)
+    
+    todas_as_marcas_cadastradas = todas_as_marcas_cadastradas.values_list('marca', flat=True).distinct().order_by('marca')
     
     # 2. Obter a contagem de computadores REALMENTE disponíveis por marca
     #    (status='disponivel' E não estão em uso)
@@ -337,7 +365,13 @@ def controle_estoque(request):
         status='disponivel'
     ).exclude(
         id__in=ids_computadores_em_uso
-    ).values('marca').annotate(
+    )
+    
+    # Aplicar filtro de loja para computadores disponíveis
+    if loja_selecionada:
+        contagem_disponiveis_raw = contagem_disponiveis_raw.filter(loja_id=loja_selecionada)
+    
+    contagem_disponiveis_raw = contagem_disponiveis_raw.values('marca').annotate(
         quantidade_disponivel=Sum('quantidade') # Somar o campo quantidade para obter o total real
     ).order_by('marca')
     
@@ -469,6 +503,7 @@ def controle_estoque(request):
         'perifericos_por_sala_ilha': perifericos_por_sala_ilha,
         'total_geral_perifericos': total_geral_perifericos,
         'perifericos_totais_por_tipo': perifericos_totais_por_tipo,
+        'total_por_tipo_periferico': total_por_tipo_periferico,
         'historico_page_obj': page_obj, # Passa o objeto da página para o template
         'pagination_data': pagination_data, # Adiciona metadados de paginação
         'data_ultima_atualizacao_real': data_ultima_atualizacao_real, # Adiciona a data ao contexto
