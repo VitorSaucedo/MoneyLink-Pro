@@ -11,6 +11,7 @@ urlpatterns = [
     
     # URLs para Auto Atribuição de PA
     path('auto-atribuicao-pa/', views.auto_atribuicao_pa, name='auto_atribuicao_pa'),
+    path('api/auto-atribuicao-pa-reassign/', views.api_auto_atribuicao_pa_reassign, name='api_auto_atribuicao_pa_reassign'),
     
     # URLs para Controle de Manutenção
     path('controle-manutencao/', views.controle_manutencao, name='controle_manutencao'),
@@ -19,6 +20,7 @@ urlpatterns = [
     # URLs para API
     path('api/ilhas-por-sala/<int:sala_id>/', views.api_ilhas_por_sala, name='api_ilhas_por_sala'),
     path('api/ilha-info/<int:ilha_id>/', views.api_ilha_info, name='api_ilha_info'),
+    path('api/computadores_disponiveis/', views.api_computadores_disponiveis, name='api_computadores_disponiveis'),
     path('atualizar_status_pa/', views.atualizar_status_pa, name='atualizar_status_pa'),
     path('remover_periferico_pa/', views.remover_periferico_pa, name='remover_periferico_pa'),
     path('api/controle-salas-dados/', views.api_controle_salas, name='api_controle_salas'),
@@ -84,7 +86,6 @@ urlpatterns = [
     # URLs da API para controle de PAs
     path('api/funcionarios/', views.get_funcionarios_json, name='api_get_funcionarios'),
     path('api/atribuir_funcionario_pa/', views.atribuir_funcionario_pa, name='api_atribuir_funcionario_pa'),
-    path('api/computadores_disponiveis/', views.api_listar_computadores_disponiveis, name='api_listar_computadores_disponiveis'),
     path('api/pa/<int:pa_id>/adicionar_computador/', views.api_adicionar_computador_pa, name='api_adicionar_computador_pa'),
     path('api/pa/<int:pa_id>/remover_computador/', views.api_remover_computador_pa, name='api_remover_computador_pa'),
     path('api/periferico/<int:periferico_id>/atualizar_status/', views.api_atualizar_status_periferico, name='api_atualizar_status_periferico'),
@@ -97,4 +98,14 @@ urlpatterns = [
 
     # Nova rota para atribuições em lote
     path('atribuicoes-perifericos/cadastrar-lote/', views.cadastrar_atribuicoes_perifericos_lote, name='cadastrar_atribuicoes_lote'),
+
+    # Novas APIs para carregamento rápido de dados
+    path('api/admin-dashboard-data/', views.api_admin_dashboard_data, name='api_admin_dashboard_data'),
+    path('api/controle-salas-data/', views.api_controle_salas_data, name='api_controle_salas_data'),
+    path('api/controle-estoque-data/', views.api_controle_estoque_data, name='api_controle_estoque_data'),
+    path('api/controle-manutencao-data/', views.api_controle_manutencao_data, name='api_controle_manutencao_data'),
+    path('api/auto-atribuicao-pa-data/', views.api_auto_atribuicao_pa_data, name='api_auto_atribuicao_pa_data'),
+    path('api/listar-perifericos/', views.api_listar_perifericos, name='api_listar_perifericos'),
+    path('api/listar-computadores/', views.api_listar_computadores, name='api_listar_computadores'),
+    path('api/listar-posicoes-atendimento/', views.api_listar_posicoes_atendimento, name='api_listar_posicoes_atendimento'),
 ] 

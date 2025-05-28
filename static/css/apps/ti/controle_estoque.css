@@ -7,12 +7,12 @@
 /* ---------- Variáveis de Cores e Sombreamentos ---------- */
 :root {
     --color-primary-dark: #142650; /* Azul escuro */
-    --color-secondary: #70f611; /* Verde */
+    --color-secondary: #4CAF50; /* Verde mais suave */
     --color-tertiary: #0bd5f0; /* Azul claro (ciano) */
     --color-accent: #b4874c; /* Tom terroso */
     --color-white: #fff;
     --color-gray: #ddd;
-    --color-light-gray: #f0f0f0;
+    --color-light-gray: #f8f9fa;
     --color-text-dark: #333;
     --color-text-light: #666;
     --color-danger: #dc3545;
@@ -20,13 +20,13 @@
 
     --box-shadow-light: 0 2px 6px rgba(0,0,0,0.05);
     --box-shadow-medium: 0 4px 12px rgba(0,0,0,0.1);
-    --box-shadow-card-hover: 0 6px 18px rgba(112, 246, 17, 0.15); /* Sombra verde no hover */
+    --box-shadow-card-hover: 0 6px 18px rgba(76, 175, 80, 0.15); /* Sombra verde no hover */
 
     /* Gradientes com foco no verde */
     --gradient-primary-green: linear-gradient(135deg, var(--color-secondary) 0%, var(--color-primary-dark) 100%);
-    --gradient-secondary-green: linear-gradient(135deg, var(--color-secondary) 0%, var(--color-tertiary) 50%, var(--color-secondary) 100%);
+    --gradient-secondary-green: linear-gradient(135deg, #6ab04c 0%, var(--color-tertiary) 50%, #6ab04c 100%);
     --gradient-metallic-green-focus: linear-gradient(135deg, #ffffff 0%, var(--color-secondary) 30%, var(--color-tertiary) 50%, var(--color-secondary) 70%, #ffffff 100%);
-    --gradient-card-header: linear-gradient(-45deg, var(--color-secondary), #5cb85c, var(--color-primary-dark), var(--color-secondary)); /* Verde, verde mais escuro, azul, verde */
+    --gradient-card-header: linear-gradient(-45deg, #4CAF50, #388e3c, var(--color-primary-dark), #4CAF50); /* Verde, verde mais escuro, azul, verde */
 
     /* Animação do Gradiente */
     --gradient-animation: gradientBG 12s ease infinite;
@@ -123,7 +123,7 @@ body {
     background-color: var(--color-white);
     border: none;
     border-radius: 10px;
-    box-shadow: none !important;
+    box-shadow: var(--box-shadow-light) !important;
     outline: none !important;
     border-bottom: none !important;
     overflow: hidden;
@@ -142,8 +142,8 @@ body {
 }
 
 .card:hover {
-    transform: none;
-    box-shadow: none;
+    transform: translateY(-2px);
+    box-shadow: var(--box-shadow-medium) !important;
 }
 
 /* Removida sombra para o hover no tema escuro */
@@ -282,6 +282,7 @@ body {
     font-size: 1rem;
     transition: border-color 0.3s ease, box-shadow 0.3s ease, background-color 0.3s ease, color 0.3s ease;
     background-color: var(--color-white);
+    color: var(--color-text-dark);
     width: 100%; /* Garante que ocupem o espaço do .mb-3 */
 }
 
@@ -295,7 +296,7 @@ body {
 .card form .form-control:focus,
 .card form .form-select:focus {
     border-color: var(--color-secondary);
-    box-shadow: 0 0 0 3px rgba(112, 246, 17, 0.15);
+    box-shadow: 0 0 0 3px rgba(76, 175, 80, 0.15);
     background-color: #fafffa;
     outline: none;
 }
@@ -343,8 +344,8 @@ body {
 .card form .form-switch .form-check-input:focus {
     border-color: var(--color-secondary);
     outline: 0;
-    box-shadow: 0 0 0 0.25rem rgba(112, 246, 17, 0.2);
-    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='-4 -4 8 8'%3e%3ccircle r='3' fill='rgba(112, 246, 17, 0.8)'/%3e%3c/svg%3e");
+    box-shadow: 0 0 0 0.25rem rgba(76, 175, 80, 0.2);
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='-4 -4 8 8'%3e%3ccircle r='3' fill='rgba(76, 175, 80, 0.8)'/%3e%3c/svg%3e");
 }
 
 [data-theme="dark"] .card form .form-switch .form-check-input:focus {
@@ -383,13 +384,13 @@ body {
     animation: gradientBGButton 10s ease infinite !important;
     border: none;
     border-radius: 8px;
-    color: var(--color-primary-dark) !important;
+    color: white !important;
     font-weight: 600;
     padding: 0.8rem 1.5rem;
     transition: all 0.3s ease;
     position: relative;
     overflow: hidden;
-    box-shadow: 0 4px 10px rgba(112, 246, 17, 0.15);
+    box-shadow: 0 4px 10px rgba(76, 175, 80, 0.15);
     width: 100%; /* Ocupa a largura total do container flex do form */
     margin-top: 1rem; /* Espaço acima do botão */
     flex-basis: 100%; /* Garante que o botão fique em linha própria */
@@ -404,7 +405,7 @@ body {
 
 .card form button[type="submit"]:hover {
     transform: translateY(-3px);
-    box-shadow: 0 6px 15px rgba(112, 246, 17, 0.25);
+    box-shadow: 0 6px 15px rgba(76, 175, 80, 0.25);
 }
 
 [data-theme="dark"] .card form button[type="submit"]:hover {
@@ -413,7 +414,7 @@ body {
 
 .card form button[type="submit"]:active {
     transform: translateY(1px);
-    box-shadow: 0 2px 5px rgba(112, 246, 17, 0.2);
+    box-shadow: 0 2px 5px rgba(76, 175, 80, 0.2);
 }
 
 [data-theme="dark"] .card form button[type="submit"]:active {
@@ -442,6 +443,7 @@ body {
     margin-bottom: 0;
     width: 100%;
     border-collapse: collapse;
+    color: var(--color-text-dark);
 }
 
 [data-theme="dark"] .table {
@@ -465,7 +467,6 @@ body {
 }
 
 .table thead th:nth-child(2) {  /* Coluna 'Total no estoque' */
-    background-color: rgba(112, 246, 17, 0.2);
     border-right: 1px solid rgba(0,0,0,0.05);
 }
 
@@ -475,7 +476,7 @@ body {
 }
 
 .table tbody tr:nth-child(even) {
-    background-color: rgba(112, 246, 17, 0.05);
+    background-color: rgba(76, 175, 80, 0.05);
 }
 
 [data-theme="dark"] .table tbody tr:nth-child(even) {
@@ -483,7 +484,7 @@ body {
 }
 
 .table tbody tr:hover {
-    background-color: rgba(112, 246, 17, 0.1);
+    background-color: rgba(76, 175, 80, 0.1);
 }
 
 [data-theme="dark"] .table tbody tr:hover {
@@ -494,6 +495,7 @@ body {
     padding: 0.75rem 1rem;
     vertical-align: middle;
     border-top: 1px solid var(--color-gray);
+    color: var(--color-text-dark);
 }
 
 [data-theme="dark"] .table tbody td {
@@ -501,13 +503,31 @@ body {
 }
 
 .table tbody td:nth-child(2) {  /* Células da coluna 'Total no estoque' */
-    background-color: rgba(112, 246, 17, 0.1);
+    background-color: rgba(76, 175, 80, 0.1);
     border-right: 1px solid rgba(0,0,0,0.05);
 }
 
 [data-theme="dark"] .table tbody td:nth-child(2) {
     background-color: rgba(110, 66, 193, 0.1);
     border-right: 1px solid rgba(255,255,255,0.05);
+}
+
+/* Estilos específicos para tabelas no modo claro */
+.table-striped>tbody>tr:nth-of-type(odd)>* {
+    color: var(--color-text-dark);
+}
+
+.table-striped>tbody>tr:nth-of-type(even)>* {
+    color: var(--color-text-dark);
+}
+
+/* Classes de coloração específicas */
+.table-info {
+    background-color: rgba(13, 202, 240, 0.15) !important;
+}
+
+.table-success {
+    background-color: rgba(76, 175, 80, 0.15) !important;
 }
 
 /* Estilos específicos para tabelas no modo escuro */
@@ -534,6 +554,8 @@ body {
     margin-right: 0.25rem;
     font-size: 0.8rem;
     border-radius: 4px;
+    background-color: var(--color-primary-dark);
+    color: white;
 }
 
 [data-theme="dark"] .table .btn-action {
@@ -633,6 +655,7 @@ body {
 .inventory-summary-computadores .text-muted {
     font-style: italic;
     font-size: 0.9em;
+    color: #6c757d !important;
     transition: color 0.3s ease;
 }
 
@@ -675,7 +698,7 @@ body {
 
 .custom-page-item.active .custom-page-link {
     z-index: 3;
-    color: var(--color-primary-dark); /* Texto escuro para contraste com verde */
+    color: white; /* Texto branco para melhor contraste */
     background-color: var(--color-secondary); /* Verde para página ativa */
     border-color: var(--color-secondary);
     font-weight: 600;
@@ -688,8 +711,8 @@ body {
 }
 
 .custom-page-item:not(.active) .custom-page-link:hover {
-    background-color: rgba(112, 246, 17, 0.1); /* Verde claro no hover */
-    border-color: rgba(112, 246, 17, 0.3);
+    background-color: rgba(76, 175, 80, 0.1); /* Verde claro no hover */
+    border-color: rgba(76, 175, 80, 0.3);
     color: var(--color-primary-dark);
 }
 
@@ -782,7 +805,7 @@ body,
 
 #store-selector:focus {
     border-color: var(--color-secondary);
-    box-shadow: 0 0 0 0.25rem rgba(112, 246, 17, 0.25);
+    box-shadow: 0 0 0 0.25rem rgba(76, 175, 80, 0.25);
     outline: none;
 }
 
@@ -841,4 +864,29 @@ body,
 
 [data-theme="dark"] .loading-overlay .spinner-border {
     color: var(--ti-accent-tertiary) !important;
+}
+
+/* Adicionar keyframes para animação de gradiente se não existir em outro lugar */
+@keyframes gradientBG {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+@keyframes gradientBGButton {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
 }

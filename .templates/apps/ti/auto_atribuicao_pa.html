@@ -140,79 +140,95 @@ TI - Auto Atribuição de PA
     </div>
   </div>
 </div>
+
+<!-- Modal personalizado para confirmação quando PA está ocupada -->
+<div class="custom-modal-container" id="pa-reassign-modal">
+  <div class="custom-modal">
+    <div class="custom-modal-header">
+      <h5 class="custom-modal-title">
+        <i class='bx bx-transfer-alt'></i>PA já ocupada
+      </h5>
+      <button type="button" class="custom-modal-close" id="modal-close-btn">
+        <i class='bx bx-x'></i>
+      </button>
+    </div>
+    <div class="custom-modal-body">
+      <div class="alert alert-warning mb-3">
+        <i class='bx bx-info-circle me-2'></i>
+        <span id="pa-ocupada-info">Esta PA está ocupada por outro funcionário.</span>
+      </div>
+      
+      <div class="options-container">
+        <h6 class="mb-3">Escolha uma ação:</h6>
+        
+        <div class="option-card mb-3" id="option-swap">
+          <div class="option-header">
+            <i class='bx bx-transfer bx-tada-hover me-2'></i>
+            <h6 class="mb-0">Trocar de PA</h6>
+          </div>
+          <div class="option-body">
+            <p>Você e o funcionário atual trocam de PA um com o outro.</p>
+            <div class="d-flex align-items-center">
+              <div class="exchange-arrow">
+                <span class="current-user">Você <i class='bx bx-right-arrow-alt'></i></span>
+                <span class="target-pa">PA <span id="target-pa-num"></span></span>
+              </div>
+              <div class="exchange-icon mx-3">
+                <i class='bx bx-transfer-alt'></i>
+              </div>
+              <div class="exchange-arrow">
+                <span class="other-user"><span id="other-user-name"></span> <i class='bx bx-right-arrow-alt'></i></span>
+                <span class="current-pa">Sua PA atual</span>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <div class="option-card mb-3" id="option-replace">
+          <div class="option-header">
+            <i class='bx bx-user-x bx-tada-hover me-2'></i>
+            <h6 class="mb-0">Substituir funcionário</h6>
+          </div>
+          <div class="option-body">
+            <p>Você assume a PA e o funcionário atual fica sem PA atribuída.</p>
+            <div class="replace-info">
+              <div class="user-status">
+                <i class='bx bx-user-check me-1'></i> Você: Atribuído à PA <span id="target-pa-num2"></span>
+              </div>
+              <div class="user-status">
+                <i class='bx bx-user-x me-1'></i> <span id="other-user-name2"></span>: Desatribuído
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <div class="option-card" id="option-cancel">
+          <div class="option-header">
+            <i class='bx bx-x-circle bx-tada-hover me-2'></i>
+            <h6 class="mb-0">Cancelar</h6>
+          </div>
+          <div class="option-body">
+            <p>Não fazer nenhuma alteração e voltar à seleção de PA.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="custom-modal-footer">
+      <button type="button" class="btn btn-secondary" id="modal-footer-close">
+        <i class='bx bx-x me-1'></i> Fechar
+      </button>
+    </div>
+  </div>
+</div>
 {% endblock %}
 
 {% block addjs_extra %}
+{# Bootstrap JS necessário para os modais #}
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-kenU1KFdBIe4zVF0s0G1M5b4hcpxyD9F7jL+jjXkk+Q2h455rYXK/7HAuoJl+0I4" crossorigin="anonymous"></script>
+
 {# Modo escuro #}
 <script src="{% static 'js/darkmode.js' %}"></script>
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-  const form = document.getElementById('pa-form');
-  
-  if (form) {
-    form.addEventListener('submit', function(e) {
-      e.preventDefault();
-      
-      const paSelect = document.getElementById('pa-select');
-      if (!paSelect.value) {
-        // Criar alerta se nenhuma PA foi selecionada
-        const messageContainer = document.getElementById('message-container');
-        messageContainer.innerHTML = `
-          <div class="alert alert-warning alert-dismissible fade show" role="alert">
-            <i class='bx bx-error me-2'></i> Por favor, selecione uma PA.
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-          </div>
-        `;
-        return;
-      }
-      
-      // Enviar o formulário via AJAX
-      const formData = new FormData(form);
-      
-      fetch('{% url "ti:auto_atribuicao_pa" %}', {
-        method: 'POST',
-        body: formData,
-        headers: {
-          'X-Requested-With': 'XMLHttpRequest'
-        }
-      })
-      .then(response => response.json())
-      .then(data => {
-        const messageContainer = document.getElementById('message-container');
-        
-        if (data.success) {
-          messageContainer.innerHTML = `
-            <div class="alert alert-success alert-dismissible fade show" role="alert">
-              <i class='bx bx-check-circle me-2'></i> ${data.message}
-              <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-            </div>
-          `;
-          
-          // Atualizar a página após 2 segundos
-          setTimeout(() => {
-            window.location.reload();
-          }, 2000);
-        } else {
-          messageContainer.innerHTML = `
-            <div class="alert alert-danger alert-dismissible fade show" role="alert">
-              <i class='bx bx-error-circle me-2'></i> ${data.message}
-              <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-            </div>
-          `;
-        }
-      })
-      .catch(error => {
-        console.error('Erro:', error);
-        const messageContainer = document.getElementById('message-container');
-        messageContainer.innerHTML = `
-          <div class="alert alert-danger alert-dismissible fade show" role="alert">
-            <i class='bx bx-error-circle me-2'></i> Ocorreu um erro ao processar sua solicitação.
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-          </div>
-        `;
-      });
-    });
-  }
-});
-</script>
+
+{# JavaScript para auto atribuição de PA #}
+<script src="{% static 'js/apps/ti/auto_atribuicao_pa.js' %}"></script>
 {% endblock %}

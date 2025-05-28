@@ -190,21 +190,17 @@ $(document).ready(function() {
     });
   }
   
-  // ===== Início do carregamento otimizado =====
-  // Variáveis globais para controle de dados
-  let dadosCarregados = {}; // Armazena dados já carregados por sala/ilha
-  let carregamentosEmCurso = {}; // Evita carregamentos duplicados
-  let modoCarregamento = document.getElementById('modo-carregamento')?.value || 'tradicional';
+  // ===== Carregamento de dados otimizado =====
+  // Criar cache para dados já carregados
+  const dadosCarregados = {};
+  // Rastrear requisições em andamento para evitar duplicadas
+  const carregamentosEmCurso = {};
+  // Armazenar configuração atual
+  let modoCarregamento = 'otimizado'; // 'otimizado' ou 'sob_demanda'
+  // Armazenar os tipos de periféricos comuns para uso em toda a aplicação
+  window.tiposPerifericosComuns = [];
   
-  // Inicializar com a sala ativa se estivermos no modo otimizado
-  if (modoCarregamento === 'otimizado' && currentSalaId) {
-    // Mostrar loader enquanto carregamos os dados iniciais
-    mostrarLoadingNaSala(currentSalaId);
-    // Iniciar carregamento da primeira sala
-    carregarDadosSala(currentSalaId, currentIlhaIds[currentSalaId]);
-  }
-  
-  // Função para mostrar o indicador de carregamento em uma sala específica
+  // Função para mostrar indicador de carregamento
   function mostrarLoadingNaSala(salaId, ilhaId = null) {
     const containerSeletor = ilhaId 
       ? `#ilha-${ilhaId}`
@@ -229,7 +225,7 @@ $(document).ready(function() {
     }
   }
   
-  // Função para remover o indicador de carregamento
+  // Função para esconder indicador de carregamento
   function esconderLoadingNaSala(salaId, ilhaId = null) {
     const containerSeletor = ilhaId 
       ? `#ilha-${ilhaId}`
@@ -244,7 +240,7 @@ $(document).ready(function() {
     }
   }
   
-  // Função para carregar dados de uma sala específica
+  // Função para carregar dados da sala/ilha especificada
   async function carregarDadosSala(salaId, ilhaId = null, forcarRecarga = false) {
     // Chave única para esta combinação de sala/ilha
     const cacheKey = `sala_${salaId}_ilha_${ilhaId || 'todas'}`;
@@ -265,7 +261,7 @@ $(document).ready(function() {
     
     try {
       // Construir URL com parâmetros de filtro
-      let url = '/ti/api/controle-salas-dados/?sala_id=' + salaId;
+      let url = '/ti/api/controle-salas-data/?sala_id=' + salaId;
       if (ilhaId) {
         url += '&ilha_id=' + ilhaId;
       }
@@ -287,6 +283,11 @@ $(document).ready(function() {
       if (data.success) {
         // Armazenar dados em cache
         dadosCarregados[cacheKey] = data;
+        
+        // Armazenar tipos de periféricos comuns globalmente
+        if (data.data && data.data.tipos_perifericos_comuns) {
+          window.tiposPerifericosComuns = data.data.tipos_perifericos_comuns;
+        }
         
         // Renderizar os dados na interface
         renderizarDadosSala(data, salaId, ilhaId);
@@ -404,44 +405,88 @@ $(document).ready(function() {
   
   // Função para atualizar periféricos em uma PA
   function atualizarPerifericosNaPA(paCardElement, perifericos = [], tiposFaltantes = []) {
-    const perifericosContainer = paCardElement.querySelector('.perifericos-container');
-    if (!perifericosContainer) return;
+    // Verificar se a PA tem periféricos
+    const perifericosListElement = paCardElement.querySelector('.perifericos-list');
+    if (!perifericosListElement) return;
     
-    // Limpar container
-    perifericosContainer.innerHTML = '';
+    // Limpar a lista de periféricos atual
+    perifericosListElement.innerHTML = '';
     
-    // Adicionar cada periférico
-    perifericos.forEach(periferico => {
-      const perifericoHtml = `
-        <div class="periferico-tag" data-periferico-id="${periferico.id}" data-tipo="${periferico.tipo}">
-          <span class="periferico-tipo">${periferico.tipo}</span>: 
-          <span class="periferico-marca">${periferico.marca}</span>
-          ${periferico.modelo ? `<span class="periferico-modelo">${periferico.modelo}</span>` : ''}
-        </div>
-      `;
-      perifericosContainer.insertAdjacentHTML('beforeend', perifericoHtml);
-    });
+    // Adicionar cada periférico atribuído
+    if (perifericos && perifericos.length > 0) {
+      perifericos.forEach(periferico => {
+        const perifericoHtml = `
+          <span class="periferico-tag" data-periferico-id="${periferico.id}">
+            ${periferico.tipo} ${periferico.marca}
+          </span>
+        `;
+        perifericosListElement.insertAdjacentHTML('beforeend', perifericoHtml);
+      });
+    } else {
+      // Se não houver periféricos, mostrar mensagem
+      perifericosListElement.innerHTML = '<span class="text-muted">Nenhum periférico atribuído</span>';
+    }
     
-    // Adicionar indicadores de periféricos faltantes
+    // Verificar e atualizar periféricos faltantes
     const faltantesContainer = paCardElement.querySelector('.perifericos-faltantes');
     if (faltantesContainer) {
-      faltantesContainer.innerHTML = '';
+      const faltantesListElement = faltantesContainer.querySelector('.perifericos-faltantes-list');
       
-      if (tiposFaltantes.length > 0) {
-        const faltantesHtml = tiposFaltantes.map(tipo => 
-          `<span class="badge rounded-pill bg-warning text-dark me-1">${tipo}</span>`
-        ).join('');
+      // Primeiro verifica se há tipos faltantes
+      if (tiposFaltantes && tiposFaltantes.length > 0) {
+        // Mostrar o contêiner de faltantes
+        faltantesContainer.classList.remove('d-none');
         
-        faltantesContainer.innerHTML = `
-          <div class="mt-2">
-            <small class="text-muted">Faltando: </small>
-            ${faltantesHtml}
-          </div>
-        `;
+        // Limpar a lista atual
+        if (faltantesListElement) {
+          faltantesListElement.innerHTML = '';
+          
+          // Pegar o ID da PA
+          const paId = paCardElement.getAttribute('data-pa-id');
+          
+          // Para cada tipo faltante, criar um botão de adicionar
+          tiposFaltantes.forEach(tipoNome => {
+            // Encontrar o ID do tipo pelo nome nos tipos comuns
+            let tipoId = null;
+            
+            // Buscar nos tipos disponíveis para encontrar o ID
+            if (window.tiposPerifericosComuns) {
+              const tipoEncontrado = window.tiposPerifericosComuns.find(t => t.nome === tipoNome);
+              if (tipoEncontrado) {
+                tipoId = tipoEncontrado.id;
+              }
+            }
+            
+            const itemHtml = `
+              <div class="periferico-faltante-item">
+                <span class="periferico-faltante-nome">${tipoNome}</span>
+                <button type="button" class="btn btn-sm btn-outline-warning add-periferico-btn" 
+                        data-pa-id="${paId}" data-tipo-id="${tipoId}" data-tipo-nome="${tipoNome}">
+                  <i class='bx bx-plus-circle me-1'></i> Adicionar ${tipoNome}
+                </button>
+              </div>
+            `;
+            faltantesListElement.insertAdjacentHTML('beforeend', itemHtml);
+          });
+          
+          // Adicionar eventos aos novos botões
+          faltantesListElement.querySelectorAll('.add-periferico-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+              const tipoId = this.getAttribute('data-tipo-id');
+              const tipoNome = this.getAttribute('data-tipo-nome');
+              
+              // Abrir modal de periféricos disponíveis
+              abrirModalPerifericosDisponiveis(tipoId, tipoNome);
+            });
+          });
+        }
+      } else {
+        // Se não há faltantes, esconder o contêiner
+        faltantesContainer.classList.add('d-none');
       }
     }
     
-    // Reativar os eventos nos novos elementos
+    // Reativar eventos nos periféricos para abrir o menu de ações
     paCardElement.querySelectorAll('.periferico-tag').forEach(tag => {
       tag.addEventListener('click', function(e) {
         e.stopPropagation();
@@ -2223,6 +2268,23 @@ $(document).ready(function() {
   // Dados para o modal atual
   let modalDadosPa = null;
   let modalDadosTipo = null;
+  
+  // Adicionar event listeners para os botões de fechar e cancelar o modal
+  perifericosDisponiveisClose.on('click', function(e) {
+    e.preventDefault();
+    fecharModalPerifericosDisponiveis();
+  });
+  
+  perifericosDisponiveisCancel.on('click', function(e) {
+    e.preventDefault();
+    fecharModalPerifericosDisponiveis();
+  });
+  
+  // Adicionar event listener para fechar o modal ao clicar no backdrop
+  perifericosDisponiveisBackdrop.on('click', function(e) {
+    e.preventDefault();
+    fecharModalPerifericosDisponiveis();
+  });
   
   // Event Listener para botões de adicionar periférico faltante
   $(document).on('click', '.add-periferico-btn', function(e) {

@@ -420,7 +420,6 @@ def criar_funcionarios(empresas, lojas, departamentos, setores, cargos, horarios
     
     return funcionarios
 
-# Função para criar elementos do módulo TI
 def criar_ti(lojas, funcionarios):
     """Cria elementos do módulo TI"""
     print("Criando itens do módulo TI...")
@@ -430,8 +429,8 @@ def criar_ti(lojas, funcionarios):
         TipoPeriferico.objects.create(nome="Monitor", descricao="Monitores de vídeo"),
         TipoPeriferico.objects.create(nome="Teclado", descricao="Teclados USB e sem fio"),
         TipoPeriferico.objects.create(nome="Mouse", descricao="Mouses USB e sem fio"),
-        TipoPeriferico.objects.create(nome="Headset", descricao="Fones de ouvido com microfone"),
-        TipoPeriferico.objects.create(nome="Webcam", descricao="Câmeras para videoconferência"),
+        TipoPeriferico.objects.create(nome="Fone", descricao="Fones de ouvido"),
+        TipoPeriferico.objects.create(nome="Mousepad", descricao="Bases para mouse"),
     ]
     
     # Criar periféricos
