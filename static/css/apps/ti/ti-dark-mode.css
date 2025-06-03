@@ -173,7 +173,7 @@
 [data-theme="dark"] .form-select {
     background-color: var(--ti-bg-input);
     color: var(--ti-text-primary);
-    border: 1px solid var(--ti-border-light);
+    border: 2px solid var(--ti-border-light); /* Ajustado para 2px */
 }
 
 [data-theme="dark"] input:focus,
@@ -191,7 +191,7 @@
 [data-theme="dark"] .app-ti textarea {
     background-color: var(--ti-bg-card);
     color: var(--ti-text-primary);
-    border: 1px solid rgba(110, 66, 193, 0.2);
+    border: 2px solid rgba(110, 66, 193, 0.2); /* Ajustado para 2px */
 }
 
 [data-theme="dark"] .app-ti input:focus,
@@ -324,6 +324,7 @@
 /* Badges */
 [data-theme="dark"] .badge {
     font-weight: 500;
+    margin-left: 15px;
 }
 
 /* Título da página */
@@ -585,7 +586,7 @@
 }
 
 [data-theme="dark"] .text-center {
-    color: var(--ti-text-secondary);
+    color: var(--ti-text-primary);
 }
 
 [data-theme="dark"] .integrated-summary-list .item-count {

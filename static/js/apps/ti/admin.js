@@ -4,49 +4,53 @@
  * Este arquivo contém as funções para ajuste de largura de elementos,
  * carregamento dinâmico de ilhas com base na sala selecionada,
  * e suporte ao modo escuro.
+ * 
+ * Convertido para jQuery para padronização com o restante do projeto
  */
 
-document.addEventListener('DOMContentLoaded', function() {
+$(document).ready(function() {
   // Ajustar largura dos elementos
-  const adjustWidths = () => {
-    const containerWidth = document.querySelector('.container').offsetWidth;
-    const maxElementWidth = Math.min(containerWidth - 30, 1140);
+  var adjustWidths = function() {
+    var containerWidth = $('.container').width();
+    var maxElementWidth = Math.min(containerWidth - 30, 1140);
     
     // Ajustar largura dos botões
-    document.querySelectorAll('.btn-listagem').forEach(btn => {
-      btn.style.maxWidth = '100%';
+    $('.btn-listagem').each(function() {
+      $(this).css('maxWidth', '100%');
     });
   };
   
   // Executar no carregamento e no redimensionamento
   adjustWidths();
-  window.addEventListener('resize', adjustWidths);
+  $(window).on('resize', adjustWidths);
   
   // Carregar ilhas com base na sala selecionada
-  const salaSelect = document.getElementById('sala');
-  const ilhaSelect = document.getElementById('ilha');
-  const quantidadePasInput = document.getElementById('quantidade_pas');
+  var $salaSelect = $('#sala');
+  var $ilhaSelect = $('#ilha');
+  var $quantidadePasInput = $('#quantidade_pas');
   
   // Objeto para armazenar informações das ilhas
-  const ilhasInfo = {};
+  var ilhasInfo = {};
   
-  if (salaSelect && ilhaSelect) {
-    salaSelect.addEventListener('change', function() {
+  if ($salaSelect.length && $ilhaSelect.length) {
+    $salaSelect.on('change', function() {
       // Limpar as opções existentes
-      ilhaSelect.innerHTML = '<option value="">-- Selecione uma Ilha --</option>';
+      $ilhaSelect.html('<option value="">-- Selecione uma Ilha --</option>');
       
-      if (salaSelect.value) {
+      if ($(this).val()) {
         // Fazer uma requisição para obter as ilhas da sala selecionada
-        fetch(`/ti/api/ilhas-por-sala/${salaSelect.value}/`)
-          .then(response => response.json())
-          .then(data => {
+        $.ajax({
+          url: '/ti/api/ilhas-por-sala/' + $(this).val() + '/',
+          type: 'GET',
+          dataType: 'json',
+          success: function(data) {
             // Adicionar as novas opções
             if (data.ilhas && Array.isArray(data.ilhas)) {
-              data.ilhas.forEach(ilha => {
-                const option = document.createElement('option');
-                option.value = ilha.id;
-                option.textContent = ilha.nome;
-                ilhaSelect.appendChild(option);
+              $.each(data.ilhas, function(index, ilha) {
+                var $option = $('<option></option>');
+                $option.val(ilha.id);
+                $option.text(ilha.nome);
+                $ilhaSelect.append($option);
                 
                 // Armazenar a quantidade de PAs para cada ilha
                 if (ilha.quantidade_pas) {
@@ -54,74 +58,79 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
               });
             }
-          })
-          .catch(error => console.error('Erro ao carregar ilhas:', error));
+          },
+          error: function(error) {
+            console.error('Erro ao carregar ilhas:', error);
+          }
+        });
       }
     });
     
     // Atualizar o valor máximo do campo quantidade com base na ilha selecionada
-    if (ilhaSelect && quantidadePasInput) {
-      ilhaSelect.addEventListener('change', function() {
-        const ilhaId = this.value;
+    if ($ilhaSelect.length && $quantidadePasInput.length) {
+      $ilhaSelect.on('change', function() {
+        const ilhaId = $(this).val();
         if (ilhaId && ilhasInfo[ilhaId]) {
           // Obter informações detalhadas sobre a ilha selecionada
-          fetch(`/ti/api/ilha-info/${ilhaId}/`)
-            .then(response => response.json())
-            .then(data => {
+          $.ajax({
+            url: '/ti/api/ilha-info/' + ilhaId + '/',
+            type: 'GET',
+            dataType: 'json',
+            success: function(data) {
               if (data.success && data.ilha) {
-                const capacidadeDisponivel = data.ilha.pas_disponiveis || 1;
-                quantidadePasInput.max = capacidadeDisponivel;
-                quantidadePasInput.value = Math.min(quantidadePasInput.value, capacidadeDisponivel);
+                var capacidadeDisponivel = data.ilha.pas_disponiveis || 1;
+                $quantidadePasInput.attr('max', capacidadeDisponivel);
+                $quantidadePasInput.val(Math.min($quantidadePasInput.val(), capacidadeDisponivel));
                 
                 // Atualizar texto informativo
-                const infoText = document.getElementById('quantidade-pas-info');
-                if (infoText) {
-                  infoText.textContent = `Máximo disponível: ${capacidadeDisponivel} PAs`;
+                var $infoText = $('#quantidade-pas-info');
+                if ($infoText.length) {
+                  $infoText.text('Máximo disponível: ' + capacidadeDisponivel + ' PAs');
                 }
               }
-            })
-            .catch(error => {
+            },
+            error: function(error) {
               console.error('Erro ao obter informações da ilha:', error);
-              quantidadePasInput.max = 1;
-              quantidadePasInput.value = 1;
-            });
+              $quantidadePasInput.attr('max', 1);
+              $quantidadePasInput.val(1);
+            }
+          });
         } else {
           // Se nenhuma ilha estiver selecionada, limitar para 1
-          quantidadePasInput.max = 1;
-          quantidadePasInput.value = 1;
+          $quantidadePasInput.attr('max', 1);
+          $quantidadePasInput.val(1);
         }
       });
     }
   }
 
   // Validação do formulário de ramal
-  const formRamal = document.getElementById('form-ramal');
-  const ramalInput = document.getElementById('numero_ramal');
-  const funcionarioSelect = document.getElementById('funcionario_ramal');
-  const ramalFeedback = document.getElementById('ramal-feedback');
-  const submitButton = formRamal ? formRamal.querySelector('button[type="submit"]') : null;
+  var $formRamal = $('#form-ramal');
+  var $ramalInput = $('#numero_ramal');
+  var $funcionarioSelect = $('#funcionario_ramal');
+  var $ramalFeedback = $('#ramal-feedback');
+  var $submitButton = $formRamal.length ? $formRamal.find('button[type="submit"]') : null;
 
-  if (formRamal && ramalInput && funcionarioSelect && submitButton) {
+  if ($formRamal.length && $ramalInput.length && $funcionarioSelect.length && $submitButton && $submitButton.length) {
     // Função para ativar/desativar o botão de envio
-    const toggleSubmitButton = (isValid) => {
+    var toggleSubmitButton = function(isValid) {
       if (isValid) {
-        submitButton.disabled = false;
-        submitButton.classList.remove('disabled');
+        $submitButton.prop('disabled', false);
+        $submitButton.removeClass('btn-secondary').addClass('btn-primary');
       } else {
-        submitButton.disabled = true;
-        submitButton.classList.add('disabled');
+        $submitButton.prop('disabled', true);
+        $submitButton.removeClass('btn-primary').addClass('btn-secondary');
       }
     };
 
     // Função para verificar se o ramal já existe no sistema
-    const verificarRamalExistente = () => {
-      const ramal = ramalInput.value.trim();
-      const funcionarioId = funcionarioSelect.value;
+    var verificarRamalExistente = function() {
+      var ramal = $ramalInput.val().trim();
+      var funcionarioId = $funcionarioSelect.val();
       
       // Limpar estados anteriores
-      ramalInput.classList.remove('is-valid');
-      ramalInput.classList.remove('is-invalid');
-      ramalFeedback.style.display = 'none';
+      $ramalInput.removeClass('is-invalid is-valid');
+      $ramalFeedback.hide().text('');
       
       // Validação básica - se não tiver exatamente 4 dígitos ou funcionário selecionado, não verificar
       if (!ramal || ramal.length !== 4 || !/^\d{4}$/.test(ramal) || !funcionarioId) {
@@ -130,49 +139,45 @@ document.addEventListener('DOMContentLoaded', function() {
       }
 
       // Mostrar indicador de carregamento
-      ramalInput.classList.add('is-loading');
+      $ramalInput.addClass('is-loading');
       toggleSubmitButton(false); // Desabilitar botão durante a verificação
       
       // Verificar se o ramal já existe no sistema
-      fetch('/ti/api/verificar-ramal/', {
+      $.ajax({
+        url: '/ti/api/verificar-ramal/',
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+          'X-CSRFToken': $('[name=csrfmiddlewaretoken]').val()
         },
-        body: JSON.stringify({
+        data: JSON.stringify({
           ramal: ramal,
           funcionario_id: funcionarioId
-        })
-      })
-      .then(response => {
-        if (!response.ok) {
-          throw new Error('Erro na resposta do servidor: ' + response.status);
+        }),
+        dataType: 'json',
+        success: function(data) {
+          // Remover indicador de carregamento
+          $ramalInput.removeClass('is-loading');
+          
+          console.log('Resposta do servidor:', data); // Para depuração
+          
+          if (data.existe === true) {
+            // Ramal já existe - aplicar estilo inválido
+            $ramalInput.addClass('is-invalid');
+            $ramalFeedback.text('Este ramal já está atribuído ao funcionário ' + data.funcionario_nome);
+            $ramalFeedback.show();
+            toggleSubmitButton(false); // Manter botão desabilitado
+          } else {
+            // Ramal não existe, está disponível - aplicar estilo válido
+            $ramalInput.addClass('is-valid');
+            toggleSubmitButton(true); // Habilitar botão
+          }
+        },
+        error: function(xhr, status, error) {
+          console.error('Erro ao verificar ramal:', error);
+          $ramalInput.removeClass('is-loading');
+          toggleSubmitButton(true); // Em caso de erro, habilitar o botão para permitir tentativa
         }
-        return response.json();
-      })
-      .then(data => {
-        // Remover indicador de carregamento
-        ramalInput.classList.remove('is-loading');
-        
-        console.log('Resposta do servidor:', data); // Para depuração
-        
-        if (data.existe === true) {
-          // Ramal já existe - aplicar estilo inválido
-          ramalInput.classList.add('is-invalid');
-          ramalFeedback.textContent = `Este ramal já está atribuído ao funcionário ${data.funcionario_nome}`;
-          ramalFeedback.style.display = 'block';
-          toggleSubmitButton(false); // Manter botão desabilitado
-        } else {
-          // Ramal não existe, está disponível - aplicar estilo válido
-          ramalInput.classList.add('is-valid');
-          toggleSubmitButton(true); // Habilitar botão
-        }
-      })
-      .catch(error => {
-        console.error('Erro ao verificar ramal:', error);
-        ramalInput.classList.remove('is-loading');
-        toggleSubmitButton(true); // Em caso de erro, habilitar o botão para permitir tentativa
       });
     };
 
@@ -180,20 +185,19 @@ document.addEventListener('DOMContentLoaded', function() {
     toggleSubmitButton(false);
 
     // Validar ramal quando o usuário digitar
-    ramalInput.addEventListener('input', function() {
+    $ramalInput.on('input', function() {
       // Limpar feedback anterior
-      ramalFeedback.textContent = '';
-      ramalInput.classList.remove('is-invalid');
-      ramalInput.classList.remove('is-valid');
-      ramalFeedback.style.display = 'none';
+      $ramalFeedback.text('');
+      $ramalInput.removeClass('is-invalid is-valid');
+      $ramalFeedback.hide();
       
-      const ramal = ramalInput.value.trim();
+      const ramal = $(this).val().trim();
       
       // Validação básica de formato
       if (ramal.length > 0 && !/^\d+$/.test(ramal)) {
-        ramalFeedback.textContent = 'O ramal deve conter apenas dígitos numéricos.';
-        ramalInput.classList.add('is-invalid');
-        ramalFeedback.style.display = 'block';
+        $ramalFeedback.text('O ramal deve conter apenas dígitos numéricos.');
+        $ramalInput.addClass('is-invalid');
+        $ramalFeedback.show();
         toggleSubmitButton(false);
         return;
       }
@@ -205,16 +209,20 @@ document.addEventListener('DOMContentLoaded', function() {
       }
       
       // Verificar apenas quando tiver 4 dígitos exatos
-      if (ramal.length === 4 && /^\d{4}$/.test(ramal) && funcionarioSelect.value) {
+      if (ramal.length === 4 && /^\d{4}$/.test(ramal) && $funcionarioSelect.val()) {
         // Verificar após um pequeno delay para evitar muitas requisições durante a digitação
-        clearTimeout(ramalInput.timeoutId);
-        ramalInput.timeoutId = setTimeout(verificarRamalExistente, 500);
+        if (window.ramalTimeoutId) {
+          clearTimeout(window.ramalTimeoutId);
+        }
+        window.ramalTimeoutId = setTimeout(function() {
+          verificarRamalExistente();
+        }, 500);
       }
     });
     
     // Verificar também quando o select de funcionário mudar
-    funcionarioSelect.addEventListener('change', function() {
-      if (ramalInput.value.trim().length === 4) {
+    $funcionarioSelect.on('change', function() {
+      if ($ramalInput.val().trim().length === 4) {
         verificarRamalExistente();
       } else {
         toggleSubmitButton(false);
@@ -222,25 +230,25 @@ document.addEventListener('DOMContentLoaded', function() {
     });
     
     // Verificar também quando o campo de ramal perder o foco
-    ramalInput.addEventListener('blur', function() {
-      const ramal = ramalInput.value.trim();
+    $ramalInput.on('blur', function() {
+      const ramal = $(this).val().trim();
       if (ramal.length === 4 && /^\d{4}$/.test(ramal)) {
         verificarRamalExistente();
       }
     });
 
     // Verificar ramal no submit do formulário (garantia extra)
-    formRamal.addEventListener('submit', function(e) {
+    $formRamal.on('submit', function(e) {
       e.preventDefault();
       
-      const ramal = ramalInput.value.trim();
-      const funcionarioId = funcionarioSelect.value;
+      const ramal = $ramalInput.val().trim();
+      const funcionarioId = $funcionarioSelect.val();
       
       if (!ramal || !funcionarioId) {
         if (!ramal) {
-          ramalFeedback.textContent = 'Por favor, digite um ramal.';
-          ramalInput.classList.add('is-invalid');
-          ramalFeedback.style.display = 'block';
+          $ramalFeedback.text('Por favor, digite um ramal.');
+          $ramalInput.addClass('is-invalid');
+          $ramalFeedback.show();
         }
         toggleSubmitButton(false);
         return;
@@ -248,53 +256,54 @@ document.addEventListener('DOMContentLoaded', function() {
       
       // Validação básica de formato
       if (!/^\d{4}$/.test(ramal)) {
-        ramalFeedback.textContent = 'O ramal deve ter exatamente 4 dígitos numéricos.';
-        ramalInput.classList.add('is-invalid');
-        ramalFeedback.style.display = 'block';
+        $ramalFeedback.text('O ramal deve ter exatamente 4 dígitos numéricos.');
+        $ramalInput.addClass('is-invalid');
         toggleSubmitButton(false);
         return;
       }
 
       // Se o campo já estiver marcado como inválido, não submete
-      if (ramalInput.classList.contains('is-invalid')) {
+      if ($ramalInput.hasClass('is-invalid')) {
         toggleSubmitButton(false);
         return;
       }
 
       // Verificação final antes do envio
-      fetch('/ti/api/verificar-ramal/', {
-        method: 'POST',
+      $.ajax({
+        url: '/ti/api/verificar-ramal/',
+        type: 'POST',
+        dataType: 'json',
         headers: {
-          'Content-Type': 'application/json',
-          'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+          'X-CSRFToken': $('[name=csrfmiddlewaretoken]').val()
         },
-        body: JSON.stringify({
+        data: JSON.stringify({
           ramal: ramal,
           funcionario_id: funcionarioId
-        })
-      })
-      .then(response => response.json())
-      .then(data => {
-        if (data.existe) {
-          // Ramal já existe
-          ramalFeedback.textContent = `Este ramal já está atribuído ao funcionário ${data.funcionario_nome}`;
-          ramalInput.classList.add('is-invalid');
-          ramalFeedback.style.display = 'block';
-          toggleSubmitButton(false);
-        } else {
-          // Ramal não existe, pode prosseguir
-          toggleSubmitButton(true);
-          formRamal.submit();
-        }
-      })
-      .catch(error => {
-        console.error('Erro ao verificar ramal:', error);
-        // Em caso de erro, mostrar alerta mas permitir o envio
-        if (confirm('Ocorreu um erro ao verificar o ramal. Deseja continuar mesmo assim?')) {
-          toggleSubmitButton(true);
-          formRamal.submit();
+        }),
+        contentType: 'application/json',
+        success: function(data) {
+          if (data.existe) {
+            // Ramal já existe
+            $ramalFeedback.text('Este ramal já está atribuído ao funcionário ' + data.funcionario_nome);
+            $ramalInput.addClass('is-invalid');
+            $ramalFeedback.show();
+            toggleSubmitButton(false);
+          } else {
+            // Ramal não existe, pode prosseguir
+            toggleSubmitButton(true);
+            $formRamal.off('submit').submit();
+          }
+        },
+        error: function(error) {
+          console.error('Erro ao verificar ramal:', error);
+          // Em caso de erro, mostrar alerta mas permitir o envio
+          if (confirm('Ocorreu um erro ao verificar o ramal. Deseja continuar mesmo assim?')) {
+            toggleSubmitButton(true);
+            $formRamal.off('submit').submit();
+          }
         }
       });
+      return false;
     });
   }
-}); 
+});

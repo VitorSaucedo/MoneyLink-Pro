@@ -40,14 +40,14 @@ class IlhaAdmin(admin.ModelAdmin):
 class PosicaoAtendimentoAdmin(admin.ModelAdmin):
     list_display = ('numero', 'sala', 'ilha', 'funcionario', 'status')
     list_filter = ('status', 'sala', 'ilha')
-    search_fields = ('numero', 'funcionario__nome')
+    search_fields = ('numero', 'funcionario__nome_completo')
     autocomplete_fields = ['funcionario']
 
 @admin.register(AtribuicaoFuncionarioPA)
 class AtribuicaoFuncionarioPAAdmin(admin.ModelAdmin):
     list_display = ('funcionario', 'posicao_atendimento', 'data_inicio', 'data_fim', 'ativo')
     list_filter = ('ativo', 'posicao_atendimento')
-    search_fields = ('funcionario__nome', 'posicao_atendimento__numero')
+    search_fields = ('funcionario__nome_completo', 'posicao_atendimento__numero')
 
 @admin.register(AtribuicaoPerifericoPA)
 class AtribuicaoPerifericoPAAdmin(admin.ModelAdmin):

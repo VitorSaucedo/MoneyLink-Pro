@@ -83,7 +83,7 @@ body {
     border: none !important;
     box-shadow: none !important;
     border-radius: 0;
-    padding: 15px;
+    /* padding: 15px; */ /* Removido para igualar ao tema claro */
 }
 
 /* Override para o container de histórico permitir layout de linha */

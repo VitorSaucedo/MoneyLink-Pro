@@ -24,6 +24,9 @@ TI - Controle de Salas, Ilhas e PAs
   {# Adicionar CSS do modo escuro #}
   <link rel="stylesheet" href="{% static 'css/darkmode.css' %}">
   <link rel="stylesheet" href="{% static 'css/apps/ti/ti-dark-mode.css' %}">
+  
+  <!-- jQuery -->
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 {% endblock %}
 
 {% block pre_content %}
@@ -510,8 +513,6 @@ TI - Controle de Salas, Ilhas e PAs
 {% endblock %}
 
 {% block addjs_extra %}
-  {# jQuery é necessário #}
-  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="{% static 'js/apps/ti/controle_salas.js' %}"></script>
   {# Modo escuro #}

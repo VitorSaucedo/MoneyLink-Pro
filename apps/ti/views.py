@@ -202,13 +202,13 @@ def controle_estoque(request):
     Permite filtrar por loja selecionada.
     """
     
+    # Obter todas as lojas ativas para o seletor
+    lojas = Loja.objects.filter(status=True).order_by('nome')
+    
     # Obter a loja selecionada, se houver
     loja_id = request.GET.get('loja')
     loja_selecionada = None
     loja_atual = None
-    
-    # Obter todas as lojas ativas para o seletor
-    lojas = Loja.objects.filter(status=True).order_by('nome')
     
     # Filtrar por loja, se for selecionada
     if loja_id:
@@ -217,6 +217,12 @@ def controle_estoque(request):
             loja_atual = get_object_or_404(Loja, id=loja_selecionada)
         except (ValueError, TypeError):
             loja_selecionada = None
+    else:
+        # Se nenhuma loja for selecionada, usar a primeira loja como padrão
+        if lojas.exists():
+            primeira_loja = lojas.first()
+            loja_selecionada = primeira_loja.id
+            loja_atual = primeira_loja
     
     # Obter todas as salas com ilhas pré-carregadas
     salas = Sala.objects.all().prefetch_related(
@@ -1227,6 +1233,29 @@ def marcar_consertado(request, item_id, tipo_item_slug):
     
     return redirect('ti:controle_manutencao')
 
+@login_required
+def excluir_periferico(request, item_id, tipo_item_slug):
+    """
+    Exclui permanentemente um periférico ou computador do banco de dados.
+    Isso é usado quando o item não tem mais conserto e precisa ser descartado.
+    """
+    if request.method == 'POST':
+        if tipo_item_slug == 'periferico':
+            item = get_object_or_404(Periferico, id=item_id)
+            marca_modelo = f'{item.marca} {item.modelo}'
+            item.delete()
+            messages.success(request, f'Periférico {marca_modelo} foi excluído permanentemente.')
+            
+        elif tipo_item_slug == 'computador':
+            item = get_object_or_404(Computador, id=item_id)
+            marca = item.marca
+            item.delete()
+            messages.success(request, f'Computador {marca} foi excluído permanentemente.')
+        
+        else:
+            messages.error(request, 'Tipo de item inválido.')
+    
+    return redirect('ti:controle_manutencao')
 
 # Views para API
 @login_required
@@ -1332,7 +1361,7 @@ def sala_list(request):
     context = {
         'salas': salas
     }
-    return render(request, 'apps/ti/sala_list.html', context)
+    return render(request, 'apps/ti/controle_salas.html', context)
 
 @login_required
 def sala_create(request):
@@ -1348,7 +1377,7 @@ def sala_create(request):
     context = {
         'form': form
     }
-    return render(request, 'apps/ti/sala_form.html', context)
+    return render(request, 'apps/ti/admin.html', context)
 
 @login_required
 def sala_update(request, pk):
@@ -1366,7 +1395,7 @@ def sala_update(request, pk):
         'form': form,
         'sala': sala
     }
-    return render(request, 'apps/ti/sala_form.html', context)
+    return render(request, 'apps/ti/admin.html', context)
 
 @login_required
 def sala_delete(request, pk):
@@ -1377,9 +1406,10 @@ def sala_delete(request, pk):
         return redirect('ti:sala_list')
     
     context = {
-        'sala': sala
+        'title': 'Excluir Sala',
+        'objeto': sala
     }
-    return render(request, 'apps/ti/sala_confirm_delete.html', context)
+    return render(request, 'apps/ti/confirm_delete.html', context)
 
 
 # Views para Ilhas
@@ -1389,7 +1419,7 @@ def ilha_list(request):
     context = {
         'ilhas': ilhas
     }
-    return render(request, 'apps/ti/ilha_list.html', context)
+    return render(request, 'apps/ti/controle_salas.html', context)
 
 @login_required
 def ilha_create(request):
@@ -1405,7 +1435,7 @@ def ilha_create(request):
     context = {
         'form': form
     }
-    return render(request, 'apps/ti/ilha_form.html', context)
+    return render(request, 'apps/ti/admin.html', context)
 
 @login_required
 def ilha_update(request, pk):
@@ -1423,7 +1453,7 @@ def ilha_update(request, pk):
         'form': form,
         'ilha': ilha
     }
-    return render(request, 'apps/ti/ilha_form.html', context)
+    return render(request, 'apps/ti/admin.html', context)
 
 @login_required
 def ilha_delete(request, pk):
@@ -1434,9 +1464,10 @@ def ilha_delete(request, pk):
         return redirect('ti:ilha_list')
     
     context = {
-        'ilha': ilha
+        'title': 'Excluir Ilha',
+        'objeto': ilha
     }
-    return render(request, 'apps/ti/ilha_confirm_delete.html', context)
+    return render(request, 'apps/ti/confirm_delete.html', context)
 
 
 # Views para Posições de Atendimento
@@ -1446,7 +1477,7 @@ def posicao_atendimento_list(request):
     context = {
         'posicoes': posicoes
     }
-    return render(request, 'apps/ti/posicao_atendimento_list.html', context)
+    return render(request, 'apps/ti/controle_salas.html', context)
 
 @login_required
 def posicao_atendimento_create(request):
@@ -1515,7 +1546,7 @@ def posicao_atendimento_create(request):
     context = {
         'form': form
     }
-    return render(request, 'apps/ti/posicao_atendimento_form.html', context)
+    return render(request, 'apps/ti/admin.html', context)
 
 @login_required
 def posicao_atendimento_update(request, pk):
@@ -1533,7 +1564,7 @@ def posicao_atendimento_update(request, pk):
         'form': form,
         'posicao': posicao
     }
-    return render(request, 'apps/ti/posicao_atendimento_form.html', context)
+    return render(request, 'apps/ti/admin.html', context)
 
 @login_required
 def posicao_atendimento_delete(request, pk):
@@ -1544,9 +1575,10 @@ def posicao_atendimento_delete(request, pk):
         return redirect('ti:posicao_atendimento_list')
     
     context = {
-        'posicao': posicao
+        'title': 'Excluir Posição de Atendimento',
+        'objeto': posicao
     }
-    return render(request, 'apps/ti/posicao_atendimento_confirm_delete.html', context)
+    return render(request, 'apps/ti/confirm_delete.html', context)
 
 
 # Views para Atribuição de Funcionários a PAs
@@ -1556,7 +1588,7 @@ def atribuicao_funcionario_pa_list(request):
     context = {
         'atribuicoes': atribuicoes
     }
-    return render(request, 'apps/ti/atribuicao_funcionario_pa_list.html', context)
+    return render(request, 'apps/ti/controle_salas.html', context)
 
 @login_required
 def atribuicao_funcionario_pa_create(request):
@@ -1572,7 +1604,7 @@ def atribuicao_funcionario_pa_create(request):
     context = {
         'form': form
     }
-    return render(request, 'apps/ti/atribuicao_funcionario_pa_form.html', context)
+    return render(request, 'apps/ti/admin.html', context)
 
 @login_required
 def atribuicao_funcionario_pa_update(request, pk):
@@ -1590,7 +1622,7 @@ def atribuicao_funcionario_pa_update(request, pk):
         'form': form,
         'atribuicao': atribuicao
     }
-    return render(request, 'apps/ti/atribuicao_funcionario_pa_form.html', context)
+    return render(request, 'apps/ti/admin.html', context)
 
 
 # Views para Periféricos
@@ -1600,7 +1632,7 @@ def periferico_list(request):
     context = {
         'perifericos': perifericos
     }
-    return render(request, 'apps/ti/periferico_list.html', context)
+    return render(request, 'apps/ti/controle_estoque.html', context)
 
 @login_required
 def periferico_create(request):
@@ -1734,7 +1766,7 @@ def periferico_create(request):
         'form': form,
         'title': 'Cadastrar Novo Periférico'
     }
-    return render(request, 'apps/ti/periferico_form.html', context)
+    return render(request, 'apps/ti/admin.html', context)
 
 @login_required
 def periferico_update(request, pk):
@@ -1752,7 +1784,7 @@ def periferico_update(request, pk):
         'form': form,
         'periferico': periferico
     }
-    return render(request, 'apps/ti/periferico_form.html', context)
+    return render(request, 'apps/ti/admin.html', context)
 
 @login_required
 def periferico_delete(request, pk):
@@ -1763,9 +1795,10 @@ def periferico_delete(request, pk):
         return redirect('ti:periferico_list')
     
     context = {
-        'periferico': periferico
+        'title': 'Excluir Periférico',
+        'objeto': periferico
     }
-    return render(request, 'apps/ti/periferico_confirm_delete.html', context)
+    return render(request, 'apps/ti/confirm_delete.html', context)
 
 # Funções que faltavam para gerenciar atribuições
 @login_required
@@ -1777,16 +1810,17 @@ def atribuicao_funcionario_pa_delete(request, pk):
         return redirect('ti:atribuicao_funcionario_pa_list')
     
     context = {
-        'atribuicao': atribuicao
+        'title': 'Excluir Atribuição de Funcionário',
+        'objeto': atribuicao
     }
-    return render(request, 'apps/ti/atribuicao_funcionario_pa_confirm_delete.html', context)
+    return render(request, 'apps/ti/confirm_delete.html', context)
 
 # Views para Atribuição de Periféricos a PAs
 @login_required
 def atribuicao_periferico(request):
     # Lógica para a página de atribuição de periféricos
     context = {}
-    return render(request, 'apps/ti/atribuicao_periferico.html', context)
+    return render(request, 'apps/ti/controle_salas.html', context)
 
 @login_required
 def atribuicao_periferico_pa_create(request):
@@ -1802,7 +1836,7 @@ def atribuicao_periferico_pa_create(request):
     context = {
         'form': form
     }
-    return render(request, 'apps/ti/atribuicao_periferico_pa_form.html', context)
+    return render(request, 'apps/ti/admin.html', context)
 
 @login_required
 def atribuicao_periferico_pa_update(request, pk):
@@ -1820,7 +1854,7 @@ def atribuicao_periferico_pa_update(request, pk):
         'form': form,
         'atribuicao': atribuicao
     }
-    return render(request, 'apps/ti/atribuicao_periferico_pa_form.html', context)
+    return render(request, 'apps/ti/admin.html', context)
 
 @login_required
 def atribuicao_periferico_pa_delete(request, pk):
@@ -1831,9 +1865,10 @@ def atribuicao_periferico_pa_delete(request, pk):
         return redirect('ti:admin')
     
     context = {
-        'atribuicao': atribuicao
+        'title': 'Excluir Atribuição de Periférico',
+        'objeto': atribuicao
     }
-    return render(request, 'apps/ti/atribuicao_periferico_pa_confirm_delete.html', context)
+    return render(request, 'apps/ti/confirm_delete.html', context)
 
 # Funções de API
 @login_required
@@ -1854,12 +1889,162 @@ def get_funcionarios_json(request):
     return JsonResponse(funcionarios, safe=False)
 
 @login_required
+@require_GET
+def api_funcionarios(request):
+    """
+    API para obter a lista de funcionários para uso em dropdowns
+    """
+    import logging
+    logger = logging.getLogger(__name__)
+    
+    logger.info("[DEBUG] api_funcionarios chamada")
+    logger.info(f"[DEBUG] Method: {request.method}, Content-Type: {request.content_type if hasattr(request, 'content_type') else 'N/A'}")
+    
+    try:
+        # Obter todos os funcionários ativos
+        logger.info("[DEBUG] Buscando funcionários ativos...")
+        funcionarios = Funcionario.objects.filter(status=True).order_by('nome_completo')
+        logger.info(f"[DEBUG] Total de funcionários encontrados: {funcionarios.count()}")
+        
+        # Construir a lista de funcionários com seus ramais (se existirem)
+        lista_funcionarios = []
+        for funcionario in funcionarios:
+            # Apenas para detalhe adicional, se precisarmos filtragem mais complexa depois
+            funcionario_info = {
+                'id': funcionario.id,
+                'nome': funcionario.nome_completo,
+                'ramal': funcionario.ramal if funcionario.ramal else '',
+                'empresa': funcionario.empresa.nome if funcionario.empresa else '',
+                'setor': funcionario.setor.nome if funcionario.setor else '',
+            }
+            lista_funcionarios.append(funcionario_info)
+        
+        logger.info(f"[DEBUG] Lista de funcionários processada com sucesso, total: {len(lista_funcionarios)}")
+        return JsonResponse({
+            'success': True,
+            'funcionarios': lista_funcionarios
+        })
+    except Exception as e:
+        logger.error(f"[DEBUG] Erro ao processar funcionários: {str(e)}", exc_info=True)
+        return JsonResponse({
+            'success': False,
+            'error': str(e)
+        }, status=500)
+
+@login_required
 def atribuir_funcionario_pa(request):
     # Lógica para atribuir funcionário a uma PA via AJAX
     if request.method == 'POST':
-        # Implementar lógica de atribuição
-        return JsonResponse({'success': True})
-    return JsonResponse({'success': False})
+        import json
+        import logging
+        logger = logging.getLogger(__name__)
+        
+        try:
+            data = json.loads(request.body)
+            pa_id = data.get('pa_id')
+            funcionario_id = data.get('funcionario_id')
+            
+            # Validação básica
+            if not pa_id:
+                return JsonResponse({'success': False, 'error': 'ID da PA não especificado'})
+            
+            # Obter a posição de atendimento
+            pa = get_object_or_404(PosicaoAtendimento, id=pa_id)
+            
+            # Lista para rastrear PAs afetadas
+            pas_afetadas = []
+            
+            if funcionario_id:
+                # Obter o funcionário
+                funcionario = get_object_or_404(Funcionario, id=funcionario_id)
+                
+                # Verificar se este funcionário já está atribuído a outras PAs
+                pas_com_funcionario = PosicaoAtendimento.objects.filter(funcionario=funcionario).exclude(id=pa_id)
+                
+                # Rastrear PAs afetadas
+                for pa_afetada in pas_com_funcionario:
+                    pas_afetadas.append({
+                        'id': pa_afetada.id,
+                        'numero': pa_afetada.numero,
+                        'sala': pa_afetada.sala.nome if pa_afetada.sala else 'S/Sala',
+                        'ilha': pa_afetada.ilha.nome if pa_afetada.ilha else 'S/Ilha',
+                        'status': 'livre'
+                    })
+                    # Remover o funcionário da PA afetada
+                    pa_afetada.funcionario = None
+                    pa_afetada.status = 'livre'
+                    pa_afetada.save()
+                
+                # Atribuir o funcionário à PA alvo
+                pa.funcionario = funcionario
+                pa.status = 'ocupada'  # Atualizar status da PA
+                pa.save()
+                
+                # Buscar atribuições ativas existentes para esta PA
+                atribuicoes_existentes = AtribuicaoFuncionarioPA.objects.filter(posicao_atendimento=pa, ativo=True)
+                
+                # Desativar todas as atribuições ativas existentes
+                if atribuicoes_existentes.exists():
+                    atribuicoes_existentes.update(ativo=False, data_fim=timezone.now().date())
+                
+                # Criar uma nova atribuição
+                atribuicao = AtribuicaoFuncionarioPA.objects.create(
+                    posicao_atendimento=pa,
+                    funcionario=funcionario,
+                    data_inicio=timezone.now().date(),
+                    ativo=True
+                )
+                created = True
+                
+                # A atribuição já foi criada como nova, não precisamos mais desta verificação
+                
+                # Preparar resposta
+                return JsonResponse({
+                    'success': True,
+                    'funcionario': {
+                        'id': funcionario.id,
+                        'nome_completo': funcionario.nome_completo,
+                        'ramal': funcionario.ramal if funcionario.ramal else '',
+                        'empresa': funcionario.empresa.nome if funcionario.empresa else '',
+                        'setor': funcionario.setor.nome if funcionario.setor else '',
+                    },
+                    'pa_numero': pa.numero,
+                    'pas_afetadas': pas_afetadas,
+                    'novo_status': pa.status,
+                    'message': f'Funcionário atribuído à PA {pa.numero} com sucesso!'
+                })
+            else:
+                # Se funcionario_id é None, estamos removendo o funcionário da PA
+                # Guardar funcionário anterior para mensagem
+                funcionario_anterior = pa.funcionario
+                
+                # Remover funcionário
+                pa.funcionario = None
+                pa.status = 'livre'  # Atualizar status da PA
+                pa.save()
+                
+                # Desativar atribuições existentes
+                AtribuicaoFuncionarioPA.objects.filter(posicao_atendimento=pa, ativo=True).update(
+                    ativo=False,
+                    data_fim=timezone.now().date()
+                )
+                
+                # Preparar resposta
+                return JsonResponse({
+                    'success': True,
+                    'funcionario': None,  # Indica que o funcionário foi removido
+                    'pa_numero': pa.numero,
+                    'pas_afetadas': [],  # Nenhuma outra PA afetada neste caso
+                    'novo_status': pa.status,
+                    'message': f'Funcionário removido da PA {pa.numero} com sucesso!'
+                })
+        
+        except Exception as e:
+            logger.error(f"Erro ao atribuir funcionário à PA: {str(e)}", exc_info=True)
+            return JsonResponse({'success': False, 'error': str(e)})
+    
+    return JsonResponse({'success': False, 'error': 'Método não permitido'})
+
 
 # Views para Ramais
 @login_required
@@ -1870,7 +2055,61 @@ def ramal_list(request):
     context = {
         'ramais': ramais
     }
-    return render(request, 'apps/ti/ramal_list.html', context)
+    return render(request, 'apps/ti/admin.html', context)
+
+@login_required
+def api_verificar_ramal(request):
+    """API para verificar se um ramal já está em uso por outro funcionário"""
+    if request.method == 'POST':
+        import json
+        import logging
+        logger = logging.getLogger(__name__)
+
+        try:
+            data = json.loads(request.body)
+            ramal = data.get('ramal')
+            funcionario_id = data.get('funcionario_id')
+            
+            # Validação básica
+            if not ramal or not funcionario_id:
+                return JsonResponse({
+                    'success': False, 
+                    'error': 'Ramal e ID do funcionário são obrigatórios'
+                })
+            
+            # Verificar se o ramal já está atribuído a outro funcionário
+            funcionario_com_ramal = Funcionario.objects.filter(
+                ramal=ramal
+            ).exclude(
+                id=funcionario_id
+            ).first()
+            
+            if funcionario_com_ramal:
+                # Ramal já está em uso por outro funcionário
+                return JsonResponse({
+                    'success': True,
+                    'existe': True,
+                    'funcionario_nome': funcionario_com_ramal.nome_completo,
+                    'funcionario_id': funcionario_com_ramal.id
+                })
+            else:
+                # Ramal está disponível ou pertence ao funcionário atual
+                return JsonResponse({
+                    'success': True,
+                    'existe': False
+                })
+                
+        except Exception as e:
+            logger.error(f"Erro ao verificar ramal: {str(e)}", exc_info=True)
+            return JsonResponse({
+                'success': False,
+                'error': str(e)
+            }, status=500)
+    
+    return JsonResponse({
+        'success': False,
+        'error': 'Método não permitido'
+    }, status=405)
 
 @login_required
 def ramal_create(request):
@@ -1891,7 +2130,7 @@ def ramal_create(request):
     context = {
         # 'form': form
     }
-    return render(request, 'apps/ti/ramal_form.html', context)
+    return render(request, 'apps/ti/admin.html', context)
 
 @login_required
 def ramal_update(request):
@@ -1931,7 +2170,7 @@ def ramal_edit(request, pk):
         # 'form': form,
         # 'ramal': ramal
     }
-    return render(request, 'apps/ti/ramal_form.html', context)
+    return render(request, 'apps/ti/admin.html', context)
 
 @login_required
 def ramal_delete(request, pk):
@@ -1944,8 +2183,10 @@ def ramal_delete(request, pk):
     
     context = {
         # 'ramal': ramal
+        'title': 'Excluir Ramal',
+        'objeto': 'Ramal'
     }
-    return render(request, 'apps/ti/ramal_confirm_delete.html', context)
+    return render(request, 'apps/ti/confirm_delete.html', context)
 
 # Views para Computadores
 @login_required
@@ -1962,7 +2203,7 @@ def computador_create(request):
     context = {
         'form': form
     }
-    return render(request, 'apps/ti/computador_form.html', context)
+    return render(request, 'apps/ti/admin.html', context)
 
 @login_required
 def atribuicao_computador_pa_create(request):
@@ -1978,7 +2219,7 @@ def atribuicao_computador_pa_create(request):
     context = {
         'form': form
     }
-    return render(request, 'apps/ti/atribuicao_computador_pa_form.html', context)
+    return render(request, 'apps/ti/admin.html', context)
 
 @require_POST
 @login_required
@@ -2141,7 +2382,7 @@ def tipo_periferico_list(request):
     context = {
         'tipos': tipos
     }
-    return render(request, 'apps/ti/tipo_periferico_list.html', context)
+    return render(request, 'apps/ti/admin.html', context)
 
 @login_required
 def tipo_periferico_create(request):
@@ -2157,7 +2398,7 @@ def tipo_periferico_create(request):
     context = {
         'form': form
     }
-    return render(request, 'apps/ti/tipo_periferico_form.html', context)
+    return render(request, 'apps/ti/admin.html', context)
 
 @login_required
 def tipo_periferico_update(request, pk):
@@ -2175,7 +2416,7 @@ def tipo_periferico_update(request, pk):
         'form': form,
         'tipo': tipo
     }
-    return render(request, 'apps/ti/tipo_periferico_form.html', context)
+    return render(request, 'apps/ti/admin.html', context)
 
 @login_required
 def tipo_periferico_delete(request, pk):
@@ -2186,9 +2427,10 @@ def tipo_periferico_delete(request, pk):
         return redirect('ti:tipo_periferico_list')
     
     context = {
-        'tipo': tipo
+        'title': 'Excluir Tipo de Periférico',
+        'objeto': tipo
     }
-    return render(request, 'apps/ti/tipo_periferico_confirm_delete.html', context)
+    return render(request, 'apps/ti/confirm_delete.html', context)
 
 # APIs para carregamento rápido
 @login_required
@@ -2227,8 +2469,16 @@ def api_controle_salas_data(request):
     API para carregamento rápido dos dados da página de controle de salas
     """
     try:
-        # Carregar salas com suas ilhas
-        salas = Sala.objects.all()
+        # Obter parâmetros de filtro da URL
+        sala_id = request.GET.get('sala_id')
+        ilha_id = request.GET.get('ilha_id')
+        
+        # Carregar salas com suas ilhas (aplicando filtro se necessário)
+        if sala_id:
+            salas = Sala.objects.filter(id=sala_id)
+        else:
+            salas = Sala.objects.all()
+            
         salas_data = []
         
         # Obter tipos de periféricos comuns (aqueles esperados em cada PA)
@@ -2301,7 +2551,12 @@ def api_controle_salas_data(request):
                 'ilhas': []
             }
             
-            for ilha in sala.ilhas.all():
+            # Aplicar filtro de ilha, se especificado
+            ilhas_queryset = sala.ilhas.all()
+            if ilha_id:
+                ilhas_queryset = ilhas_queryset.filter(id=ilha_id)
+                
+            for ilha in ilhas_queryset:
                 ilha_dict = {
                     'id': ilha.id,
                     'nome': ilha.nome,
@@ -2323,7 +2578,7 @@ def api_controle_salas_data(request):
                         'numero': pa.numero,
                         'status': pa.status,
                         'status_display': pa.get_status_display(),
-                        'funcionario': pa.funcionario.nome if pa.funcionario else None,
+                        'funcionario': pa.funcionario.nome_completo if pa.funcionario else None,
                         'perifericos': perifericos_por_pa.get(pa.id, []),
                         'faltando': tipos_faltantes,
                         'computadores': computadores_por_pa.get(pa.id, [])
@@ -2587,7 +2842,7 @@ def api_auto_atribuicao_pa_data(request):
                 'ilha': pa.ilha.nome if pa.ilha else 'S/Ilha',
                 'status': pa.status,
                 'status_display': pa.get_status_display(),
-                'funcionario_atual': pa.funcionario.nome if pa.funcionario else None
+                'funcionario_atual': pa.funcionario.nome_completo if pa.funcionario else None
             })
         
         return JsonResponse({
@@ -2595,7 +2850,7 @@ def api_auto_atribuicao_pa_data(request):
             'data': {
                 'funcionario': {
                     'id': funcionario.id,
-                    'nome': funcionario.nome,
+                    'nome': funcionario.nome_completo,
                     'cargo': funcionario.cargo
                 },
                 'pa_atual': pa_atual,
@@ -2863,7 +3118,7 @@ def api_listar_posicoes_atendimento(request):
                 'status_display': pa.get_status_display(),
                 'funcionario': {
                     'id': pa.funcionario.id,
-                    'nome': pa.funcionario.nome
+                    'nome': pa.funcionario.nome_completo
                 } if pa.funcionario else None,
                 'perifericos': perifericos_data,
                 'computadores': computadores_data

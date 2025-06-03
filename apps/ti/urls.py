@@ -16,6 +16,7 @@ urlpatterns = [
     # URLs para Controle de Manutenção
     path('controle-manutencao/', views.controle_manutencao, name='controle_manutencao'),
     path('marcar-consertado/<int:item_id>/<slug:tipo_item_slug>/', views.marcar_consertado, name='marcar_consertado'),
+    path('excluir-periferico/<int:item_id>/<slug:tipo_item_slug>/', views.excluir_periferico, name='excluir_periferico'),
     
     # URLs para API
     path('api/ilhas-por-sala/<int:sala_id>/', views.api_ilhas_por_sala, name='api_ilhas_por_sala'),
@@ -84,7 +85,9 @@ urlpatterns = [
     path('api/pas-para-atribuicao-periferico/<int:periferico_id>/', views.api_pas_para_atribuicao_periferico, name='api_pas_para_atribuicao_periferico'),
 
     # URLs da API para controle de PAs
-    path('api/funcionarios/', views.get_funcionarios_json, name='api_get_funcionarios'),
+    path('api/funcionarios/', views.api_funcionarios, name='api_funcionarios'),
+    # URL antiga mantida por compatibilidade (redirecionando para a nova)
+    path('api/get_funcionarios/', views.api_funcionarios, name='api_get_funcionarios'),
     path('api/atribuir_funcionario_pa/', views.atribuir_funcionario_pa, name='api_atribuir_funcionario_pa'),
     path('api/pa/<int:pa_id>/adicionar_computador/', views.api_adicionar_computador_pa, name='api_adicionar_computador_pa'),
     path('api/pa/<int:pa_id>/remover_computador/', views.api_remover_computador_pa, name='api_remover_computador_pa'),
@@ -94,7 +97,7 @@ urlpatterns = [
     
     # URLs para gerenciamento de ramais
     # path('ramal/update/', views.ramal_update, name='ramal_update'),
-    # path('api/verificar-ramal/', views.api_verificar_ramal, name='api_verificar_ramal'),
+    path('api/verificar-ramal/', views.api_verificar_ramal, name='api_verificar_ramal'),
 
     # Nova rota para atribuições em lote
     path('atribuicoes-perifericos/cadastrar-lote/', views.cadastrar_atribuicoes_perifericos_lote, name='cadastrar_atribuicoes_lote'),
@@ -108,4 +111,5 @@ urlpatterns = [
     path('api/listar-perifericos/', views.api_listar_perifericos, name='api_listar_perifericos'),
     path('api/listar-computadores/', views.api_listar_computadores, name='api_listar_computadores'),
     path('api/listar-posicoes-atendimento/', views.api_listar_posicoes_atendimento, name='api_listar_posicoes_atendimento'),
+    path('api/funcionarios/', views.api_funcionarios, name='api_funcionarios'),
 ] 

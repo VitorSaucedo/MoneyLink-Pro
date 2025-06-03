@@ -6,115 +6,114 @@
  * - Verificação de PAs ocupadas
  * - Modal de confirmação para troca/substituição
  * - Processamento de atribuições via AJAX
+ * 
+ * Convertido para jQuery para padronização com o restante do projeto
  */
 
 // Variáveis globais
-let modalElement = null;
-let closeBtn = null;
-let footerCloseBtn = null;
+var $modalElement = null;
+var $closeBtn = null;
+var $footerCloseBtn = null;
 
 // Implementação de modal personalizado
-const customModal = {
+var customModal = {
   show: function() {
     // Tentar obter o elemento modal caso ainda não tenha sido encontrado
-    if (!modalElement) {
-      modalElement = document.getElementById('pa-reassign-modal');
+    if (!$modalElement || !$modalElement.length) {
+      $modalElement = $('#pa-reassign-modal');
     }
     
-    if (!modalElement) {
+    if (!$modalElement.length) {
       console.error('Elemento do modal não encontrado');
       return;
     }
     console.log('Mostrando modal personalizado');
     // Adicionar classe para mostrar o modal
-    modalElement.classList.add('visible');
+    $modalElement.addClass('visible');
     
     // Impedir o scroll no body
-    document.body.style.overflow = 'hidden';
+    $('body').css('overflow', 'hidden');
   },
   hide: function() {
-    if (!modalElement) {
-      modalElement = document.getElementById('pa-reassign-modal');
+    if (!$modalElement || !$modalElement.length) {
+      $modalElement = $('#pa-reassign-modal');
     }
     
-    if (!modalElement) {
+    if (!$modalElement.length) {
       console.error('Elemento do modal não encontrado para ocultar');
       return;
     }
     console.log('Escondendo modal personalizado');
     // Remover classe para esconder o modal
-    modalElement.classList.remove('visible');
+    $modalElement.removeClass('visible');
     
     // Restaurar o scroll no body
-    document.body.style.overflow = '';
+    $('body').css('overflow', '');
   }
 };
 
 // Garantir que o modal e outros elementos estejam inicializados corretamente
 function initializeElements() {
-  modalElement = document.getElementById('pa-reassign-modal');
-  closeBtn = document.getElementById('modal-close-btn');
-  footerCloseBtn = document.getElementById('modal-footer-close');
+  $modalElement = $('#pa-reassign-modal');
+  $closeBtn = $('#modal-close-btn');
+  $footerCloseBtn = $('#modal-footer-close');
   
-  console.log('Modal element:', modalElement);
+  console.log('Modal element:', $modalElement);
   
   // Adicionar eventos de fechamento aos botões
-  if (closeBtn) {
-    closeBtn.addEventListener('click', function() {
+  if ($closeBtn.length) {
+    $closeBtn.on('click', function() {
       customModal.hide();
     });
   }
   
-  if (footerCloseBtn) {
-    footerCloseBtn.addEventListener('click', function() {
+  if ($footerCloseBtn.length) {
+    $footerCloseBtn.on('click', function() {
       customModal.hide();
     });
   }
   
   // Permitir fechar o modal ao clicar fora dele
-  if (modalElement) {
-    modalElement.addEventListener('click', function(e) {
-      if (e.target === modalElement) {
+  if ($modalElement.length) {
+    $modalElement.on('click', function(e) {
+      if (e.target === this) {
         customModal.hide();
       }
     });
   }
 }
 
-// Funções auxiliares - definidas fora do escopo DOMContentLoaded para evitar duplicação
+// Funções auxiliares - definidas fora do escopo document.ready para evitar duplicação
 
 // Verificar se a PA selecionada está ocupada
-function isPaOcupada(paSelectElement) {
-  if (!paSelectElement || !paSelectElement.selectedIndex || paSelectElement.selectedIndex < 0) return false;
+function isPaOcupada($paSelectElement) {
+  if (!$paSelectElement || !$paSelectElement.length || $paSelectElement.prop('selectedIndex') < 0) {
+    console.log('PA não selecionada ou elemento select inválido');
+    return false;
+  }
   
-  const selectedOption = paSelectElement.options[paSelectElement.selectedIndex];
-  if (!selectedOption) return false;
-  
-  const optionText = selectedOption.textContent || '';
-  return optionText.includes('[Ocupada por:');
+  const optionText = $paSelectElement.find('option:selected').text() || '';
+  console.log('Texto da opção selecionada:', optionText);
+  const isOcupada = optionText.includes('[Ocupada por:');
+  console.log('PA está ocupada?', isOcupada);
+  return isOcupada;
 }
 
 // Extrair o nome do funcionário que ocupa a PA
-function getOccupantName(paSelectElement) {
-  if (!paSelectElement || !paSelectElement.selectedIndex || paSelectElement.selectedIndex < 0) return '';
+function getOccupantName($paSelectElement) {
+  if (!$paSelectElement || !$paSelectElement.length || $paSelectElement.prop('selectedIndex') < 0) return '';
   
-  const selectedOption = paSelectElement.options[paSelectElement.selectedIndex];
-  if (!selectedOption) return '';
-  
-  const optionText = selectedOption.textContent || '';
+  const optionText = $paSelectElement.find('option:selected').text() || '';
   const match = optionText.match(/\[Ocupada por: (.+?)\]/);
   
   return (match && match[1]) ? match[1].trim() : '';
 }
 
 // Extrair o número da PA
-function getPaNumber(paSelectElement) {
-  if (!paSelectElement || !paSelectElement.selectedIndex || paSelectElement.selectedIndex < 0) return '';
+function getPaNumber($paSelectElement) {
+  if (!$paSelectElement || !$paSelectElement.length || $paSelectElement.prop('selectedIndex') < 0) return '';
   
-  const selectedOption = paSelectElement.options[paSelectElement.selectedIndex];
-  if (!selectedOption) return '';
-  
-  const optionText = selectedOption.textContent || '';
+  const optionText = $paSelectElement.find('option:selected').text() || '';
   const match = optionText.match(/PA\s+(\d+)/);
   
   return (match && match[1]) ? match[1].trim() : '';
@@ -123,32 +122,36 @@ function getPaNumber(paSelectElement) {
 // Mostrar o modal de reatribuição com informações específicas
 function showReassignModal(paInfo) {
   // Verificar se o elemento do modal existe
-  if (!modalElement) {
-    modalElement = document.getElementById('pa-reassign-modal');
+  if (!$modalElement || !$modalElement.length) {
+    $modalElement = $('#pa-reassign-modal');
   }
   
-  if (!modalElement) {
+  if (!$modalElement.length) {
     console.error('Elemento do modal não encontrado');
     return;
   }
   
-  // Preencher os detalhes no modal
-  const paInfoElement = document.getElementById('pa-ocupada-info');
-  if (paInfoElement) {
-    paInfoElement.textContent = `A PA ${paInfo.numero} está ocupada por ${paInfo.funcionario_nome}.`;
+  // Atualizar o conteúdo do modal com as informações da PA
+  const $titleElement = $modalElement.find('.custom-modal-title');
+  if ($titleElement.length) {
+    $titleElement.html(`<i class='bx bx-transfer-alt'></i>PA ${paInfo.numero} já está ocupada`);
   }
-      
-  // Preencher informações para as opções
-  document.querySelectorAll('#target-pa-num, #target-pa-num2').forEach(el => {
-    if (el) el.textContent = paInfo.numero;
-  });
   
-  document.querySelectorAll('#other-user-name, #other-user-name2').forEach(el => {
-    if (el) el.textContent = paInfo.funcionario_nome;
-  });
+  const $bodyElement = $modalElement.find('.custom-modal-body');
+  if ($bodyElement.length) {
+    // Atualizar texto no alerta do modal
+    const $paOcupadaInfo = $modalElement.find('#pa-ocupada-info');
+    if ($paOcupadaInfo.length) {
+      $paOcupadaInfo.text(`A PA selecionada já está atribuída ao funcionário ${paInfo.funcionario_nome}.`);
+    }
+    
+    // Atualizar números da PA e nome do funcionário nos campos dinâmicos
+    $modalElement.find('#target-pa-num, #target-pa-num2').text(paInfo.numero);
+    $modalElement.find('#other-user-name, #other-user-name2').text(paInfo.funcionario_nome);
+  }
   
-  // Configurar eventos para as opções
-  setupModalOptions(paInfo.id, paInfo.funcionario_id);
+  // Configurar os botões de ação
+  setupModalOptions(paInfo.id, null);
   
   // Exibir o modal personalizado
   customModal.show();
@@ -156,162 +159,152 @@ function showReassignModal(paInfo) {
 
 // Configurar eventos para as opções do modal
 function setupModalOptions(paId, funcionarioId) {
-  const optionSwap = document.getElementById('option-swap');
-  const optionReplace = document.getElementById('option-replace');
-  const optionCancel = document.getElementById('option-cancel');
+  const $optionSwap = $('#option-swap');
+  const $optionReplace = $('#option-replace');
+  const $optionCancel = $('#option-cancel');
   
-  if (optionSwap) {
-    optionSwap.onclick = function() {
+  // Remover handlers antigos para evitar duplicação
+  $optionSwap.off('click');
+  $optionReplace.off('click');
+  $optionCancel.off('click');
+  
+  if ($optionSwap.length) {
+    $optionSwap.on('click', function() {
       handleReassignment(paId, 'swap');
       customModal.hide();
-    };
+    });
   }
   
-  if (optionReplace) {
-    optionReplace.onclick = function() {
+  if ($optionReplace.length) {
+    $optionReplace.on('click', function() {
       handleReassignment(paId, 'replace');
       customModal.hide();
-    };
+    });
   }
   
-  if (optionCancel) {
-    optionCancel.onclick = function() {
+  if ($optionCancel.length) {
+    $optionCancel.on('click', function() {
       customModal.hide();
-    };
+    });
   }
 }
 
 // Processar a reatribuição (troca ou substituição)
-async function handleReassignment(paId, option) {
+function handleReassignment(paId, option) {
   // Mostrar indicador de carregamento
-  const messageContainer = document.getElementById('message-container');
-  messageContainer.innerHTML = `
-    <div class="alert alert-info alert-dismissible fade show" role="alert">
-      <i class='bx bx-loader-alt bx-spin me-2'></i> Processando sua solicitação...
-      <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-    </div>
-  `;
+  var $messageContainer = $('#message-container');
+  $messageContainer.html(
+    '<div class="alert alert-info alert-dismissible fade show" role="alert">'+
+      '<i class="bx bx-loader-alt bx-spin me-2"></i> Processando sua solicitação...'+
+      '<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>'+
+    '</div>'
+  );
   
-  try {
-    // Obter o token CSRF do formulário
-    const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
-    
-    // Preparar os dados para envio
-    const data = {
-      pa_id: paId,
-      option: option
-    };
-    
-    console.log('Enviando dados para reatribuição:', data);
-    
-    // Enviar a solicitação para a API com a URL correta
-    const response = await fetch('/ti/api/auto-atribuicao-pa-reassign/', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'X-CSRFToken': csrfToken,
-        'X-Requested-With': 'XMLHttpRequest'
-      },
-      body: JSON.stringify(data)
-    });
-    
-    if (!response.ok) {
-      throw new Error(`Erro na requisição: ${response.status}`);
+  // Obter o token CSRF do formulário
+  var csrfToken = $('[name=csrfmiddlewaretoken]').val();
+  
+  // Preparar os dados para envio
+  var data = {
+    pa_id: paId,
+    option: option
+  };
+  
+  console.log('Enviando dados para reatribuição:', data);
+  
+  // Usando jQuery para fazer a requisição AJAX
+  $.ajax({
+    url: '/ti/api/auto-atribuicao-pa-reassign/',
+    method: 'POST',
+    headers: {
+      'X-CSRFToken': csrfToken,
+      'X-Requested-With': 'XMLHttpRequest'
+    },
+    contentType: 'application/json',
+    data: JSON.stringify(data),
+    success: function(response) {
+      if (response.success) {
+        $messageContainer.html(
+          '<div class="alert alert-success alert-dismissible fade show" role="alert">'+
+            '<i class="bx bx-check-circle me-2"></i> '+ response.message +
+            '<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>'+
+          '</div>'
+        );
+        
+        // Recarregar a página após 2 segundos
+        setTimeout(function() {
+          window.location.reload();
+        }, 2000);
+      } else {
+        $messageContainer.html(
+          '<div class="alert alert-danger alert-dismissible fade show" role="alert">'+
+            '<i class="bx bx-error-circle me-2"></i> '+ (response.message || 'Ocorreu um erro ao processar sua solicitação.') +
+            '<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>'+
+          '</div>'
+        );
+      }
+    },
+    error: function(error) {
+      console.error('Erro:', error);
+      $messageContainer.html(
+        '<div class="alert alert-danger alert-dismissible fade show" role="alert">'+
+          '<i class="bx bx-error-circle me-2"></i> Ocorreu um erro ao processar sua solicitação.'+
+          '<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>'+
+        '</div>'
+      );
     }
-    
-    const responseData = await response.json();
-    
-    if (responseData.success) {
-      messageContainer.innerHTML = `
-        <div class="alert alert-success alert-dismissible fade show" role="alert">
-          <i class='bx bx-check-circle me-2'></i> ${responseData.message}
-          <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-        </div>
-      `;
-      
-      // Recarregar a página após 2 segundos
-      setTimeout(() => {
-        window.location.reload();
-      }, 2000);
-    } else {
-      messageContainer.innerHTML = `
-        <div class="alert alert-danger alert-dismissible fade show" role="alert">
-          <i class='bx bx-error-circle me-2'></i> ${responseData.message || 'Ocorreu um erro ao processar sua solicitação.'}
-          <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-        </div>
-      `;
-    }
-  } catch (error) {
-    console.error('Erro:', error);
-    messageContainer.innerHTML = `
-      <div class="alert alert-danger alert-dismissible fade show" role="alert">
-        <i class='bx bx-error-circle me-2'></i> Ocorreu um erro ao processar sua solicitação.
-        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-      </div>
-    `;
-  }
+  });
 }
 
 // Inicialização quando o DOM está pronto
-document.addEventListener('DOMContentLoaded', function() {
+$(document).ready(function() {
   // Elementos DOM
-  const form = document.getElementById('pa-form');
-  const paSelect = document.getElementById('pa-select');
+  var $form = $('#pa-form');
+  var $paSelect = $('#pa-select'); // Seleciona o elemento do select de PA
   
   // Inicializar elementos ao carregar a página
   initializeElements();
   
-  // Garantir que o modal está inicializado quando a página terminar de carregar
-  window.addEventListener('load', function() {
-    // Tentar inicializar elementos novamente, caso não tenham sido encontrados no DOMContentLoaded
-    if (!modalElement) {
-      console.log('Tentando inicializar elementos novamente...');
-      initializeElements();
-    }
-    
-    // Garantir que o modal esteja no fim do documento
-    const modalElement = document.getElementById('pa-reassign-modal');
-    if (modalElement) {
-      // Remover o modal se estiver dentro de outro container
-      if (modalElement.parentNode) {
-        modalElement.parentNode.removeChild(modalElement);
-      }
-      // Adicionar ao final do body
-      document.body.appendChild(modalElement);
+  // Mover o modal para o corpo do documento, se necessário
+  setTimeout(function() {
+    console.log('Verificando posição do modal...');
+    var $modalElement = $('#pa-reassign-modal');
+    if ($modalElement.length) {
+      // Mover o modal para o final do body
+      $modalElement.detach().appendTo('body');
     }
   });
   
   // Configurar o formulário
-  if (form) {
-    form.addEventListener('submit', function(e) {
+  if ($form.length) {
+    $form.on('submit', function(e) {
       e.preventDefault();
       console.log('Formulário submetido');
       
-      if (!paSelect.value) {
+      if (!$paSelect.val()) {
         // Criar alerta se nenhuma PA foi selecionada
-        const messageContainer = document.getElementById('message-container');
-        messageContainer.innerHTML = `
-          <div class="alert alert-warning alert-dismissible fade show" role="alert">
-            <i class='bx bx-error me-2'></i> Por favor, selecione uma PA.
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-          </div>
-        `;
+        var $messageContainer = $('#message-container');
+        $messageContainer.html(
+          '<div class="alert alert-warning alert-dismissible fade show" role="alert">'+
+            '<i class="bx bx-error me-2"></i> Por favor, selecione uma PA.'+
+            '<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>'+
+          '</div>'
+        );
         return;
       }
       
-      console.log('PA selecionada:', paSelect.value);
+      console.log('PA selecionada:', $paSelect.val());
       
       // Verificar se a PA está ocupada após clicar no botão de confirmação
-      if (isPaOcupada(paSelect)) {
+      if (isPaOcupada($paSelect)) {
         console.log('PA está ocupada, exibindo modal de confirmação');
         // Obter informações para o modal
-        const occupantName = getOccupantName(paSelect);
-        const paNumber = getPaNumber(paSelect);
-        const paId = paSelect.value;
+        var occupantName = getOccupantName($paSelect);
+        var paNumber = getPaNumber($paSelect);
+        var paId = $paSelect.val();
         
         try {
           // Criar um objeto com as informações para o modal
-          const paInfo = {
+          var paInfo = {
             id: paId,
             funcionario_nome: occupantName,
             numero: paNumber,
@@ -328,50 +321,52 @@ document.addEventListener('DOMContentLoaded', function() {
       
       console.log('PA não ocupada, prosseguindo com atribuição normal');
       // Se a PA não está ocupada, proceder normalmente
-      const formData = new FormData(form);
+      var formData = new FormData(this);
       
-      // Corrigir a URL para corresponder à rota correta no urls.py
-      fetch('/ti/auto-atribuicao-pa/', {
+      // Usar jQuery Ajax para enviar o formulário
+      $.ajax({
+        url: '/ti/auto-atribuicao-pa/',
         method: 'POST',
-        body: formData,
+        data: formData,
+        processData: false,
+        contentType: false,
         headers: {
           'X-Requested-With': 'XMLHttpRequest'
-        }
-      })
-      .then(response => response.json())
-      .then(data => {
-        const messageContainer = document.getElementById('message-container');
-        
-        if (data.success) {
-          messageContainer.innerHTML = `
-            <div class="alert alert-success alert-dismissible fade show" role="alert">
-              <i class='bx bx-check-circle me-2'></i> ${data.message}
-              <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-            </div>
-          `;
+        },
+        success: function(data) {
+          var $messageContainer = $('#message-container');
           
-          // Atualizar a página após 2 segundos
-          setTimeout(() => {
-            window.location.reload();
-          }, 2000);
-        } else {
-          messageContainer.innerHTML = `
-            <div class="alert alert-danger alert-dismissible fade show" role="alert">
-              <i class='bx bx-error-circle me-2'></i> ${data.message}
-              <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-            </div>
-          `;
+          if (data.success) {
+            $messageContainer.html(
+              '<div class="alert alert-success alert-dismissible fade show" role="alert">'+
+                '<i class="bx bx-check-circle me-2"></i> '+ data.message +
+                '<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>'+
+              '</div>'
+            );
+            
+            // Atualizar a página após 2 segundos
+            setTimeout(function() {
+              window.location.reload();
+            }, 2000);
+          } else {
+            $messageContainer.html(
+              '<div class="alert alert-danger alert-dismissible fade show" role="alert">'+
+                '<i class="bx bx-error-circle me-2"></i> '+ data.message +
+                '<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>'+
+              '</div>'
+            );
+          }
+        },
+        error: function(error) {
+          console.error('Erro:', error);
+          var $messageContainer = $('#message-container');
+          $messageContainer.html(
+            '<div class="alert alert-danger alert-dismissible fade show" role="alert">'+
+              '<i class="bx bx-error-circle me-2"></i> Ocorreu um erro ao processar sua solicitação.'+
+              '<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>'+
+            '</div>'
+          );
         }
-      })
-      .catch(error => {
-        console.error('Erro:', error);
-        const messageContainer = document.getElementById('message-container');
-        messageContainer.innerHTML = `
-          <div class="alert alert-danger alert-dismissible fade show" role="alert">
-            <i class='bx bx-error-circle me-2'></i> Ocorreu um erro ao processar sua solicitação.
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-          </div>
-        `;
       });
     });
   }

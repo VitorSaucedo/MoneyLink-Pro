@@ -7,33 +7,32 @@
 
 $(document).ready(function() {
   // Armazenador de periféricos pendentes para atribuição
-  let perifericosPendentes = [];
+  var perifericosPendentes = [];
   
   // Lista global para rastrear periféricos pendentes por tipo
   // Estrutura: { tipoId: [perifericoId1, perifericoId2, ...] }
-  let perifericosPendentesPorTipo = {};
+  var perifericosPendentesPorTipo = {};
   
   // Variáveis para rastrear estado
-  let paAtual = null;
+  var paAtual = null;
   
   // Função para atualizar a contagem de atribuições pendentes
   function atualizarContadorAtribuicoesPendentes() {
-    const contador = perifericosPendentes.length;
+    var contador = perifericosPendentes.length;
     if (contador > 0) {
       // Atualizar o HTML completo para incluir o botão cancelar
-      const saveButtonHTML = `
-        <div class="pending-count">${contador}</div>
-        <div class="btn-group">
-          <button type="button" class="btn btn-primary save-all-changes-btn">
-            <i class='bx bx-save me-2'></i> Salvar Alterações
-          </button>
-          <button type="button" class="btn btn-outline-secondary cancel-all-changes-btn" title="Cancelar todas as alterações">
-            <i class='bx bx-x'></i>
-          </button>
-        </div>
-      `;
+      var saveButtonHTML = 
+        '<div class="pending-count">'+ contador +'</div>'+
+        '<div class="btn-group">'+
+          '<button type="button" class="btn btn-primary save-all-changes-btn">'+
+            '<i class="bx bx-save me-2"></i> Salvar Alterações'+
+          '</button>'+
+          '<button type="button" class="btn btn-outline-secondary cancel-all-changes-btn" title="Cancelar todas as alterações">'+
+            '<i class="bx bx-x"></i>'+
+          '</button>'+
+        '</div>';
       
-      const $saveButton = $('#save-changes-button');
+      var $saveButton = $('#save-changes-button');
       $saveButton.html(saveButtonHTML);
       $saveButton.removeClass('d-none');
     } else {
@@ -46,24 +45,25 @@ $(document).ready(function() {
     if (perifericosPendentes.length === 0) return;
     
     // Desabilitar o botão e mostrar loading
-    const $button = $(this);
-    const originalHtml = $button.html();
+    var $button = $(this);
+    var originalHtml = $button.html();
     $button.prop('disabled', true).html('<i class="bx bx-loader-alt bx-spin me-2"></i> Salvando...');
     
     // Mostrar mensagem informativa
     mostrarMensagem('Salvando ' + perifericosPendentes.length + ' atribuições de periféricos...', 'info');
     
     // Preparar os dados para envio em lote
-    const dadosLote = perifericosPendentes.map(atribuicao => {
+    var dadosLote = [];
+    $.each(perifericosPendentes, function(i, atribuicao) {
       // Obter a data/hora atual no formato ISO para o Django
-      const agora = new Date();
-      const dataHoraFormatada = agora.toISOString().replace('Z', '');
+      var agora = new Date();
+      var dataHoraFormatada = agora.toISOString().replace('Z', '');
       
-      return {
+      dadosLote.push({
         periferico: atribuicao.perifericoId,
         posicao_atendimento: atribuicao.paId,
         data_atribuicao: dataHoraFormatada
-      };
+      });
     });
     
     // Fazer uma única requisição em lote
@@ -99,16 +99,16 @@ $(document).ready(function() {
   
   // Nova função para processamento de requisições separadas (fallback)
   function processarRequisicoesSeparadas($button, originalHtml) {
-    let requisicoesConcluidas = 0;
-    const totalRequisicoes = perifericosPendentes.length;
-    let sucessos = 0;
-    let falhas = 0;
+    var requisicoesConcluidas = 0;
+    var totalRequisicoes = perifericosPendentes.length;
+    var sucessos = 0;
+    var falhas = 0;
 
     // Para cada atribuição pendente
     perifericosPendentes.forEach(function(atribuicao) {
       // Obter a data/hora atual no formato ISO para o Django
-      const agora = new Date();
-      const dataHoraFormatada = agora.toISOString();
+      var agora = new Date();
+      var dataHoraFormatada = agora.toISOString();
 
       $.ajax({
         url: '/ti/atribuicoes-perifericos/cadastrar/',
@@ -131,8 +131,8 @@ $(document).ready(function() {
           requisicoesConcluidas++;
           
           // Atualizar progresso no botão
-          const percentual = Math.round((requisicoesConcluidas / totalRequisicoes) * 100);
-          $button.html(`<i class="bx bx-loader-alt bx-spin me-2"></i> ${percentual}%`);
+          var percentual = Math.round((requisicoesConcluidas / totalRequisicoes) * 100);
+          $button.html('<i class="bx bx-loader-alt bx-spin me-2"></i> ' + percentual + '%');
           
           // Verificar se todas as requisições foram concluídas
           if (requisicoesConcluidas === totalRequisicoes) {
@@ -164,10 +164,10 @@ $(document).ready(function() {
   // console.log('Document ready e controle_salas.js carregado.'); // Log de inicialização
 
   // Armazenar IDs ativos
-  let currentSalaId = null;
-  let currentIlhaIds = {};
-  let previousSalaId = null;
-  let previousIlhaIds = {};
+  var currentSalaId = null;
+  var currentIlhaIds = {};
+  var previousSalaId = null;
+  var previousIlhaIds = {};
   
   // Forçar a ocultação de abas não ativas
   $('.tab-pane').not('.active').hide();
@@ -192,11 +192,11 @@ $(document).ready(function() {
   
   // ===== Carregamento de dados otimizado =====
   // Criar cache para dados já carregados
-  const dadosCarregados = {};
+  var dadosCarregados = {};
   // Rastrear requisições em andamento para evitar duplicadas
-  const carregamentosEmCurso = {};
+  var carregamentosEmCurso = {};
   // Armazenar configuração atual
-  let modoCarregamento = 'otimizado'; // 'otimizado' ou 'sob_demanda'
+  var modoCarregamento = 'otimizado'; // 'otimizado' ou 'sob_demanda'
   // Armazenar os tipos de periféricos comuns para uso em toda a aplicação
   window.tiposPerifericosComuns = [];
   
@@ -261,38 +261,34 @@ $(document).ready(function() {
     
     try {
       // Construir URL com parâmetros de filtro
-      let url = '/ti/api/controle-salas-data/?sala_id=' + salaId;
+      let url = '/ti/api/controle-salas-data/';
+      let params = { sala_id: salaId };
       if (ilhaId) {
-        url += '&ilha_id=' + ilhaId;
+        params.ilha_id = ilhaId;
       }
       
-      // Fazer a requisição
-      const response = await fetch(url, {
+      // Fazer a requisição usando jQuery em vez de fetch
+      const response = await $.ajax({
+        url: url,
         method: 'GET',
-        headers: {
-          'X-Requested-With': 'XMLHttpRequest'
-        }
+        data: params,
+        dataType: 'json'
       });
       
-      if (!response.ok) {
-        throw new Error(`Erro na requisição: ${response.status}`);
-      }
-      
-      const data = await response.json();
-      
-      if (data.success) {
+      // Processar a resposta
+      if (response.success) {
         // Armazenar dados em cache
-        dadosCarregados[cacheKey] = data;
+        dadosCarregados[cacheKey] = response;
         
         // Armazenar tipos de periféricos comuns globalmente
-        if (data.data && data.data.tipos_perifericos_comuns) {
-          window.tiposPerifericosComuns = data.data.tipos_perifericos_comuns;
+        if (response.data && response.data.tipos_perifericos_comuns) {
+          window.tiposPerifericosComuns = response.data.tipos_perifericos_comuns;
         }
         
         // Renderizar os dados na interface
-        renderizarDadosSala(data, salaId, ilhaId);
+        renderizarDadosSala(response, salaId, ilhaId);
       } else {
-        throw new Error(data.error || 'Erro ao carregar dados da sala');
+        throw new Error(response.error || 'Erro ao carregar dados da sala');
       }
     } catch (error) {
       console.error('Erro ao carregar dados:', error);
@@ -306,33 +302,34 @@ $(document).ready(function() {
   
   // Função para renderizar os dados recebidos da API na interface
   function renderizarDadosSala(data, salaId, ilhaId = null) {
-    // Obtemos as posições da resposta 
-    const posicoes = data.posicoes || [];
+    // Obtemos as posições da resposta, considerando a nova estrutura da API
+    const responseData = data.data || data;
+    const posicoes = responseData.posicoes || [];
     
     // Para cada posição, encontramos o elemento correspondente e atualizamos
     posicoes.forEach(pa => {
-      const paCardElement = document.querySelector(`.pa-card[data-pa-id="${pa.id}"]`);
-      if (!paCardElement) return; // Pular se o elemento não for encontrado
+      const $paCardElement = $(`.pa-card[data-pa-id="${pa.id}"]`);
+      if ($paCardElement.length === 0) return; // Pular se o elemento não for encontrado
       
       // Atualizar status da PA
-      atualizarVisualizacaoStatusPA(paCardElement, pa.status);
+      atualizarVisualizacaoStatusPA($paCardElement[0], pa.status);
       
       // Atualizar funcionário
       if (pa.funcionario) {
-        atualizarVisualizacaoFuncionarioPA(paCardElement, pa.funcionario, pa.status);
+        atualizarVisualizacaoFuncionarioPA($paCardElement[0], pa.funcionario, pa.status);
       } else {
         // Limpar dados de funcionário
-        const funcionarioInfoElem = paCardElement.querySelector('.funcionario-info');
-        if (funcionarioInfoElem) {
-          funcionarioInfoElem.innerHTML = '<span class="text-muted">Sem funcionário atribuído</span>';
+        const $funcionarioInfoElem = $paCardElement.find('.funcionario-info');
+        if ($funcionarioInfoElem.length > 0) {
+          $funcionarioInfoElem.html('<span class="text-muted">Sem funcionário atribuído</span>');
         }
       }
       
       // Atualizar periféricos
-      atualizarPerifericosNaPA(paCardElement, pa.perifericos, pa.faltando);
+      atualizarPerifericosNaPA($paCardElement[0], pa.perifericos, pa.faltando);
       
       // Atualizar computadores
-      atualizarVisualizacaoComputadoresPA(paCardElement, pa.computadores);
+      atualizarVisualizacaoComputadoresPA($paCardElement[0], pa.computadores);
     });
     
     // Se temos mais dados para carregar (paginação)
@@ -345,15 +342,17 @@ $(document).ready(function() {
   // Função para adicionar botão de recarga na aba ativa
   function adicionarBotaoRecarga() {
     // Remover botões existentes primeiro para evitar duplicação
-    document.querySelectorAll('.btn-reload-sala').forEach(btn => btn.remove());
+    $('.btn-reload-sala').remove();
     
     // Adicionar botão na sala ativa
     if (currentSalaId) {
-      const salaPane = document.querySelector(`#sala-${currentSalaId}`);
-      if (salaPane && !salaPane.querySelector('.btn-reload-sala')) {
-        const headerSection = salaPane.querySelector('.sala-header') || salaPane.querySelector('.container-fluid');
+      const $salaPane = $(`#sala-${currentSalaId}`);
+      if ($salaPane.length > 0 && $salaPane.find('.btn-reload-sala').length === 0) {
+        const $headerSection = $salaPane.find('.sala-header').length > 0 ? 
+                              $salaPane.find('.sala-header') : 
+                              $salaPane.find('.container-fluid');
         
-        if (headerSection) {
+        if ($headerSection.length > 0) {
           const btnHtml = `
             <button class="btn btn-sm btn-outline-secondary btn-reload-sala" 
                     style="position: absolute; right: 15px; top: 15px;"
@@ -361,24 +360,23 @@ $(document).ready(function() {
               <i class="fas fa-sync-alt"></i> Atualizar
             </button>
           `;
-          headerSection.style.position = 'relative';
-          headerSection.insertAdjacentHTML('beforeend', btnHtml);
+          $headerSection.css('position', 'relative');
+          $headerSection.append(btnHtml);
           
           // Adicionar evento de click
-          const btnReload = headerSection.querySelector('.btn-reload-sala');
-          btnReload.addEventListener('click', function() {
+          $headerSection.find('.btn-reload-sala').on('click', function() {
             // Rotação do ícone para indicar carregamento
-            const icon = this.querySelector('i');
-            icon.classList.add('fa-spin');
-            this.disabled = true;
+            const $icon = $(this).find('i');
+            $icon.addClass('fa-spin');
+            $(this).prop('disabled', true);
             
             // Forçar recarga dos dados (ignorando cache)
             const ilhaAtiva = currentIlhaIds[currentSalaId];
             mostrarLoadingNaSala(currentSalaId, ilhaAtiva);
             carregarDadosSala(currentSalaId, ilhaAtiva, true).finally(() => {
               // Parar rotação quando carregamento terminar
-              icon.classList.remove('fa-spin');
-              this.disabled = false;
+              $icon.removeClass('fa-spin');
+              $(this).prop('disabled', false);
             });
           });
         }
@@ -705,8 +703,33 @@ $(document).ready(function() {
   
   // Função para mostrar mensagens de feedback
   function mostrarMensagem(mensagem, tipo) {
-    const alertClass = tipo === 'success' ? 'alert-success' : 'alert-danger';
-    const icon = tipo === 'success' ? 'fas fa-check-circle' : 'fas fa-exclamation-circle';
+    // Mapear tipos para classes de alerta e ícones
+    let alertClass, icon;
+    
+    switch(tipo) {
+      case 'success':
+        alertClass = 'alert-success';
+        icon = 'fas fa-check-circle';
+        break;
+      case 'error':
+        alertClass = 'alert-danger';
+        icon = 'fas fa-exclamation-circle';
+        break;
+      case 'warning':
+        alertClass = 'alert-warning';
+        icon = 'fas fa-exclamation-triangle';
+        break;
+      case 'info':
+        alertClass = 'alert-info';
+        icon = 'fas fa-info-circle';
+        break;
+      default:
+        alertClass = 'alert-primary';
+        icon = 'fas fa-info-circle';
+    }
+    
+    // Limpar mensagens anteriores para evitar acúmulo
+    $('#message-container').empty();
     
     const messageHTML = `
       <div class="alert ${alertClass} alert-dismissible fade show" role="alert">
@@ -715,11 +738,20 @@ $(document).ready(function() {
       </div>
     `;
     
-    $('#message-container').html(messageHTML);
+    // Adicionar a nova mensagem
+    const $messageElement = $(messageHTML).appendTo('#message-container');
     
-    // Auto-remover após 5 segundos
+    // Auto-remover após 5 segundos de duas formas diferentes para garantir
     setTimeout(() => {
-      $('.alert').alert('close');
+      // Tenta usar a API do Bootstrap
+      try {
+        $messageElement.alert('close');
+      } catch (e) {
+        // Fallback: remoção manual com fade out
+        $messageElement.fadeOut(300, function() {
+          $(this).remove();
+        });
+      }
     }, 5000);
   }
   
@@ -1412,112 +1444,162 @@ $(document).ready(function() {
   // --- Lógica para Dropdown e Atribuição de Funcionários ---
   const funcionariosApiUrl = '/ti/api/funcionarios/'; // Certifique-se que esta URL está correta
   const atribuirFuncionarioApiUrl = '/ti/api/atribuir_funcionario_pa/'; // Certifique-se que esta URL está correta
-  let funcionariosCache = null; // Cache simples para a lista de funcionários
+  let funcionariosCache = []; // Cache simples para a lista de funcionários
+  console.log('[DEBUG] URLs da API:', {
+    funcionariosApi: funcionariosApiUrl,
+    atribuirFuncionarioApi: atribuirFuncionarioApiUrl
+  });
   let activeDropdown = null; // Rastreia o dropdown ativo
 
-  // Função para buscar funcionários (com cache)
-  async function fetchFuncionarios() {
-    if (funcionariosCache) {
+// Função para buscar funcionários (com cache)
+async function fetchFuncionarios() {
+  try {
+    // Se já tivermos os dados em cache, retorná-los
+    if (funcionariosCache && funcionariosCache.length > 0) {
+      console.log('[DEBUG] Retornando funcionários do cache, total:', funcionariosCache.length);
       return funcionariosCache;
     }
-    try {
-      const response = await $.ajax({
-        url: funcionariosApiUrl,
-        method: 'GET',
-        dataType: 'json'
-      });
-      if (response.funcionarios) {
-        funcionariosCache = response.funcionarios;
-        // Adicionar opção "Nenhum (Desatribuir)" no início
-        // Verifica se a opção já não existe para evitar duplicação em re-fetches (embora cache deva prevenir)
-        if (!funcionariosCache.find(f => f.id === 0)) {
-          funcionariosCache.unshift({ id: 0, nome: "Nenhum (Desatribuir)", ramal: "" });
-        }
-        return funcionariosCache;
-      } else {
-        throw new Error(response.error || 'Erro desconhecido ao buscar funcionários.'); // Usar um erro mais específico
-      }
-    } catch (error) {
-      console.error("Erro detalhado ao buscar funcionários:", error);
-      let errorMsg = 'Erro desconhecido.';
-      if (error.responseJSON && error.responseJSON.error) {
-        // Erro vindo da nossa API Django
-        errorMsg = error.responseJSON.error;
-      } else if (error.statusText) {
-        // Erro AJAX genérico (jqXHR object)
-        errorMsg = `${error.statusText} (Status: ${error.status || 'N/A'})`;
-      } else if (error.message) {
-        // Erro JavaScript padrão
-        errorMsg = error.message;
-      } else if (typeof error === 'string'){
-        // Se o erro for uma string
-        errorMsg = error;
-      }
-      mostrarMensagem(`Erro ao buscar funcionários: ${errorMsg}`, 'error');
-      return null;
+    
+    // Caso contrário, fazer a requisição
+    console.log('[DEBUG] Buscando funcionários via API...');
+    console.log('[DEBUG] URL da API:', funcionariosApiUrl);
+    
+    // Verificar se a URL está correta
+    if (!funcionariosApiUrl || funcionariosApiUrl === '/ti/api/funcionarios/') {
+      console.log('[DEBUG] Usando URL padrão para funcionários. Verifique se esta URL existe no backend');
     }
-  }
-
-  // Função para criar o HTML do dropdown
-  function criarDropdownHTML(funcionarios, paId) {
-    let itemsHTML = '';
-    if (!funcionarios) return '<div class="funcionario-dropdown-menu p-2 text-danger">Erro ao carregar.</div>';
-
-    funcionarios.forEach(func => {
-      // Modificado para exibir o ramal próximo ao nome
-      let nomeRamal = func.id === 0 ? 
-        `<span class="nome">${func.nome}</span>` : 
-        `<span class="nome">${func.nome} ${func.ramal ? `<span class="ramal-inline">(Ramal: ${func.ramal})</span>` : ''}</span>`;
-      
-      const itemClass = func.id === 0 ? 'desatribuir-item' : '';
-      itemsHTML += `
-        <div class="funcionario-dropdown-item ${itemClass}" data-funcionario-id="${func.id}" data-pa-id="${paId}">
-          ${nomeRamal}
-          ${func.id !== 0 && !func.ramal ? '<span class="ramal no-ramal">(Sem Ramal)</span>' : ''}
-        </div>
-      `;
+    
+    const response = await $.ajax({
+      url: funcionariosApiUrl,
+      type: 'GET',
+      dataType: 'json',
+      beforeSend: function() {
+        console.log('[DEBUG] Enviando requisição AJAX para buscar funcionários');
+      },
+      error: function(jqXHR, textStatus, errorThrown) {
+        console.log('[DEBUG] Erro na requisição AJAX:', textStatus, errorThrown);
+        console.log('[DEBUG] Status HTTP:', jqXHR.status);
+        console.log('[DEBUG] Resposta completa:', jqXHR.responseText);
+      }
     });
+    
+    console.log('[DEBUG] Resposta recebida da API:', response);
+    
+    if (response.success) {
+      console.log('[DEBUG] Funcionários obtidos com sucesso, total:', response.funcionarios.length);
+      funcionariosCache = response.funcionarios;
+      // Adicionar a opção "Nenhum" se ainda não existir
+      if (!funcionariosCache.find(f => f.id === 0)) {
+        funcionariosCache.unshift({ id: 0, nome: "Nenhum (Desatribuir)", ramal: "" });
+      }
+      return funcionariosCache;
+    } else {
+      console.log('[DEBUG] API retornou erro:', response.error || 'Erro não especificado');
+      throw new Error(response.error || 'Erro desconhecido ao buscar funcionários.'); // Usar um erro mais específico
+    }
+  } catch (error) {
+    console.error("[DEBUG] Erro detalhado ao buscar funcionários:", error);
+    if (error.responseJSON) {
+      console.log('[DEBUG] Detalhes do erro (responseJSON):', error.responseJSON);
+    }
+    if (error.responseText) {
+      console.log('[DEBUG] Resposta de texto:', error.responseText);
+    }
+    
+    let errorMsg = 'Erro desconhecido.';
+    if (error.responseJSON && error.responseJSON.error) {
+      // Erro vindo da nossa API Django
+      errorMsg = error.responseJSON.error;
+    } else if (error.statusText) {
+      // Erro AJAX genérico (jqXHR object)
+      errorMsg = `${error.statusText} (Status: ${error.status || 'N/A'})`;
+    } else if (error.message) {
+      // Erro JavaScript padrão
+      errorMsg = error.message;
+    } else if (typeof error === 'string'){
+      // Se o erro for uma string
+      errorMsg = error;
+    }
+    mostrarMensagem(`Erro ao buscar funcionários: ${errorMsg}`, 'error');
+    return null;
+  }
+}
 
-    return `<div class="funcionario-dropdown-menu" id="dropdown-pa-${paId}">${itemsHTML}</div>`;
+// Função para criar o HTML do dropdown
+function criarDropdownHTML(funcionarios, paId) {
+  let itemsHTML = '';
+  if (!funcionarios) return '<div class="funcionario-dropdown-menu p-2 text-danger">Erro ao carregar.</div>';
+
+  funcionarios.forEach(func => {
+    // Modificado para exibir o ramal próximo ao nome
+    let nomeRamal = func.id === 0 ? 
+      `<span class="nome">${func.nome}</span>` : 
+      `<span class="nome">${func.nome} ${func.ramal ? `<span class="ramal-inline">(Ramal: ${func.ramal})</span>` : ''}</span>`;
+    
+    const itemClass = func.id === 0 ? 'desatribuir-item' : '';
+    itemsHTML += `
+      <div class="funcionario-dropdown-item ${itemClass}" data-funcionario-id="${func.id}" data-pa-id="${paId}">
+        ${nomeRamal}
+        ${func.id !== 0 && !func.ramal ? '<span class="ramal no-ramal">(Sem Ramal)</span>' : ''}
+      </div>
+    `;
+  });
+
+  return `<div class="funcionario-dropdown-menu" id="dropdown-pa-${paId}">${itemsHTML}</div>`;
+}
+
+// Função para mostrar/esconder e posicionar o dropdown
+async function toggleDropdownFuncionarios(button) {
+  console.log('[DEBUG] toggleDropdownFuncionarios iniciado para botão:', button);
+  const paId = $(button).data('pa-id');
+  console.log('[DEBUG] PA ID obtido:', paId);
+  const existingDropdown = $(`#dropdown-pa-${paId}`);
+  console.log('[DEBUG] Dropdown existente?', existingDropdown.length > 0);
+
+  // Fechar dropdown ativo se existir e não for o atual
+  if (activeDropdown && activeDropdown.attr('id') !== `dropdown-pa-${paId}`) {
+    console.log('[DEBUG] Fechando dropdown ativo diferente');
+    activeDropdown.fadeOut(100, function() { $(this).remove(); });
+    activeDropdown = null;
   }
 
-  // Função para mostrar/esconder e posicionar o dropdown
-  async function toggleDropdownFuncionarios(button) {
-    const paId = $(button).data('pa-id');
-    const existingDropdown = $(`#dropdown-pa-${paId}`);
-
-    // Fechar dropdown ativo se existir e não for o atual
-    if (activeDropdown && activeDropdown.attr('id') !== `dropdown-pa-${paId}`) {
-        activeDropdown.fadeOut(100, function() { $(this).remove(); });
-        activeDropdown = null;
-    }
-
-    if (existingDropdown.length > 0) {
-      // Se existe, apenas remove (fecha)
-      existingDropdown.fadeOut(100, function() { $(this).remove(); });
-      activeDropdown = null;
-    } else {
-      // Se não existe, busca dados, cria e mostra
-      // Criar um loader flutuante próximo ao botão que clicamos
-      const buttonRect = button.getBoundingClientRect();
-      const loaderHTML = `<div id="dropdown-loader-${paId}" style="position: fixed; z-index: 9999; left: ${buttonRect.right + 10}px; top: ${buttonRect.top}px;">
-                            <div class="spinner-border spinner-border-sm text-primary" role="status">
-                              <span class="visually-hidden">Loading...</span>
-                            </div>
-                          </div>`;
-      $('body').append(loaderHTML);
-      
+  if (existingDropdown.length > 0) {
+    // Se existe, apenas remove (fecha)
+    console.log('[DEBUG] Fechando dropdown existente');
+    existingDropdown.fadeOut(100, function() { $(this).remove(); });
+    activeDropdown = null;
+  } else {
+    // Se não existe, busca dados, cria e mostra
+    console.log('[DEBUG] Criando novo dropdown para PA:', paId);
+    // Criar um loader flutuante próximo ao botão que clicamos
+    const buttonRect = button.getBoundingClientRect();
+    console.log('[DEBUG] Posição do botão:', buttonRect);
+    const loaderHTML = `<div id="dropdown-loader-${paId}" style="position: fixed; z-index: 9999; left: ${buttonRect.right + 10}px; top: ${buttonRect.top}px;">
+                          <div class="spinner-border spinner-border-sm text-primary" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                          </div>
+                        </div>`;
+    $('body').append(loaderHTML);
+    console.log('[DEBUG] Loader adicionado, buscando funcionários...');
+    
+    try {
       const funcionarios = await fetchFuncionarios();
+      console.log('[DEBUG] Resultado da busca de funcionários:', funcionarios ? 'Sucesso' : 'Falha');
       $(`#dropdown-loader-${paId}`).remove(); // Remove o loader
+      console.log('[DEBUG] Loader removido');
       
       if (funcionarios) {
+        console.log('[DEBUG] Criando HTML do dropdown com', funcionarios.length, 'funcionários');
         const dropdownHTML = criarDropdownHTML(funcionarios, paId);
+        console.log('[DEBUG] HTML do dropdown criado');
         
         // Anexar dropdown ao body em vez de dentro do card
         $('body').append(dropdownHTML);
+        console.log('[DEBUG] Dropdown anexado ao body');
         
         const newDropdown = $(`#dropdown-pa-${paId}`);
         activeDropdown = newDropdown;
+        console.log('[DEBUG] Novo dropdown ativo definido');
 
         // Posicionar baseado na posição absoluta do botão na viewport
         const buttonRect = button.getBoundingClientRect();
@@ -1532,11 +1614,11 @@ $(document).ready(function() {
         }
         
         newDropdown.css({
-            position: 'fixed', // Posição fixa em relação à viewport
-            top: (buttonRect.bottom + 5) + 'px',
-            left: leftPos + 'px',
-            display: 'none', // Começa escondido para o fadeIn
-            zIndex: 9999 // Garante que fica acima de tudo
+          position: 'fixed', // Posição fixa em relação à viewport
+          top: (buttonRect.bottom + 5) + 'px',
+          left: leftPos + 'px',
+          display: 'none', // Começa escondido para o fadeIn
+          zIndex: 9999 // Garante que fica acima de tudo
         });
 
         newDropdown.fadeIn(150);
@@ -1546,24 +1628,38 @@ $(document).ready(function() {
           const selectedFuncId = $(this).data('funcionario-id');
           atribuirFuncionarioAPa(paId, selectedFuncId, $(`.pa-card[data-pa-id="${paId}"]`));
           if (activeDropdown) {
-             activeDropdown.fadeOut(100, function() { $(this).remove(); });
-             activeDropdown = null;
+            activeDropdown.fadeOut(100, function() { $(this).remove(); });
+            activeDropdown = null;
           }
         });
       } else {
-          // Caso fetchFuncionarios falhe, mostrar mensagem de erro
-          const errorHtml = `<div id="error-message-${paId}" style="position: fixed; z-index: 9999; left: ${buttonRect.right + 10}px; top: ${buttonRect.top}px; background: white; padding: 5px 10px; border-radius: 4px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); color: red;">
-                              Falha ao carregar funcionários
-                            </div>`;
-          $('body').append(errorHtml);
-          
-          // Remover após alguns segundos
-          setTimeout(() => {
-            $(`#error-message-${paId}`).fadeOut(300, function() { $(this).remove(); });
-          }, 3000);
+        // Caso fetchFuncionarios falhe, mostrar mensagem de erro
+        const errorHtml = `<div id="error-message-${paId}" style="position: fixed; z-index: 9999; left: ${buttonRect.right + 10}px; top: ${buttonRect.top}px; background: white; padding: 5px 10px; border-radius: 4px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); color: red;">
+                            Falha ao carregar funcionários
+                          </div>`;
+        $('body').append(errorHtml);
+        
+        // Remover após alguns segundos
+        setTimeout(() => {
+          $(`#error-message-${paId}`).fadeOut(300, function() { $(this).remove(); });
+        }, 3000);
       }
+    } catch (error) {
+      console.error('[DEBUG] Erro no toggleDropdownFuncionarios:', error);
+      // Remover o loader se existir
+      $(`#dropdown-loader-${paId}`).remove();
+      // Mostrar mensagem de erro
+      const errorHtml = `<div id="error-message-${paId}" style="position: fixed; z-index: 9999; left: ${buttonRect.right + 10}px; top: ${buttonRect.top}px; background: white; padding: 5px 10px; border-radius: 4px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); color: red;">
+                          Erro ao carregar funcionários: ${error.message || 'Erro desconhecido'}
+                        </div>`;
+      $('body').append(errorHtml);
+      // Remover após alguns segundos
+      setTimeout(() => {
+        $(`#error-message-${paId}`).fadeOut(300, function() { $(this).remove(); });
+      }, 5000);
     }
   }
+}
 
   // Função para atribuir funcionário via AJAX
   function atribuirFuncionarioAPa(paId, funcionarioId, paCardElement) {
@@ -1607,14 +1703,18 @@ $(document).ready(function() {
                 paAfetadaDesc = ''; // Nenhuma outra PA afetada
               }
               // Usar o número da PA alvo (response.pa_numero)
-              mostrarMensagem(`Funcionário ${response.funcionario.nome} atribuído à PA ${response.pa_numero}.${paAfetadaDesc}`, 'success');
+              mostrarMensagem(`Funcionário ${response.funcionario.nome_completo} atribuído à PA ${response.pa_numero}.${paAfetadaDesc}`, 'success');
             } else {
               // Mensagem para desatribuição (funcionário removido)
               mostrarMensagem(`Funcionário removido da PA ${response.pa_numero}.`, 'success');
             }
           } else {
             // Mensagem padrão (caso não haja funcionário ou PAs afetadas - fallback)
-            mostrarMensagem(response.message || `Funcionário atribuído à PA ${response.pa_numero} com sucesso!`, 'success');
+            if (response.funcionario) {
+              mostrarMensagem(response.message || `Funcionário ${response.funcionario.nome_completo} atribuído à PA ${response.pa_numero} com sucesso!`, 'success');
+            } else {
+              mostrarMensagem(response.message || `Funcionário atribuído à PA ${response.pa_numero} com sucesso!`, 'success');
+            }
           }
         } else {
           mostrarMensagem('Erro ao atribuir funcionário: ' + (response.error || 'Erro desconhecido'), 'error');
@@ -1644,7 +1744,7 @@ $(document).ready(function() {
 
     if (funcionarioData) {
       // Adicionar nome do funcionário
-      paFuncionarioDiv.append(`<span class="funcionario-nome">${funcionarioData.nome}</span>`);
+      paFuncionarioDiv.append(`<span class="funcionario-nome">${funcionarioData.nome_completo}</span>`);
       
       // Adicionar o botão de ramal
       let buttonHTML;
@@ -1680,6 +1780,11 @@ $(document).ready(function() {
   $(document).on('click', '.ramal-badge, .assign-funcionario-btn', function(e) {
       e.preventDefault();
       e.stopPropagation(); // Impede que feche imediatamente se clicar no botão
+      
+      console.log('[DEBUG] Clique em ramal-badge ou assign-funcionario-btn');
+      console.log('[DEBUG] Elemento clicado:', this);
+      console.log('[DEBUG] Classe do elemento:', $(this).attr('class'));
+      console.log('[DEBUG] PA ID:', $(this).data('pa-id'));
       toggleDropdownFuncionarios(this);
   });
 
@@ -2798,4 +2903,4 @@ $(document).ready(function() {
     // Carregar os dados em seguida
     carregarPerifericosDisponiveis(tipoId);
   });
-}); 
+});

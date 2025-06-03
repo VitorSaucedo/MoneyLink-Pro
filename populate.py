@@ -341,6 +341,9 @@ def criar_funcionarios(empresas, lojas, departamentos, setores, cargos, horarios
         anos_atras_adm = random.randint(1, 5)
         data_adm = date.today() - timedelta(days=anos_atras_adm*365)
         
+        # Calcular ramal (começando de 1000 em diante)
+        ramal = str(1000 + i)
+        
         funcionario = Funcionario.objects.create(
             nome_completo=dados["nome_completo"],
             cpf=dados["cpf"],
@@ -355,6 +358,7 @@ def criar_funcionarios(empresas, lojas, departamentos, setores, cargos, horarios
             status=True,
             data_admissao=data_adm,
             matricula=f"F{i+1000:04d}",
+            ramal=ramal,
         )
         
         funcionarios.append(funcionario)
@@ -400,6 +404,10 @@ def criar_funcionarios(empresas, lojas, departamentos, setores, cargos, horarios
         anos_atras_adm = random.randint(1, 3)
         data_adm = date.today() - timedelta(days=anos_atras_adm*365)
         
+        # Calcular ramal (continuando de onde paramos, base + i + 6)
+        # Como temos 6 funcionários base e depois 50 adicionais, começamos de 1006
+        ramal = str(1006 + i)
+        
         funcionario = Funcionario.objects.create(
             nome_completo=nome_completo,
             cpf=cpf,
@@ -414,6 +422,7 @@ def criar_funcionarios(empresas, lojas, departamentos, setores, cargos, horarios
             status=True,
             data_admissao=data_adm,
             matricula=f"F{i+2000:04d}",
+            ramal=ramal,
         )
         
         funcionarios.append(funcionario)
@@ -600,10 +609,48 @@ def criar_ti(lojas, funcionarios):
         'atribuicoes_computador': atribuicoes_computador,
     }
 
-def main():
-    """Função principal para popular o sistema"""
-    print("Iniciando população dos módulos de TI e Funcionários...")
+def atribuir_ramais():
+    """Atribui ramais para todos os funcionários existentes que não possuem ramal"""
+    print("Atribuindo ramais para funcionários existentes...")
     
+    # Obter todos os funcionários sem ramal
+    funcionarios = Funcionario.objects.filter(ramal__isnull=True)
+    
+    if not funcionarios.exists():
+        print("Não há funcionários sem ramal. Todos já possuem ramais atribuídos.")
+        return
+    
+    # Obter o maior ramal existente
+    maior_ramal = Funcionario.objects.exclude(ramal__isnull=True).order_by('-ramal').first()
+    
+    # Definir o ramal inicial (1000 ou o próximo após o maior existente)
+    if maior_ramal and maior_ramal.ramal and maior_ramal.ramal.isdigit():
+        ramal_inicial = int(maior_ramal.ramal) + 1
+    else:
+        ramal_inicial = 1000
+    
+    # Atribuir ramais sequencialmente
+    for i, funcionario in enumerate(funcionarios):
+        novo_ramal = str(ramal_inicial + i)
+        funcionario.ramal = novo_ramal
+        funcionario.save()
+        print(f"Ramal {novo_ramal} atribuído a {funcionario.nome_completo}")
+    
+    print(f"\nTotal de {funcionarios.count()} ramais atribuídos com sucesso!")
+
+def main():
+    """Função principal para execução do script"""
+    # Verificar se há argumentos na linha de comando
+    if len(sys.argv) > 1 and sys.argv[1] == '--ramal':
+        # Modo atualização de ramais apenas
+        print("Modo de atualização de ramais ativado.\n")
+        atribuir_ramais()
+        return
+    
+    # Modo padrão: povoar o banco de dados completo
+    print("Iniciando população de dados...\n")
+    
+    # Limpar dados existentes (opcional, descomente para limpar)   
     limpar_dados()
     
     # Criar entidades de funcionários

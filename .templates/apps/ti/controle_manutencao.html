@@ -10,6 +10,9 @@
     {# Adicionar CSS do modo escuro #}
     <link rel="stylesheet" href="{% static 'css/darkmode.css' %}">
     <link rel="stylesheet" href="{% static 'css/apps/ti/ti-dark-mode.css' %}">
+    
+    <!-- jQuery -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 {% endblock %}
 
 {% block header_title %}Controle de Manutenção de Periféricos e Computadores
@@ -73,12 +76,20 @@
                             <td>{{ item.ultima_pa.numero|default:"N/A" }}</td>
                             <td>{{ item.observacoes|default:"-" }}</td>
                             <td>
-                                <form method="POST" action="{% url 'ti:marcar_consertado' item.id_item item.tipo_item_slug %}" style="display: inline;">
-                                    {% csrf_token %}
-                                    <button type="submit" class="btn-consertado">
-                                        <i class="fas fa-check-circle"></i> Marcar como Consertado
-                                    </button>
-                                </form>
+                                <div class="acoes-container">
+                                    <form method="POST" action="{% url 'ti:marcar_consertado' item.id_item item.tipo_item_slug %}" style="display: inline;">
+                                        {% csrf_token %}
+                                        <button type="submit" class="btn-consertado">
+                                            <i class="fas fa-check-circle"></i> Marcar como Consertado
+                                        </button>
+                                    </form>
+                                    <form method="POST" action="{% url 'ti:excluir_periferico' item.id_item item.tipo_item_slug %}" style="display: inline;" class="form-excluir">
+                                        {% csrf_token %}
+                                        <button type="button" class="btn-excluir">
+                                            <i class="fas fa-trash"></i> Excluir Periférico
+                                        </button>
+                                    </form>
+                                </div>
                             </td>
                         </tr>
                         {% endfor %}

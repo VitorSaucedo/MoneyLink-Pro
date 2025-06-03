@@ -44,6 +44,36 @@ table.table-manutencao tbody tr:hover {
     background-color: #aaa;
     cursor: not-allowed;
 }
+
+/* Botão para excluir periférico */
+.btn-excluir {
+    background-color: var(--color-danger);
+    color: white;
+    padding: 8px 15px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 0.9em;
+    margin-left: 5px;
+    transition: background-color 0.3s ease;
+}
+
+.btn-excluir:hover {
+    background-color: #bb2d3b; /* Um tom mais escuro de vermelho */
+}
+
+.btn-excluir:disabled {
+    background-color: #aaa;
+    cursor: not-allowed;
+}
+
+/* Espaçamento entre botões na célula de ações */
+.acoes-container {
+    align-items: center;
+    display: flex;
+    gap: 5px;
+}
+
 .card .card-body {
     overflow-x: auto; /* Permite scroll horizontal na tabela se necessário */
 }

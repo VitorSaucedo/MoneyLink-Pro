@@ -12,6 +12,9 @@
 <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
 <link rel="stylesheet" href="{% static 'css/darkmode.css' %}">
 <link rel="stylesheet" href="{% static 'css/apps/ti/ti-dark-mode.css' %}">
+
+<!-- jQuery -->
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 {% endblock %}
 
 {% block header_title %}
@@ -81,15 +84,15 @@ Controle de Estoque - TI
                 {% for tipo in tipos_perifericos %}
                   <tr>
                     <td>
-                      {% if tipo.nome == 'MOUSE' %}
+                      {% if tipo.nome|upper == 'MOUSE' %}
                         <i class='bx bx-mouse'></i>
-                      {% elif tipo.nome == 'TECLADO' %}
-                        <i class='bx bx-keyboard'></i>
-                      {% elif tipo.nome == 'MONITOR' %}
+                      {% elif tipo.nome|upper == 'TECLADO' %}
+                        <i class='bx bxs-keyboard'></i>
+                      {% elif tipo.nome|upper == 'MONITOR' %}
                         <i class='bx bx-desktop'></i>
-                      {% elif tipo.nome == 'MOUSEPAD' %}
+                      {% elif tipo.nome|upper == 'MOUSEPAD' %}
                         <i class='bx bx-square'></i>
-                      {% elif tipo.nome == 'FONE' or tipo.nome == 'HEADSET' %}
+                      {% elif tipo.nome|upper == 'FONE' or tipo.nome|upper == 'HEADSET' %}
                         <i class='bx bx-headphone'></i>
                       {% else %}
                         <i class='bx bx-devices'></i>
