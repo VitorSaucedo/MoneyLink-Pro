@@ -37,6 +37,37 @@ TI - Controle de Salas, Ilhas e PAs
 <div class="container my-4">
   <h1 class="titulo-pagina mb-4"><i class='bx bx-building me-2'></i>Controle de Salas, Ilhas e PAs</h1>
   
+  {# Seletor de Loja #}
+  <div class="row mb-4">
+    <div class="col-md-4">
+      <div class="card filtro-loja-container">
+        <div class="card-body">
+          <h6 class="card-title"><i class='bx bx-store me-2'></i>Filtrar por Loja</h6>
+          <form method="GET" id="form-filtro-loja">
+            <div class="input-group">
+              <select name="loja" id="select-loja" class="form-select">
+                {% for loja in lojas %}
+                  <option value="{{ loja.id }}" {% if loja.id == loja_selecionada %}selected{% endif %}>
+                    {{ loja.nome }}
+                  </option>
+                {% endfor %}
+              </select>
+              <button type="submit" class="btn btn-primary">
+                <i class='bx bx-search'></i>
+              </button>
+            </div>
+          </form>
+          {% if loja_atual %}
+            <div class="loja-info-text">
+              <i class='bx bx-info-circle me-1'></i>
+              Mostrando salas de: <strong>{{ loja_atual.nome }}</strong>
+            </div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+  
   {# Container para mensagens de feedback (gerenciado pelo JS) #}
   <div id="message-container"></div>
 
@@ -134,44 +165,50 @@ TI - Controle de Salas, Ilhas e PAs
                                           <div class="d-flex justify-content-between align-items-center flex-grow-1"> {# Flex container para nome e botão #}
                                             <span> {# Grupo Nome #}
                                               <strong>Funcionário:</strong> 
-                                              {% if pa.funcionario %}
-                                                <span class="funcionario-nome ms-1">{{ pa.funcionario.nome_completo }}</span>
-                                              {% else %}
-                                                <span class="text-muted ms-1">Não atribuído</span>
-                                              {% endif %}
+                                              {% with funcionario=funcionarios_por_pa|get_item:pa.id %}
+                                                {% if funcionario %}
+                                                  <span class="funcionario-nome ms-1">{{ funcionario.nome_completo }}</span>
+                                                {% else %}
+                                                  <span class="text-muted ms-1">Não atribuído</span>
+                                                {% endif %}
+                                              {% endwith %}
                                             </span>
                                             <span> {# Grupo Botão #}
-                                              {% if pa.funcionario %}
-                                                {% if pa.funcionario.ramal %}
-                                                  <button type="button" class="btn btn-sm ramal-badge" data-pa-id="{{ pa.id }}" data-action="change"> {# Removido ms-2 #}
-                                                    Ramal: {{ pa.funcionario.ramal }} <i class='bx bxs-down-arrow bx-xs ms-1'></i>
-                                                  </button>
+                                              {% with funcionario=funcionarios_por_pa|get_item:pa.id %}
+                                                {% if funcionario %}
+                                                  {% if funcionario.ramal %}
+                                                    <button type="button" class="btn btn-sm ramal-badge" data-pa-id="{{ pa.id }}" data-action="change"> {# Removido ms-2 #}
+                                                      Ramal: {{ funcionario.ramal }} <i class='bx bxs-down-arrow bx-xs ms-1'></i>
+                                                    </button>
+                                                  {% else %}
+                                                    {# Caso funcionário não tenha ramal, ainda permitir troca #}
+                                                    <button type="button" class="btn btn-sm ramal-badge" data-pa-id="{{ pa.id }}" data-action="change"> {# Removido ms-2 #}
+                                                      Sem Ramal <i class='bx bxs-down-arrow bx-xs ms-1'></i>
+                                                    </button>
+                                                  {% endif %}
                                                 {% else %}
-                                                  {# Caso funcionário não tenha ramal, ainda permitir troca #}
-                                                  <button type="button" class="btn btn-sm ramal-badge" data-pa-id="{{ pa.id }}" data-action="change"> {# Removido ms-2 #}
-                                                    Sem Ramal <i class='bx bxs-down-arrow bx-xs ms-1'></i>
+                                                  <button type="button" class="btn btn-sm btn-outline-primary assign-funcionario-btn" data-pa-id="{{ pa.id }}" data-action="assign"> {# Removido ms-2 #}
+                                                    <i class='bx bx-user-plus me-1'></i> Atribuir
                                                   </button>
                                                 {% endif %}
-                                              {% else %}
-                                                <button type="button" class="btn btn-sm btn-outline-primary assign-funcionario-btn" data-pa-id="{{ pa.id }}" data-action="assign"> {# Removido ms-2 #}
-                                                  <i class='bx bx-user-plus me-1'></i> Atribuir
-                                                </button>
-                                              {% endif %}
+                                              {% endwith %}
                                             </span>
                                           </div>
                                           {# Adicionado: Bloco para Cargo e Setor - CORRIGIDO #}
-                                          {% if pa.funcionario %} {# Primeiro checa se existe funcionário #}
-                                            {% if pa.funcionario.cargo or pa.funcionario.departamento %} {# Depois checa cargo OU depto #}
-                                              <div class="funcionario-info small text-muted mt-1">
-                                                {% if pa.funcionario.cargo %}
-                                                  <span class="funcionario-cargo me-2"><i class='bx bx-id-card me-1'></i>{{ pa.funcionario.cargo.nome }}</span>
-                                                {% endif %}
-                                                {% if pa.funcionario.departamento %}
-                                                  <span class="funcionario-departamento"><i class='bx bx-buildings me-1'></i>{{ pa.funcionario.departamento.nome }}</span>
-                                                {% endif %}
-                                              </div>
+                                          {% with funcionario=funcionarios_por_pa|get_item:pa.id %}
+                                            {% if funcionario %} {# Primeiro checa se existe funcionário #}
+                                              {% if funcionario.cargo or funcionario.departamento %} {# Depois checa cargo OU depto #}
+                                                <div class="funcionario-info small text-muted mt-1">
+                                                  {% if funcionario.cargo %}
+                                                    <span class="funcionario-cargo me-2"><i class='bx bx-id-card me-1'></i>{{ funcionario.cargo.nome }}</span>
+                                                  {% endif %}
+                                                  {% if funcionario.departamento %}
+                                                    <span class="funcionario-departamento"><i class='bx bx-buildings me-1'></i>{{ funcionario.departamento.nome }}</span>
+                                                  {% endif %}
+                                                </div>
+                                              {% endif %}
                                             {% endif %}
-                                          {% endif %}
+                                          {% endwith %}
                                           {# Placeholder para o dropdown - será posicionado via JS #}
                                           <div class="funcionario-dropdown-container position-relative"></div> 
                                         </div>
@@ -271,44 +308,50 @@ TI - Controle de Salas, Ilhas e PAs
                                           <div class="d-flex justify-content-between align-items-center flex-grow-1"> {# Flex container para nome e botão #}
                                             <span> {# Grupo Nome #}
                                               <strong>Funcionário:</strong> 
-                                              {% if pa.funcionario %}
-                                                <span class="funcionario-nome ms-1">{{ pa.funcionario.nome_completo }}</span>
-                                              {% else %}
-                                                <span class="text-muted ms-1">Não atribuído</span>
-                                              {% endif %}
+                                              {% with funcionario=funcionarios_por_pa|get_item:pa.id %}
+                                                {% if funcionario %}
+                                                  <span class="funcionario-nome ms-1">{{ funcionario.nome_completo }}</span>
+                                                {% else %}
+                                                  <span class="text-muted ms-1">Não atribuído</span>
+                                                {% endif %}
+                                              {% endwith %}
                                             </span>
                                             <span> {# Grupo Botão #}
-                                              {% if pa.funcionario %}
-                                                {% if pa.funcionario.ramal %}
-                                                  <button type="button" class="btn btn-sm ramal-badge" data-pa-id="{{ pa.id }}" data-action="change"> {# Removido ms-2 #}
-                                                    Ramal: {{ pa.funcionario.ramal }} <i class='bx bxs-down-arrow bx-xs ms-1'></i>
-                                                  </button>
+                                              {% with funcionario=funcionarios_por_pa|get_item:pa.id %}
+                                                {% if funcionario %}
+                                                  {% if funcionario.ramal %}
+                                                    <button type="button" class="btn btn-sm ramal-badge" data-pa-id="{{ pa.id }}" data-action="change"> {# Removido ms-2 #}
+                                                      Ramal: {{ funcionario.ramal }} <i class='bx bxs-down-arrow bx-xs ms-1'></i>
+                                                    </button>
+                                                  {% else %}
+                                                    {# Caso funcionário não tenha ramal, ainda permitir troca #}
+                                                    <button type="button" class="btn btn-sm ramal-badge" data-pa-id="{{ pa.id }}" data-action="change"> {# Removido ms-2 #}
+                                                      Sem Ramal <i class='bx bxs-down-arrow bx-xs ms-1'></i>
+                                                    </button>
+                                                  {% endif %}
                                                 {% else %}
-                                                  {# Caso funcionário não tenha ramal, ainda permitir troca #}
-                                                  <button type="button" class="btn btn-sm ramal-badge" data-pa-id="{{ pa.id }}" data-action="change"> {# Removido ms-2 #}
-                                                    Sem Ramal <i class='bx bxs-down-arrow bx-xs ms-1'></i>
+                                                  <button type="button" class="btn btn-sm btn-outline-primary assign-funcionario-btn" data-pa-id="{{ pa.id }}" data-action="assign"> {# Removido ms-2 #}
+                                                    <i class='bx bx-user-plus me-1'></i> Atribuir
                                                   </button>
                                                 {% endif %}
-                                              {% else %}
-                                                <button type="button" class="btn btn-sm btn-outline-primary assign-funcionario-btn" data-pa-id="{{ pa.id }}" data-action="assign"> {# Removido ms-2 #}
-                                                  <i class='bx bx-user-plus me-1'></i> Atribuir
-                                                </button>
-                                              {% endif %}
+                                              {% endwith %}
                                             </span>
                                           </div>
                                           {# Adicionado: Bloco para Cargo e Setor - CORRIGIDO #}
-                                          {% if pa.funcionario %} {# Primeiro checa se existe funcionário #}
-                                            {% if pa.funcionario.cargo or pa.funcionario.departamento %} {# Depois checa cargo OU depto #}
-                                              <div class="funcionario-info small text-muted mt-1">
-                                                {% if pa.funcionario.cargo %}
-                                                  <span class="funcionario-cargo me-2"><i class='bx bx-id-card me-1'></i>{{ pa.funcionario.cargo.nome }}</span>
-                                                {% endif %}
-                                                {% if pa.funcionario.departamento %}
-                                                  <span class="funcionario-departamento"><i class='bx bx-buildings me-1'></i>{{ pa.funcionario.departamento.nome }}</span>
-                                                {% endif %}
-                                              </div>
+                                          {% with funcionario=funcionarios_por_pa|get_item:pa.id %}
+                                            {% if funcionario %} {# Primeiro checa se existe funcionário #}
+                                              {% if funcionario.cargo or funcionario.departamento %} {# Depois checa cargo OU depto #}
+                                                <div class="funcionario-info small text-muted mt-1">
+                                                  {% if funcionario.cargo %}
+                                                    <span class="funcionario-cargo me-2"><i class='bx bx-id-card me-1'></i>{{ funcionario.cargo.nome }}</span>
+                                                  {% endif %}
+                                                  {% if funcionario.departamento %}
+                                                    <span class="funcionario-departamento"><i class='bx bx-buildings me-1'></i>{{ funcionario.departamento.nome }}</span>
+                                                  {% endif %}
+                                                </div>
+                                              {% endif %}
                                             {% endif %}
-                                          {% endif %}
+                                          {% endwith %}
                                           {# Placeholder para o dropdown - será posicionado via JS #}
                                           <div class="funcionario-dropdown-container position-relative"></div> 
                                         </div>

@@ -1,12 +1,26 @@
 /**
- * admin.css - Estilos para a página de administração do módulo TI
- * ATENÇÃO: Este arquivo contém APENAS os estilos para o tema CLARO (padrão).
- * Os estilos para o tema escuro (dark mode) estão no arquivo ti-dark-mode.css
+ * admin.css - Estilos para administração do módulo TI
+ * 
+ * Este arquivo contém APENAS os estilos para o tema CLARO (padrão).
+ * Os estilos para o tema escuro estão no arquivo ti-dark-mode.css
+ * 
+ * Organização:
+ * 1. Variáveis CSS
+ * 2. Toggle de tema
+ * 3. Estilos gerais
+ * 4. Cards e cabeçalhos
+ * 5. Formulários
+ * 6. Botões
+ * 7. Validação de formulários
+ * 8. Cadastro em lote de periféricos
+ * 9. Responsividade
  */
 
-/* ---------- Variáveis de Cores e Sombreamentos ---------- */
+/* ========================================
+   1. VARIÁVEIS CSS 
+   ======================================== */
 :root {
-    /* Cores primárias - Compatíveis com o tema escuro */
+    /* Cores primárias */
     --color-primary-dark: #142650; /* Azul escuro */
     --color-secondary: #70f611; /* Verde */
     --color-tertiary: #0bd5f0; /* Azul claro (ciano) */
@@ -21,7 +35,7 @@
     --color-warning: #ffc107;
     --color-info: #0dcaf0;
 
-    /* Variáveis equivalentes ao dark mode para consistência */
+    /* Variáveis para tema TI - equivalentes ao dark mode para consistência */
     --ti-bg-primary: #ffffff;
     --ti-bg-secondary: #f8f9fa;
     --ti-bg-card: #ffffff;
@@ -44,14 +58,15 @@
     --ti-border-color: var(--color-gray);
     --ti-border-light: rgba(220, 220, 220, 0.5);
 
+    /* Sombreamentos */
     --box-shadow-light: 0 2px 6px rgba(0,0,0,0.05);
     --box-shadow-medium: 0 4px 12px rgba(0,0,0,0.1);
-    --box-shadow-card-hover: 0 6px 18px rgba(112, 246, 17, 0.15); /* Sombra verde no hover */
+    --box-shadow-card-hover: 0 6px 18px rgba(112, 246, 17, 0.15);
 
-    /* Gradientes com foco no verde */
+    /* Gradientes */
     --gradient-primary-green: linear-gradient(135deg, var(--color-secondary) 0%, var(--color-primary-dark) 100%);
     --gradient-secondary-green: linear-gradient(135deg, var(--color-secondary) 0%, var(--color-tertiary) 50%, var(--color-secondary) 100%);
-    --gradient-card-header: linear-gradient(-45deg, var(--color-secondary), #5cb85c, var(--color-primary-dark), var(--color-secondary)); /* Verde, verde mais escuro, azul, verde */
+    --gradient-card-header: linear-gradient(-45deg, var(--color-secondary), #5cb85c, var(--color-primary-dark), var(--color-secondary));
     
     /* Variável de gradiente compatível com dark mode */
     --ti-gradient-header: var(--gradient-card-header);
@@ -60,7 +75,9 @@
     --gradient-animation: gradientBG 12s ease infinite;
 }
 
-/* Ajustes para o toggle de tema no cabeçalho */
+/* ========================================
+   2. TOGGLE DE TEMA
+   ======================================== */
 .theme-switch-wrapper {
     margin-top: -2px;
     vertical-align: middle;
@@ -86,7 +103,9 @@ header .slider i {
     font-size: 12px;
 }
 
-/* Estilos Gerais da Página */
+/* ========================================
+   3. ESTILOS GERAIS
+   ======================================== */
 body {
     background-color: var(--ti-bg-primary);
     transition: background-color 0.3s ease;
@@ -103,18 +122,6 @@ body {
     outline: none !important;
 }
 
-/* Estilo do corpo do card */
-.card .card-body {
-    padding: 1.25rem;
-    display: flex;
-    flex-direction: column;
-    gap: 1rem;
-    background-color: var(--ti-bg-card);
-    transition: background-color 0.3s ease;
-    border-bottom: none !important;
-    box-shadow: none !important;
-}
-
 /* Título da página */
 .titulo-pagina {
     color: var(--ti-text-primary);
@@ -123,7 +130,7 @@ body {
     padding-bottom: 0.5rem;
     display: inline-block;
     transition: color 0.3s ease, background-color 0.3s ease;
-    background-color: transparent; /* Garantindo que seja transparente */
+    background-color: transparent;
     box-shadow: none;
 }
 
@@ -146,7 +153,9 @@ body {
     outline: none !important;
 }
 
-/* Estilos dos Cards */
+/* ========================================
+   4. CARDS E CABEÇALHOS
+   ======================================== */
 .card {
     background-color: var(--ti-bg-card);
     border: none !important;
@@ -168,6 +177,7 @@ body {
     box-shadow: none;
 }
 
+/* Cabeçalhos de Card */
 .card .card-header {
     background: var(--ti-gradient-header) !important;
     background-size: 400% 400% !important;
@@ -184,7 +194,7 @@ body {
     position: relative;
     z-index: 1;
     transition: color 0.3s ease;
-    overflow: hidden; /* Importante para conter o efeito de brilho */
+    overflow: hidden; /* Para conter o efeito de brilho */
 }
 
 .card .card-header i {
@@ -193,7 +203,7 @@ body {
     vertical-align: middle;
 }
 
-/* Efeito de brilho metálico - Apenas no header */
+/* Efeito de brilho metálico nos cabeçalhos */
 .card .card-header::before {
     content: '';
     position: absolute;
@@ -219,16 +229,21 @@ body {
     left: 150%;
 }
 
+/* Corpo do Card */
 .card .card-body {
     padding: 1.25rem;
     display: flex;
     flex-direction: column;
     gap: 1rem;
     background-color: var(--ti-bg-card);
-    transition: background 0.3s ease;
+    transition: background-color 0.3s ease;
+    border-bottom: none !important;
+    box-shadow: none !important;
 }
 
-/* Estilos dos Formulários */
+/* ========================================
+   5. FORMULÁRIOS
+   ======================================== */
 .card form {
     width: 100%;
     display: flex;
@@ -246,6 +261,7 @@ body {
     flex-basis: 100%;
 }
 
+/* Labels de formulário */
 .card form .form-label {
     display: flex;
     align-items: center;
@@ -263,6 +279,7 @@ body {
     transition: color 0.3s ease;
 }
 
+/* Campos de formulário */
 .card form .form-control,
 .card form .form-select {
     border: 2px solid var(--ti-border-color);
@@ -283,7 +300,10 @@ body {
     outline: none;
 }
 
-/* Botão de Submissão */
+/* ========================================
+   6. BOTÕES
+   ======================================== */
+/* Botão Primário e Botão de Submissão */
 .card form button[type="submit"],
 .btn-primary {
     background: var(--gradient-secondary-green) !important;
@@ -311,6 +331,7 @@ body {
     box-shadow: 0 6px 12px rgba(112, 246, 17, 0.2);
 }
 
+/* Estado desabilitado */
 .card form button[type="submit"]:disabled,
 .card form button[type="submit"].disabled,
 .btn-primary:disabled,
@@ -335,31 +356,6 @@ body {
 .btn-primary i {
     font-size: 1.2rem;
     margin-right: 0.5rem;
-}
-
-/* Animações */
-@keyframes gradientBG {
-    0% {
-        background-position: 0% 50%;
-    }
-    50% {
-        background-position: 100% 50%;
-    }
-    100% {
-        background-position: 0% 50%;
-    }
-}
-
-@keyframes gradientBGButton {
-    0% {
-        background-position: 0% 50%;
-    }
-    50% {
-        background-position: 100% 50%;
-    }
-    100% {
-        background-position: 0% 50%;
-    }
 }
 
 /* Botões de Listagem */
@@ -396,7 +392,9 @@ body {
     margin-right: 0.5rem;
 }
 
-/* Estilos para validação de formulários */
+/* ========================================
+   7. VALIDAÇÃO DE FORMULÁRIOS
+   ======================================== */
 .is-loading {
     background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24'%3E%3Cpath fill='%23333' d='M12,4a8,8,0,0,1,7.89,6.7A1.53,1.53,0,0,0,21.38,12h0a1.5,1.5,0,0,0,1.48-1.75,11,11,0,0,0-21.72,0A1.5,1.5,0,0,0,2.62,12h0a1.53,1.53,0,0,0,1.49-1.3A8,8,0,0,1,12,4Z'%3E%3CanimateTransform attributeName='transform' dur='0.75s' repeatCount='indefinite' type='rotate' values='0 12 12;360 12 12'/%3E%3C/path%3E%3C/svg%3E");
     background-repeat: no-repeat;
@@ -432,31 +430,9 @@ body {
     display: block;
 }
 
-/* Transição para todos os elementos */
-body, 
-.card, 
-.card-header, 
-.card-body, 
-.form-control, 
-.form-select, 
-.form-label, 
-.btn-listagem, 
-.titulo-pagina {
-    transition: all 0.3s ease;
-}
-
-/* Responsividade */
-@media (max-width: 992px) {
-    .card form .mb-3 {
-        flex: 1 1 100%;
-    }
-    
-    .btn-listagem {
-        max-width: 100%;
-    }
-}
-
-/* Estilos para Cadastro em Lote de Periféricos */
+/* ========================================
+   8. CADASTRO EM LOTE DE PERIFÉRICOS
+   ======================================== */
 .perifericos-pendentes-container {
     background-color: var(--ti-bg-secondary);
     border-radius: 8px;
@@ -556,7 +532,9 @@ body,
     margin-bottom: 1rem;
 }
 
-/* Responsividade */
+/* ========================================
+   9. RESPONSIVIDADE
+   ======================================== */
 @media (max-width: 992px) {
     .card form .mb-3 {
         flex: 1 1 100%;
@@ -567,18 +545,40 @@ body,
     }
 }
 
+/* ========================================
+   10. ANIMAÇÕES
+   ======================================== */
+@keyframes gradientBG {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+}
+
+@keyframes gradientBGButton {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+}
+
+/* ========================================
+   11. UTILIDADES
+   ======================================== */
+/* Transição padrão para elementos */
+body, 
+.card, 
+.card-header, 
+.card-body, 
+.form-control, 
+.form-select, 
+.form-label, 
+.btn-listagem, 
+.titulo-pagina {
+    transition: all 0.3s ease;
+}
+
 /* Estilos para os ícones */
 .bx {
     margin-right: 0.5rem;
-}
-
-/* Estilo para container de periféricos pendentes */
-.perifericos-pendentes-container {
-    background-color: var(--ti-bg-secondary);
-    border-radius: 8px;
-    padding: 1.25rem;
-    margin-top: 1.5rem;
-    border: 1px solid var(--ti-border-color);
 }
 
 /* Classe app-ti para especificidade */

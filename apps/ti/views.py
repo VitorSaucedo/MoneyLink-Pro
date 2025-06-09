@@ -16,6 +16,8 @@ from .models import (
     Ilha,
     Computador,
     AtribuicaoComputadorPA,
+    Monitor,
+    AtribuicaoMonitorPA,
     Loja
 )
 from .forms import (
@@ -27,7 +29,9 @@ from .forms import (
     SalaForm,
     IlhaForm,
     ComputadorForm,
-    AtribuicaoComputadorPAForm
+    AtribuicaoComputadorPAForm,
+    MonitorForm,
+    AtribuicaoMonitorPAForm
 )
 from apps.funcionarios.models import Funcionario, Empresa
 import json
@@ -42,66 +46,107 @@ from datetime import datetime
 # View principal para Admin
 @login_required
 def admin(request):
-    # Inicializar os formulários
+    """
+    Página de administração principal do módulo TI.
+    
+    Esta view renderiza o painel de administração que permite cadastrar:
+    - Salas e ilhas (infraestrutura)
+    - Posições de atendimento (PAs)
+    - Computadores e periféricos
+    - Tipos de periféricos
+    - Ramais
+    
+    O contexto inclui formulários, listas de objetos para os selects,
+    e contagens para possíveis painéis de estatísticas.
+    Filtra dados baseado na loja selecionada.
+    """
+    # Obter todas as lojas ativas para o seletor
+    lojas = Loja.objects.filter(status=True).order_by('nome')
+    
+    # Obter a loja selecionada, se houver
+    loja_id = request.GET.get('loja')
+    loja_selecionada = None
+    loja_atual = None
+    
+    # Filtrar por loja, se for selecionada
+    if loja_id:
+        try:
+            loja_selecionada = int(loja_id)
+            loja_atual = get_object_or_404(Loja, id=loja_selecionada)
+        except (ValueError, TypeError):
+            loja_selecionada = None
+    else:
+        # Se nenhuma loja for selecionada, usar a primeira loja como padrão
+        if lojas.exists():
+            primeira_loja = lojas.first()
+            loja_selecionada = primeira_loja.id
+            loja_atual = primeira_loja
+    
+    # Aplicar filtro de loja nas consultas
+    filtro_loja = {'loja_id': loja_selecionada} if loja_selecionada else {}
+    
+    # Formulários para criação de novos itens
     form_periferico = PerifericoForm()
     form_atribuicao_pa = AtribuicaoPerifericoPAForm()
     
-    context = {
-        'title': 'Admin - TI',
+    # Organizando o contexto em seções para melhor manutenção
+    # Contagens para estatísticas (filtradas por loja)
+    contagens = {
         'tipos_perifericos': TipoPeriferico.objects.all().count(),
-        'perifericos': Periferico.objects.all().count(),
-        'salas': Sala.objects.all().count(),
-        'ilhas': Ilha.objects.all().count(),
-        'posicoes_atendimento': PosicaoAtendimento.objects.all().count(),
-        'atribuicoes_funcionarios': AtribuicaoFuncionarioPA.objects.filter(ativo=True).count(),
-        'atribuicoes_perifericos': AtribuicaoPerifericoPA.objects.filter(ativo=True).count(),
+        'perifericos': Periferico.objects.filter(**filtro_loja).count(),
+        'monitores': Monitor.objects.filter(**filtro_loja).count(),
+        'salas': Sala.objects.filter(**filtro_loja).count(),
+        'ilhas': Ilha.objects.filter(sala__in=Sala.objects.filter(**filtro_loja)).count(),
+        'posicoes_atendimento': PosicaoAtendimento.objects.filter(sala__in=Sala.objects.filter(**filtro_loja)).count(),
+        'atribuicoes_funcionarios': AtribuicaoFuncionarioPA.objects.filter(
+            ativo=True,
+            posicao_atendimento__sala__in=Sala.objects.filter(**filtro_loja)
+        ).count(),
+        'atribuicoes_perifericos': AtribuicaoPerifericoPA.objects.filter(
+            ativo=True,
+            periferico__in=Periferico.objects.filter(**filtro_loja)
+        ).count(),
+        'atribuicoes_monitores': AtribuicaoMonitorPA.objects.filter(
+            ativo=True,
+            monitor__in=Monitor.objects.filter(**filtro_loja)
+        ).count(),
+    }
+    
+    # Listas de objetos para os campos select (filtradas por loja)
+    selects = {
         'tipos_perifericos_list': TipoPeriferico.objects.all(),
-        'salas_list': Sala.objects.all(),
-        'funcionarios_list': Funcionario.objects.all(),
-        'perifericos_list': Periferico.objects.filter(status='disponivel'),
-        'posicoes_atendimento_list': PosicaoAtendimento.objects.all(),
-        'computadores_list': Computador.objects.filter(status='disponivel'),
-        'lojas_list': Loja.objects.filter(status=True).order_by('nome'),
+        'salas_list': Sala.objects.filter(**filtro_loja).select_related('loja'),
+        'funcionarios_list': Funcionario.objects.filter(
+            Q(empresa__lojas__id=loja_selecionada) if loja_selecionada else Q()
+        ).order_by('nome_completo'),
+        'perifericos_list': Periferico.objects.filter(status='disponivel', **filtro_loja),
+        'monitores_list': Monitor.objects.filter(status='disponivel', **filtro_loja),
+        'posicoes_atendimento_list': PosicaoAtendimento.objects.filter(
+            sala__in=Sala.objects.filter(**filtro_loja)
+        ),
+        'computadores_list': Computador.objects.filter(status='disponivel', **filtro_loja),
+        'lojas_list': lojas,
         'empresas_list': Empresa.objects.filter(status=True),
-        # Adicionar os formulários no contexto
+    }
+    
+    # Formulários
+    forms = {
         'form_periferico': form_periferico,
         'form_atribuicao_pa': form_atribuicao_pa,
     }
     
-    if request.method == 'POST':
-        # Verificar qual formulário foi enviado
-        if 'submit_periferico' in request.POST:
-            # Processamento do formulário de cadastro de periférico
-            form_periferico = PerifericoForm(request.POST)
-            if form_periferico.is_valid():
-                form_periferico.save()
-                messages.success(request, 'Periférico cadastrado com sucesso!')
-                return redirect('ti:admin')
-            else:
-                # Se o formulário não for válido, repassar o formulário com erros
-                context['form_periferico'] = form_periferico
-        
-        elif 'submit_atribuicao_pa' in request.POST:
-            # Processamento do formulário de atribuição de periférico a PA
-            form_atribuicao_pa = AtribuicaoPerifericoPAForm(request.POST)
-            if form_atribuicao_pa.is_valid():
-                form_atribuicao_pa.save()
-                messages.success(request, 'Atribuição de periférico cadastrada com sucesso!')
-                return redirect('ti:admin')
-            else:
-                # Se o formulário não for válido, repassar o formulário com erros
-                context['form_atribuicao_pa'] = form_atribuicao_pa
-                
-        elif 'periferico' in request.POST and 'posicao_atendimento' in request.POST and 'data_atribuicao' in request.POST:
-            # Processamento do formulário de atribuição de periférico (formato antigo)
-            form = AtribuicaoPerifericoPAForm(request.POST)
-            if form.is_valid():
-                form.save()
-                messages.success(request, 'Atribuição de periférico cadastrada com sucesso!')
-                return redirect('ti:admin')
+    # Montando o contexto completo
+    context = {
+        'title': 'Administração - TI',
+        'loja_selecionada': loja_selecionada,
+        'loja_atual': loja_atual,
+        'lojas': lojas,
+        **contagens,
+        **selects,
+        **forms,
+    }
     
     return render(request, 'apps/ti/admin.html', context)
-# Views para Loja removidas - funcionalidade já existe em outro módulo
 
 @login_required
 def loja_list(request):
@@ -114,11 +159,47 @@ def loja_list(request):
 
 @login_required
 def controle_salas(request):
-    salas = Sala.objects.all()
-    ilhas = Ilha.objects.all()
+    # Obter todas as lojas ativas para o seletor
+    lojas = Loja.objects.filter(status=True).order_by('nome')
     
-    # Carrega todas as posições de atendimento com seus relacionamentos
-    posicoes = PosicaoAtendimento.objects.all().select_related('funcionario', 'ilha', 'sala')
+    # Obter a loja selecionada, se houver
+    loja_id = request.GET.get('loja')
+    loja_selecionada = None
+    loja_atual = None
+    
+    # Filtrar por loja, se for selecionada
+    if loja_id:
+        try:
+            loja_selecionada = int(loja_id)
+            loja_atual = get_object_or_404(Loja, id=loja_selecionada)
+        except (ValueError, TypeError):
+            loja_selecionada = None
+    else:
+        # Se nenhuma loja for selecionada, usar a primeira loja como padrão
+        if lojas.exists():
+            primeira_loja = lojas.first()
+            loja_selecionada = primeira_loja.id
+            loja_atual = primeira_loja
+    
+    # Aplicar filtro de loja nas consultas
+    filtro_loja = {'loja_id': loja_selecionada} if loja_selecionada else {}
+    
+    # Carregar salas com filtro de loja
+    salas = Sala.objects.filter(**filtro_loja)
+    ilhas = Ilha.objects.filter(sala__in=salas)
+    
+    # Carrega todas as posições de atendimento com seus relacionamentos (filtradas por salas da loja)
+    posicoes = PosicaoAtendimento.objects.filter(sala__in=salas).select_related('ilha', 'sala')
+    
+    # Obter funcionários atribuídos a cada PA
+    funcionarios_por_pa = {}
+    atribuicoes_funcionarios = AtribuicaoFuncionarioPA.objects.filter(
+        ativo=True
+    ).select_related('funcionario', 'posicao_atendimento')
+    
+    for atribuicao in atribuicoes_funcionarios:
+        pa_id = atribuicao.posicao_atendimento.id
+        funcionarios_por_pa[pa_id] = atribuicao.funcionario
     
     # Obter todos os tipos de periféricos
     tipos_perifericos = TipoPeriferico.objects.all()
@@ -186,11 +267,15 @@ def controle_salas(request):
         'salas': salas,
         'ilhas': ilhas,
         'posicoes': posicoes,
+        'funcionarios_por_pa': funcionarios_por_pa,
         'perifericos_por_pa': perifericos_por_pa,
         'computadores_por_pa': computadores_por_pa,
         'perifericos_faltando_por_pa': perifericos_faltando_por_pa,
         'perifericos_disponiveis_por_tipo': perifericos_disponiveis_por_tipo,
-        'tipos_perifericos_comuns': tipos_perifericos_comuns
+        'tipos_perifericos_comuns': tipos_perifericos_comuns,
+        'lojas': lojas,
+        'loja_selecionada': loja_selecionada,
+        'loja_atual': loja_atual,
     }
     return render(request, 'apps/ti/controle_salas.html', context)
 
@@ -796,15 +881,28 @@ def api_atualizar_status_computador(request, computador_id):
 def api_listar_perifericos_disponiveis_por_tipo(request, tipo_id):
     """
     Retorna uma lista de periféricos disponíveis de um determinado tipo.
+    Considera filtro por loja se especificado.
     """
     try:
         # Verificar se o tipo existe
         tipo = get_object_or_404(TipoPeriferico, pk=tipo_id)
         
+        # Obter a loja selecionada, se houver
+        loja_id = request.GET.get('loja')
+        filtro_loja = {}
+        
+        if loja_id:
+            try:
+                loja_selecionada = int(loja_id)
+                filtro_loja = {'loja_id': loja_selecionada}
+            except (ValueError, TypeError):
+                pass
+        
         # Buscar periféricos disponíveis deste tipo
         perifericos = Periferico.objects.filter(
             tipo=tipo, 
-            status='disponivel'
+            status='disponivel',
+            **filtro_loja
         ).order_by('marca', 'modelo')
         
         # Formatar para JSON
@@ -858,73 +956,39 @@ def auto_atribuicao_pa(request):
         pa_atual = None
         if atribuicao_atual:
             pa_atual = atribuicao_atual.posicao_atendimento
-        else:
-            # Verificar também diretamente na tabela de PAs como fallback
-            pa_atual = PosicaoAtendimento.objects.filter(funcionario=funcionario).first()
             
         context['pa_atual'] = pa_atual
         
         # Buscar PAs livres ou ocupadas (para permitir troca)
         pas_disponiveis = PosicaoAtendimento.objects.filter(
             Q(status='livre') | Q(status='ocupada')
-        ).select_related('sala', 'ilha', 'funcionario')
+        ).select_related('sala', 'ilha')
         
         # Se o funcionário já tem uma PA, exclua ela da lista
         if pa_atual:
             pas_disponiveis = pas_disponiveis.exclude(id=pa_atual.id)
         
         context['pas_disponiveis'] = pas_disponiveis
-    
-    # Processo de atribuição (via POST)
-    if request.method == 'POST' and funcionario:
-        pa_id = request.POST.get('posicao_atendimento')
         
-        if not pa_id:
-            if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
-                return JsonResponse({
-                    'success': False,
-                    'message': 'Selecione uma PA válida.'
-                })
-            messages.error(request, 'Selecione uma PA válida.')
-            return redirect('ti:auto_atribuicao_pa')
-        
-        try:
-            pa = PosicaoAtendimento.objects.get(id=pa_id)
-            
-            # Verificar se a PA está em estado válido para atribuição (livre, ocupada ou manutenção)
-            if pa.status not in ['livre', 'ocupada', 'manutencao']:
-                if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
-                    return JsonResponse({
-                        'success': False,
-                        'message': f'PA {pa.numero} não está disponível. Status atual: {pa.get_status_display()}.'
-                    })
-                messages.error(request, f'PA {pa.numero} não está disponível. Status atual: {pa.get_status_display()}.')
+        # Tratar formulário de auto-atribuição
+        if request.method == 'POST':
+            pa_id = request.POST.get('pa_id')
+            if not pa_id:
+                messages.error(request, 'Selecione uma posição de atendimento válida.')
                 return redirect('ti:auto_atribuicao_pa')
             
-            # Se o funcionário já tem uma PA, desatribuir
-            if pa_atual:
-                pa_atual.funcionario = None
-                pa_atual.status = 'livre'
-                pa_atual.save()
-                
-                # Finalizar a atribuição anterior no histórico
-                atribuicoes_antigas = AtribuicaoFuncionarioPA.objects.filter(
-                    funcionario=funcionario,
-                    posicao_atendimento=pa_atual,
-                    ativo=True
-                )
-                for atribuicao in atribuicoes_antigas:
-                    atribuicao.ativo = False
-                    atribuicao.data_fim = timezone.now().date()
-                    atribuicao.save()
-                    
+            try:
+                pa = PosicaoAtendimento.objects.get(id=pa_id)
+            except PosicaoAtendimento.DoesNotExist:
+                messages.error(request, 'Posição de atendimento não encontrada.')
+                return redirect('ti:auto_atribuicao_pa')
+            
             # Se a PA selecionada já está ocupada por outro funcionário, desatribuir
-            if pa.status == 'ocupada' and pa.funcionario and pa.funcionario != funcionario:
-                funcionario_anterior = pa.funcionario
-                
+            funcionario_atual = pa.funcionario_atual
+            if pa.status == 'ocupada' and funcionario_atual and funcionario_atual != funcionario:
                 # Finalizar a atribuição do funcionário anterior no histórico
                 atribuicoes_antigas = AtribuicaoFuncionarioPA.objects.filter(
-                    funcionario=funcionario_anterior,
+                    funcionario=funcionario_atual,
                     posicao_atendimento=pa,
                     ativo=True
                 )
@@ -945,18 +1009,24 @@ def auto_atribuicao_pa(request):
                         object_id=pa.id,
                         object_repr=str(pa),
                         action_flag=CHANGE,
-                        change_message=f'PA ocupada por {funcionario_anterior} foi transferida para {funcionario}'
+                        change_message=f'PA ocupada por {funcionario_atual} foi transferida para {funcionario}'
                     )
                 except Exception:
                     # Silenciosamente ignorar erros no log (não é crítico)
                     pass
             
-            # Atribuir funcionário à nova PA
-            pa.funcionario = funcionario
+            # Atualizar o status da PA
             pa.status = 'ocupada'
             pa.save()
             
-            # Registrar no histórico
+            # Criar nova atribuição usando o modelo de relacionamento
+            # Primeiro, desativar atribuições existentes deste funcionário
+            AtribuicaoFuncionarioPA.objects.filter(
+                funcionario=funcionario,
+                ativo=True
+            ).update(ativo=False, data_fim=timezone.now().date())
+            
+            # Criar nova atribuição
             AtribuicaoFuncionarioPA.objects.create(
                 funcionario=funcionario,
                 posicao_atendimento=pa,
@@ -964,22 +1034,7 @@ def auto_atribuicao_pa(request):
                 ativo=True
             )
             
-            if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
-                return JsonResponse({
-                    'success': True,
-                    'message': f'Você foi atribuído com sucesso à PA {pa.numero} - {pa.ilha.nome} ({pa.sala.nome})'
-                })
-            
-            messages.success(request, f'Você foi atribuído com sucesso à PA {pa.numero} - {pa.ilha.nome} ({pa.sala.nome})')
-            return redirect('ti:auto_atribuicao_pa')
-            
-        except PosicaoAtendimento.DoesNotExist:
-            if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
-                return JsonResponse({
-                    'success': False,
-                    'message': 'PA não encontrada.'
-                })
-            messages.error(request, 'PA não encontrada.')
+            messages.success(request, f'Você agora está atribuído à PA {pa.numero}.')
             return redirect('ti:auto_atribuicao_pa')
     
     return render(request, 'apps/ti/auto_atribuicao_pa.html', context)
@@ -1022,17 +1077,22 @@ def api_auto_atribuicao_pa_reassign(request):
             })
         
         # Verificar se a PA está realmente ocupada e por outro funcionário
-        if pa.status != 'ocupada' or not pa.funcionario or pa.funcionario == funcionario:
+        funcionario_atual_pa = pa.funcionario_atual
+        if pa.status != 'ocupada' or not funcionario_atual_pa or funcionario_atual_pa == funcionario:
             return JsonResponse({
                 'success': False,
                 'message': 'Esta PA não está ocupada por outro funcionário.'
             })
         
         # Obter o funcionário atual da PA
-        funcionario_anterior = pa.funcionario
+        funcionario_anterior = funcionario_atual_pa
         
         # Verificar se o funcionário atual tem uma PA atribuída
-        pa_atual = PosicaoAtendimento.objects.filter(funcionario=funcionario).first()
+        atribuicao_atual = AtribuicaoFuncionarioPA.objects.filter(
+            funcionario=funcionario, 
+            ativo=True
+        ).select_related('posicao_atendimento').first()
+        pa_atual = atribuicao_atual.posicao_atendimento if atribuicao_atual else None
         
         # Atualizar atribuições com base na opção selecionada
         if option == 'swap' and pa_atual:
@@ -1050,13 +1110,8 @@ def api_auto_atribuicao_pa_reassign(request):
                 ativo=True
             ).update(ativo=False, data_fim=timezone.now().date())
             
-            # Trocar os funcionários
-            pa.funcionario = funcionario
-            pa_atual.funcionario = funcionario_anterior
-            
-            # Salvar as alterações
-            pa.save()
-            pa_atual.save()
+            # As atribuições de funcionários são gerenciadas pelo modelo AtribuicaoFuncionarioPA
+            # Os status das PAs também são atualizados automaticamente através das atribuições
             
             # Criar novas atribuições no histórico
             AtribuicaoFuncionarioPA.objects.create(
@@ -1095,14 +1150,8 @@ def api_auto_atribuicao_pa_reassign(request):
                     ativo=True
                 ).update(ativo=False, data_fim=timezone.now().date())
                 
-                pa_atual.funcionario = None
-                pa_atual.status = 'livre'
-                pa_atual.save()
-            
-            # Atribuir novo funcionário à PA
-            pa.funcionario = funcionario
-            pa.status = 'ocupada'
-            pa.save()
+                # O status da PA será atualizado automaticamente
+                pass
             
             # Criar nova atribuição no histórico
             AtribuicaoFuncionarioPA.objects.create(
@@ -1357,7 +1406,7 @@ def api_controle_salas(request):
 # Views para Salas
 @login_required
 def sala_list(request):
-    salas = Sala.objects.all()
+    salas = Sala.objects.all().select_related('loja')
     context = {
         'salas': salas
     }
@@ -1375,7 +1424,8 @@ def sala_create(request):
         form = SalaForm()
     
     context = {
-        'form': form
+        'form': form,
+        'lojas_list': Loja.objects.filter(status=True).order_by('nome'),
     }
     return render(request, 'apps/ti/admin.html', context)
 
@@ -1393,9 +1443,10 @@ def sala_update(request, pk):
     
     context = {
         'form': form,
-        'sala': sala
+        'sala': sala,
+        'lojas_list': Loja.objects.filter(status=True).order_by('nome'),
     }
-    return render(request, 'apps/ti/admin.html', context)
+    return render(request, 'apps/ti/sala_form.html', context)
 
 @login_required
 def sala_delete(request, pk):
@@ -1415,7 +1466,7 @@ def sala_delete(request, pk):
 # Views para Ilhas
 @login_required
 def ilha_list(request):
-    ilhas = Ilha.objects.all().select_related('sala')
+    ilhas = Ilha.objects.all().select_related('sala', 'sala__loja')
     context = {
         'ilhas': ilhas
     }
@@ -1433,7 +1484,9 @@ def ilha_create(request):
         form = IlhaForm()
     
     context = {
-        'form': form
+        'form': form,
+        'salas_list': Sala.objects.all().select_related('loja'),
+        'lojas_list': Loja.objects.filter(status=True).order_by('nome'),
     }
     return render(request, 'apps/ti/admin.html', context)
 
@@ -1451,9 +1504,11 @@ def ilha_update(request, pk):
     
     context = {
         'form': form,
-        'ilha': ilha
+        'ilha': ilha,
+        'salas_list': Sala.objects.all().select_related('loja'),
+        'lojas_list': Loja.objects.filter(status=True).order_by('nome'),
     }
-    return render(request, 'apps/ti/admin.html', context)
+    return render(request, 'apps/ti/ilha_form.html', context)
 
 @login_required
 def ilha_delete(request, pk):
@@ -1482,89 +1537,70 @@ def posicao_atendimento_list(request):
 @login_required
 def posicao_atendimento_create(request):
     if request.method == 'POST':
-        # Obter número de PAs a serem criadas
-        quantidade_pas = int(request.POST.get('quantidade_pas', 1))
-        
-        # Limitar a quantidade para evitar sobrecarga
-        quantidade_pas = min(quantidade_pas, 20)  # Máximo de 20 PAs por vez
-        
-        # Verificar se ilha foi selecionada
-        ilha_id = request.POST.get('ilha')
-        if ilha_id:
-            try:
-                ilha = Ilha.objects.get(id=ilha_id)
-                
-                # Contar PAs existentes para esta ilha
-                pas_existentes = PosicaoAtendimento.objects.filter(ilha=ilha).count()
-                
-                # Verificar quantas PAs ainda podem ser criadas
-                pas_disponiveis = max(0, ilha.quantidade_pas - pas_existentes)
-                
-                # Limitar a quantidade ao disponível
-                quantidade_pas = min(quantidade_pas, pas_disponiveis)
-                
-                # Se não for possível criar nenhuma PA, mostrar erro
-                if quantidade_pas <= 0:
-                    messages.error(request, f'Não há mais espaço para criar PAs na ilha {ilha.nome}. Capacidade máxima atingida.')
-                    return redirect('ti:admin')
-                
-                # Preparar dados base para todas as PAs
-                pa_data = request.POST.copy()
-                
-                # Processar cada PA
-                pas_criadas = 0
-                for _ in range(quantidade_pas):
-                    # Se o usuário forneceu um número específico e a quantidade > 1, não usar esse número
-                    if quantidade_pas > 1 and pa_data.get('numero'):
-                        pa_data['numero'] = ''  # Permitir geração automática de números sequenciais
-                    
-                    form = PosicaoAtendimentoForm(pa_data)
-                    if form.is_valid():
-                        form.save()
-                        pas_criadas += 1
-                
-                if pas_criadas > 0:
-                    if pas_criadas == 1:
-                        messages.success(request, 'Posição de atendimento cadastrada com sucesso!')
-                    else:
-                        messages.success(request, f'{pas_criadas} posições de atendimento cadastradas com sucesso!')
-                    return redirect('ti:admin')
+        form = PosicaoAtendimentoForm(request.POST)
+        if form.is_valid():
+            # Obter a quantidade de PAs a serem criadas
+            quantidade_pas = form.cleaned_data.get('quantidade_pas', 1)
+            
+            # Dados base da primeira PA
+            pa_base = form.save(commit=False)
+            
+            pas_criadas = []
+            for i in range(quantidade_pas):
+                # Criar nova instância para cada PA (exceto a primeira)
+                if i == 0:
+                    pa = pa_base
                 else:
-                    messages.error(request, 'Não foi possível criar as posições de atendimento.')
-            except Exception as e:
-                messages.error(request, f'Erro ao criar posições de atendimento: {str(e)}')
-        else:
-            # Processar normalmente se não houver ilha selecionada
-            form = PosicaoAtendimentoForm(request.POST)
-            if form.is_valid():
-                form.save()
-                messages.success(request, 'Posição de atendimento cadastrada com sucesso!')
-                return redirect('ti:admin')
+                    pa = PosicaoAtendimento(
+                        titulo=pa_base.titulo,
+                        ilha=pa_base.ilha,
+                        sala=pa_base.sala,
+                        status=pa_base.status,
+                        observacoes=pa_base.observacoes
+                    )
+                
+                # Não definir número manualmente - deixar o model.save() gerar automaticamente
+                pa.numero = None
+                pa.save()
+                pas_criadas.append(pa)
+            
+            # Mensagem de sucesso
+            if quantidade_pas == 1:
+                messages.success(request, f'PA {pas_criadas[0].numero} cadastrada com sucesso!')
+            else:
+                numeros_pas = [pa.numero for pa in pas_criadas]
+                messages.success(request, f'{quantidade_pas} PAs cadastradas com sucesso: {", ".join(numeros_pas)}')
+            
+            return redirect('ti:admin')
     else:
         form = PosicaoAtendimentoForm()
     
     context = {
-        'form': form
+        'form': form,
+        'salas_list': Sala.objects.all().select_related('loja'),
+        'lojas_list': Loja.objects.filter(status=True).order_by('nome'),
     }
     return render(request, 'apps/ti/admin.html', context)
 
 @login_required
 def posicao_atendimento_update(request, pk):
-    posicao = get_object_or_404(PosicaoAtendimento, pk=pk)
+    posicao_atendimento = get_object_or_404(PosicaoAtendimento, pk=pk)
     if request.method == 'POST':
-        form = PosicaoAtendimentoForm(request.POST, instance=posicao)
+        form = PosicaoAtendimentoForm(request.POST, instance=posicao_atendimento)
         if form.is_valid():
             form.save()
             messages.success(request, 'Posição de atendimento atualizada com sucesso!')
             return redirect('ti:posicao_atendimento_list')
     else:
-        form = PosicaoAtendimentoForm(instance=posicao)
+        form = PosicaoAtendimentoForm(instance=posicao_atendimento)
     
     context = {
         'form': form,
-        'posicao': posicao
+        'posicao_atendimento': posicao_atendimento,
+        'salas_list': Sala.objects.all().select_related('loja'),
+        'lojas_list': Loja.objects.filter(status=True).order_by('nome'),
     }
-    return render(request, 'apps/ti/admin.html', context)
+    return render(request, 'apps/ti/posicao_atendimento_form.html', context)
 
 @login_required
 def posicao_atendimento_delete(request, pk):
@@ -1893,6 +1929,7 @@ def get_funcionarios_json(request):
 def api_funcionarios(request):
     """
     API para obter a lista de funcionários para uso em dropdowns
+    Considera filtro por loja se especificado
     """
     import logging
     logger = logging.getLogger(__name__)
@@ -1901,9 +1938,23 @@ def api_funcionarios(request):
     logger.info(f"[DEBUG] Method: {request.method}, Content-Type: {request.content_type if hasattr(request, 'content_type') else 'N/A'}")
     
     try:
+        # Obter a loja selecionada, se houver
+        loja_id = request.GET.get('loja')
+        
         # Obter todos os funcionários ativos
         logger.info("[DEBUG] Buscando funcionários ativos...")
-        funcionarios = Funcionario.objects.filter(status=True).order_by('nome_completo')
+        funcionarios = Funcionario.objects.filter(status=True)
+        
+        # Aplicar filtro de loja se necessário
+        if loja_id:
+            try:
+                loja_selecionada = int(loja_id)
+                funcionarios = funcionarios.filter(empresa__lojas__id=loja_selecionada)
+                logger.info(f"[DEBUG] Filtro aplicado para loja: {loja_selecionada}")
+            except (ValueError, TypeError):
+                logger.warning(f"[DEBUG] ID de loja inválido: {loja_id}")
+        
+        funcionarios = funcionarios.order_by('nome_completo')
         logger.info(f"[DEBUG] Total de funcionários encontrados: {funcionarios.count()}")
         
         # Construir a lista de funcionários com seus ramais (se existirem)
@@ -1958,11 +2009,15 @@ def atribuir_funcionario_pa(request):
                 # Obter o funcionário
                 funcionario = get_object_or_404(Funcionario, id=funcionario_id)
                 
-                # Verificar se este funcionário já está atribuído a outras PAs
-                pas_com_funcionario = PosicaoAtendimento.objects.filter(funcionario=funcionario).exclude(id=pa_id)
+                # Verificar se este funcionário já está atribuído a outras PAs através do modelo de atribuição
+                atribuicoes_existentes = AtribuicaoFuncionarioPA.objects.filter(
+                    funcionario=funcionario,
+                    ativo=True
+                ).exclude(posicao_atendimento_id=pa_id)
                 
-                # Rastrear PAs afetadas
-                for pa_afetada in pas_com_funcionario:
+                # Rastrear PAs afetadas e desativar atribuições anteriores
+                for atribuicao in atribuicoes_existentes:
+                    pa_afetada = atribuicao.posicao_atendimento
                     pas_afetadas.append({
                         'id': pa_afetada.id,
                         'numero': pa_afetada.numero,
@@ -1970,22 +2025,22 @@ def atribuir_funcionario_pa(request):
                         'ilha': pa_afetada.ilha.nome if pa_afetada.ilha else 'S/Ilha',
                         'status': 'livre'
                     })
-                    # Remover o funcionário da PA afetada
-                    pa_afetada.funcionario = None
+                    
+                    # Desativar atribuição
+                    atribuicao.ativo = False
+                    atribuicao.data_fim = timezone.now().date()
+                    atribuicao.save()
+                    
+                    # Atualizar status da PA afetada
                     pa_afetada.status = 'livre'
                     pa_afetada.save()
                 
-                # Atribuir o funcionário à PA alvo
-                pa.funcionario = funcionario
-                pa.status = 'ocupada'  # Atualizar status da PA
-                pa.save()
-                
                 # Buscar atribuições ativas existentes para esta PA
-                atribuicoes_existentes = AtribuicaoFuncionarioPA.objects.filter(posicao_atendimento=pa, ativo=True)
+                atribuicoes_existentes_pa = AtribuicaoFuncionarioPA.objects.filter(posicao_atendimento=pa, ativo=True)
                 
                 # Desativar todas as atribuições ativas existentes
-                if atribuicoes_existentes.exists():
-                    atribuicoes_existentes.update(ativo=False, data_fim=timezone.now().date())
+                if atribuicoes_existentes_pa.exists():
+                    atribuicoes_existentes_pa.update(ativo=False, data_fim=timezone.now().date())
                 
                 # Criar uma nova atribuição
                 atribuicao = AtribuicaoFuncionarioPA.objects.create(
@@ -1994,9 +2049,10 @@ def atribuir_funcionario_pa(request):
                     data_inicio=timezone.now().date(),
                     ativo=True
                 )
-                created = True
                 
-                # A atribuição já foi criada como nova, não precisamos mais desta verificação
+                # Atualizar status da PA
+                pa.status = 'ocupada'
+                pa.save()
                 
                 # Preparar resposta
                 return JsonResponse({
@@ -2016,18 +2072,17 @@ def atribuir_funcionario_pa(request):
             else:
                 # Se funcionario_id é None, estamos removendo o funcionário da PA
                 # Guardar funcionário anterior para mensagem
-                funcionario_anterior = pa.funcionario
-                
-                # Remover funcionário
-                pa.funcionario = None
-                pa.status = 'livre'  # Atualizar status da PA
-                pa.save()
+                funcionario_anterior = pa.funcionario_atual
                 
                 # Desativar atribuições existentes
                 AtribuicaoFuncionarioPA.objects.filter(posicao_atendimento=pa, ativo=True).update(
                     ativo=False,
                     data_fim=timezone.now().date()
                 )
+                
+                # Atualizar status da PA
+                pa.status = 'livre'
+                pa.save()
                 
                 # Preparar resposta
                 return JsonResponse({
@@ -2194,8 +2249,55 @@ def computador_create(request):
     if request.method == 'POST':
         form = ComputadorForm(request.POST)
         if form.is_valid():
-            form.save()
-            messages.success(request, 'Computador cadastrado com sucesso!')
+            computador = form.save(commit=False)
+            status = form.cleaned_data['status']
+            
+            # Processar campos específicos para cada status
+            if status == 'em_uso':
+                pa_id = request.POST.get('pa_em_uso')
+                if pa_id:
+                    # Salvar o computador primeiro
+                    computador.save()
+                    
+                    # Obter a PA selecionada
+                    try:
+                        pa = PosicaoAtendimento.objects.get(id=pa_id)
+                        
+                        # Criar uma atribuição de computador à PA
+                        AtribuicaoComputadorPA.objects.create(
+                            computador=computador,
+                            posicao_atendimento=pa,
+                            data_atribuicao=timezone.now(),
+                            ativo=True
+                        )
+                        
+                        messages.success(request, f'Computador cadastrado e atribuído à PA {pa.numero} com sucesso!')
+                    except PosicaoAtendimento.DoesNotExist:
+                        messages.error(request, 'Posição de Atendimento não encontrada.')
+                        # Ainda salvamos o computador mesmo se a PA não for encontrada
+                        computador.save()
+                else:
+                    # Se nenhuma PA for selecionada, apenas salvar o computador
+                    computador.save()
+                    messages.success(request, 'Computador cadastrado com sucesso, mas nenhuma PA foi selecionada.')
+            
+            elif status == 'manutencao':
+                # Adicionar observações de manutenção ao computador
+                observacoes_manutencao = request.POST.get('observacoes_manutencao')
+                if observacoes_manutencao:
+                    computador.observacoes = f"MANUTENÇÃO: {observacoes_manutencao}"
+                
+                computador.save()
+                messages.success(request, 'Computador cadastrado e enviado para manutenção com sucesso!')
+                
+                # Redirecionar para a página de controle de manutenção
+                return redirect('ti:controle_manutencao')
+            
+            else:
+                # Para os outros status, apenas salvar o computador
+                computador.save()
+                messages.success(request, 'Computador cadastrado com sucesso!')
+            
             return redirect('ti:admin')
     else:
         form = ComputadorForm()
@@ -2220,6 +2322,350 @@ def atribuicao_computador_pa_create(request):
         'form': form
     }
     return render(request, 'apps/ti/admin.html', context)
+
+# Views para Monitores
+@login_required
+def monitor_list(request):
+    monitores = Monitor.objects.all().select_related('loja')
+    context = {
+        'monitores': monitores
+    }
+    return render(request, 'apps/ti/monitor_list.html', context)
+
+@login_required
+def monitor_create(request):
+    if request.method == 'POST':
+        form = MonitorForm(request.POST)
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'Monitor cadastrado com sucesso!')
+            return redirect('ti:admin')
+    else:
+        form = MonitorForm()
+    
+    context = {
+        'form': form,
+        'title': 'Cadastrar Novo Monitor'
+    }
+    return render(request, 'apps/ti/admin.html', context)
+
+@login_required
+def monitor_update(request, pk):
+    monitor = get_object_or_404(Monitor, pk=pk)
+    if request.method == 'POST':
+        form = MonitorForm(request.POST, instance=monitor)
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'Monitor atualizado com sucesso!')
+            return redirect('ti:monitor_list')
+    else:
+        form = MonitorForm(instance=monitor)
+    
+    context = {
+        'form': form,
+        'monitor': monitor
+    }
+    return render(request, 'apps/ti/monitor_form.html', context)
+
+@login_required
+def monitor_delete(request, pk):
+    monitor = get_object_or_404(Monitor, pk=pk)
+    if request.method == 'POST':
+        monitor.delete()
+        messages.success(request, 'Monitor excluído com sucesso!')
+        return redirect('ti:monitor_list')
+    
+    context = {
+        'title': 'Excluir Monitor',
+        'objeto': monitor
+    }
+    return render(request, 'apps/ti/confirm_delete.html', context)
+
+# Views para Atribuição de Monitores a PAs
+@login_required
+def atribuicao_monitor_pa_create(request):
+    if request.method == 'POST':
+        form = AtribuicaoMonitorPAForm(request.POST)
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'Atribuição de monitor realizada com sucesso!')
+            return redirect('ti:admin')
+    else:
+        form = AtribuicaoMonitorPAForm()
+    
+    context = {
+        'form': form
+    }
+    return render(request, 'apps/ti/admin.html', context)
+
+@require_GET
+@login_required
+def api_monitores_disponiveis(request):
+    """
+    API para retornar monitores disponíveis para atribuição
+    Retorna uma lista de monitores com status 'disponivel'
+    Considera filtro por loja se especificado
+    """
+    try:
+        # Obter a loja selecionada, se houver
+        loja_id = request.GET.get('loja')
+        filtro_loja = {}
+        
+        if loja_id:
+            try:
+                loja_selecionada = int(loja_id)
+                filtro_loja = {'loja_id': loja_selecionada}
+            except (ValueError, TypeError):
+                pass
+        
+        # Buscar monitores com status 'disponivel'
+        monitores_disponiveis = Monitor.objects.filter(
+            status='disponivel',
+            **filtro_loja
+        ).values('id', 'marca', 'modelo', 'tamanho', 'resolucao')
+        
+        # Converter para lista para serialização JSON
+        monitores_lista = list(monitores_disponiveis)
+        
+        return JsonResponse({
+            'success': True,
+            'monitores': monitores_lista
+        })
+    except Exception as e:
+        import traceback
+        print(f"Erro ao buscar monitores disponíveis: {str(e)}")
+        print(traceback.format_exc())
+        return JsonResponse({
+            'success': False,
+            'error': str(e)
+        }, status=500)
+
+# APIs para Monitores
+@require_POST
+@login_required
+def api_adicionar_monitor_pa(request, pa_id):
+    try:
+        data = json.loads(request.body)
+        monitor_id = data.get('monitor_id')
+
+        if not monitor_id:
+            return gerar_resposta_api(False, error='ID do Monitor não fornecido.', status=400)
+
+        pa_alvo = get_object_or_404(PosicaoAtendimento, pk=pa_id)
+        monitor = get_object_or_404(Monitor, pk=monitor_id)
+
+        # Verificar se o monitor já está atribuído a outra PA
+        atribuicao_existente = AtribuicaoMonitorPA.objects.filter(
+            monitor=monitor,
+            ativo=True
+        ).exclude(posicao_atendimento=pa_alvo).first()
+        
+        if atribuicao_existente:
+            return gerar_resposta_api(
+                False, 
+                error=f'Monitor já está atribuído à PA {atribuicao_existente.posicao_atendimento.numero}',
+                status=400
+            )
+        
+        # Verificar se já existe atribuição ativa para esta PA e monitor
+        atribuicao_ativa = AtribuicaoMonitorPA.objects.filter(
+            monitor=monitor,
+            posicao_atendimento=pa_alvo,
+            ativo=True
+        ).first()
+        
+        if atribuicao_ativa:
+            return gerar_resposta_api(
+                False,
+                error='Monitor já está atribuído a esta PA',
+                status=400
+            )
+        
+        # Criar nova atribuição
+        AtribuicaoMonitorPA.objects.create(
+            monitor=monitor,
+            posicao_atendimento=pa_alvo,
+            ativo=True
+        )
+        
+        # Atualizar status do monitor
+        monitor.status = 'em_uso'
+        monitor.save()
+        
+        # Listar monitores atribuídos à PA para a resposta
+        lista_monitores_pa = []
+        atribuicoes_pa = AtribuicaoMonitorPA.objects.filter(
+            posicao_atendimento=pa_alvo,
+            ativo=True
+        ).select_related('monitor')
+        
+        for atr in atribuicoes_pa:
+            lista_monitores_pa.append({
+                'id': atr.monitor.id,
+                'marca': atr.monitor.marca,
+                'modelo': atr.monitor.modelo,
+                'tamanho': atr.monitor.tamanho
+            })
+
+        return gerar_resposta_api(
+            True, 
+            message='Monitor adicionado à PA com sucesso!',
+            data={'lista_monitores_pa': lista_monitores_pa}
+        )
+
+    except PosicaoAtendimento.DoesNotExist:
+        return gerar_resposta_api(False, error='PA não encontrada.', status=404)
+    except Monitor.DoesNotExist:
+        return gerar_resposta_api(False, error='Monitor não encontrado.', status=404)
+    except json.JSONDecodeError:
+        return gerar_resposta_api(False, error='Dados JSON inválidos.', status=400)
+    except Exception as e:
+        return gerar_resposta_api(False, error=str(e), status=500)
+
+@require_POST
+@login_required
+def api_remover_monitor_pa(request, pa_id):
+    try:
+        data = json.loads(request.body)
+        monitor_id = data.get('monitor_id')
+
+        if not monitor_id:
+            return gerar_resposta_api(False, error='ID do Monitor não fornecido.', status=400)
+
+        pa_alvo = get_object_or_404(PosicaoAtendimento, pk=pa_id)
+        monitor = get_object_or_404(Monitor, pk=monitor_id)
+
+        atribuicao_ativa = AtribuicaoMonitorPA.objects.filter(
+            posicao_atendimento=pa_alvo, 
+            monitor=monitor, 
+            ativo=True
+        ).first()
+
+        if not atribuicao_ativa:
+            return gerar_resposta_api(False, error='Monitor não está ativamente atribuído a esta PA.', status=400)
+
+        # Desativar a atribuição
+        atribuicao_ativa.ativo = False
+        atribuicao_ativa.data_remocao = timezone.now()
+        atribuicao_ativa.save()
+        
+        # Atualizar status do monitor
+        monitor.status = 'disponivel'
+        monitor.save()
+        
+        # Listar monitores atribuídos à PA para a resposta
+        lista_monitores_pa = []
+        atribuicoes_pa = AtribuicaoMonitorPA.objects.filter(
+            posicao_atendimento=pa_alvo,
+            ativo=True
+        ).select_related('monitor')
+        
+        for atr in atribuicoes_pa:
+            lista_monitores_pa.append({
+                'id': atr.monitor.id,
+                'marca': atr.monitor.marca,
+                'modelo': atr.monitor.modelo,
+                'tamanho': atr.monitor.tamanho
+            })
+
+        return gerar_resposta_api(
+            True,
+            message='Monitor removido da PA com sucesso!',
+            data={'lista_monitores_pa': lista_monitores_pa}
+        )
+
+    except PosicaoAtendimento.DoesNotExist:
+        return gerar_resposta_api(False, error='PA não encontrada.', status=404)
+    except Monitor.DoesNotExist:
+        return gerar_resposta_api(False, error='Monitor não encontrado.', status=404)
+    except json.JSONDecodeError:
+        return gerar_resposta_api(False, error='Dados JSON inválidos.', status=400)
+    except Exception as e:
+        return gerar_resposta_api(False, error=str(e), status=500)
+
+@require_POST
+@login_required
+def api_atualizar_status_monitor(request, monitor_id):
+    try:
+        data = json.loads(request.body)
+        novo_status = data.get('status')
+        pa_id = data.get('pa_id')  # PA da qual o monitor está sendo gerenciado no frontend
+        observacoes = data.get('observacoes')
+
+        if not novo_status or novo_status not in [s[0] for s in Monitor.status_choices]:
+            return JsonResponse({'success': False, 'error': 'Status inválido fornecido.'}, status=400)
+
+        monitor = get_object_or_404(Monitor, pk=monitor_id)
+
+        monitor.status = novo_status
+        if novo_status == 'manutencao':
+            if observacoes:
+                monitor.observacoes = observacoes
+            else:
+                monitor.observacoes = None
+        elif novo_status == 'disponivel':
+            if monitor.observacoes and monitor.observacoes.startswith("MANUTENÇÃO:"):
+                monitor.observacoes = None
+            elif not monitor.observacoes:
+                pass
+
+        monitor.save()
+        
+        partes_mensagem = [
+            f'Status do monitor {monitor.marca} {monitor.modelo} atualizado para {monitor.get_status_display()}.'
+        ]
+        monitor_removido_da_pa_especifica = False
+        lista_monitores_pa_atualizada = []
+
+        if (novo_status == 'disponivel' or novo_status == 'manutencao') and pa_id:
+            atribuicao_especifica = AtribuicaoMonitorPA.objects.filter(
+                monitor=monitor,
+                posicao_atendimento_id=pa_id,
+                ativo=True
+            ).first()
+            
+            if atribuicao_especifica:
+                atribuicao_especifica.ativo = False
+                atribuicao_especifica.data_remocao = timezone.now()
+                atribuicao_especifica.save()
+                monitor_removido_da_pa_especifica = True
+                acao = "para manutenção" if novo_status == 'manutencao' else "pois está livre"
+                partes_mensagem.append(f'Ele foi desatribuído da PA {atribuicao_especifica.posicao_atendimento.numero} {acao}.')
+                
+                pa_alvo = get_object_or_404(PosicaoAtendimento, pk=pa_id)
+                atribuicoes_pa_atual = AtribuicaoMonitorPA.objects.filter(
+                    posicao_atendimento=pa_alvo, 
+                    ativo=True
+                ).select_related('monitor')
+                for atr in atribuicoes_pa_atual:
+                    lista_monitores_pa_atualizada.append({
+                        'id': atr.monitor.id,
+                        'marca': atr.monitor.marca,
+                        'modelo': atr.monitor.modelo,
+                        'tamanho': atr.monitor.tamanho
+                    })
+        
+        mensagem_final = " ".join(partes_mensagem)
+
+        return JsonResponse({
+            'success': True, 
+            'message': mensagem_final,
+            'novo_status_display': monitor.get_status_display(),
+            'monitor_removido_da_pa': monitor_removido_da_pa_especifica,
+            'lista_monitores_pa': lista_monitores_pa_atualizada
+        })
+
+    except Monitor.DoesNotExist:
+        return JsonResponse({'success': False, 'error': 'Monitor não encontrado.'}, status=404)
+    except PosicaoAtendimento.DoesNotExist:
+        return JsonResponse({'success': False, 'error': 'PA não encontrada ao tentar atualizar lista de monitores.'}, status=404)
+    except json.JSONDecodeError:
+        return JsonResponse({'success': False, 'error': 'Dados JSON inválidos.'}, status=400)
+    except Exception as e:
+        return JsonResponse({
+            'success': False,
+            'error': str(e)
+        }, status=500)
 
 @require_POST
 @login_required
@@ -2346,13 +2792,26 @@ def api_computadores_disponiveis(request):
     """
     API para retornar computadores disponíveis para atribuição
     Retorna uma lista de computadores com status 'disponivel'
+    Considera filtro por loja se especificado
     """
     try:
         from .models import Computador  # Importar aqui para evitar importação circular
         
+        # Obter a loja selecionada, se houver
+        loja_id = request.GET.get('loja')
+        filtro_loja = {}
+        
+        if loja_id:
+            try:
+                loja_selecionada = int(loja_id)
+                filtro_loja = {'loja_id': loja_selecionada}
+            except (ValueError, TypeError):
+                pass
+        
         # Buscar computadores com status 'disponivel'
         computadores_disponiveis = Computador.objects.filter(
-            status='disponivel'
+            status='disponivel',
+            **filtro_loja
         ).values('id', 'marca')
         
         # Converter para lista para serialização JSON
@@ -2438,25 +2897,59 @@ def tipo_periferico_delete(request, pk):
 def api_admin_dashboard_data(request):
     """
     API para carregamento rápido dos dados do dashboard administrativo de TI
+    Considera filtro por loja se especificado
     """
     try:
+        # Obter a loja selecionada, se houver
+        loja_id = request.GET.get('loja')
+        loja_selecionada = None
+        
+        # Aplicar filtro de loja se necessário
+        if loja_id:
+            try:
+                loja_selecionada = int(loja_id)
+            except (ValueError, TypeError):
+                loja_selecionada = None
+        
+        filtro_loja = {'loja_id': loja_selecionada} if loja_selecionada else {}
+        
         data = {
             'counts': {
                 'tipos_perifericos': TipoPeriferico.objects.all().count(),
-                'perifericos': Periferico.objects.all().count(),
-                'salas': Sala.objects.all().count(),
-                'ilhas': Ilha.objects.all().count(),
-                'posicoes_atendimento': PosicaoAtendimento.objects.all().count(),
-                'atribuicoes_funcionarios': AtribuicaoFuncionarioPA.objects.filter(ativo=True).count(),
-                'atribuicoes_perifericos': AtribuicaoPerifericoPA.objects.filter(ativo=True).count(),
+                'perifericos': Periferico.objects.filter(**filtro_loja).count(),
+                'monitores': Monitor.objects.filter(**filtro_loja).count(),
+                'salas': Sala.objects.filter(**filtro_loja).count(),
+                'ilhas': Ilha.objects.filter(sala__in=Sala.objects.filter(**filtro_loja)).count(),
+                'posicoes_atendimento': PosicaoAtendimento.objects.filter(sala__in=Sala.objects.filter(**filtro_loja)).count(),
+                'atribuicoes_funcionarios': AtribuicaoFuncionarioPA.objects.filter(
+                    ativo=True,
+                    posicao_atendimento__sala__in=Sala.objects.filter(**filtro_loja)
+                ).count(),
+                'atribuicoes_perifericos': AtribuicaoPerifericoPA.objects.filter(
+                    ativo=True,
+                    periferico__in=Periferico.objects.filter(**filtro_loja)
+                ).count(),
+                'atribuicoes_monitores': AtribuicaoMonitorPA.objects.filter(
+                    ativo=True,
+                    monitor__in=Monitor.objects.filter(**filtro_loja)
+                ).count(),
             },
             'listas': {
                 'tipos_perifericos': list(TipoPeriferico.objects.all().values('id', 'nome')),
-                'salas': list(Sala.objects.all().values('id', 'nome')),
-                'perifericos_disponiveis': list(Periferico.objects.filter(status='disponivel').values('id', 'marca', 'modelo', 'tipo__nome')),
-                'computadores_disponiveis': list(Computador.objects.filter(status='disponivel').values('id', 'marca')),
+                'salas': list(Sala.objects.filter(**filtro_loja).values('id', 'nome')),
+                'perifericos_disponiveis': list(Periferico.objects.filter(status='disponivel', **filtro_loja).values('id', 'marca', 'modelo', 'tipo__nome')),
+                'computadores_disponiveis': list(Computador.objects.filter(status='disponivel', **filtro_loja).values('id', 'marca')),
+                'monitores_disponiveis': list(Monitor.objects.filter(status='disponivel', **filtro_loja).values('id', 'marca', 'modelo')),
+                'funcionarios': list(Funcionario.objects.filter(
+                    Q(empresa__lojas__id=loja_selecionada) if loja_selecionada else Q(),
+                    status=True
+                ).values('id', 'nome_completo', 'ramal').order_by('nome_completo')),
+                'posicoes_atendimento': list(PosicaoAtendimento.objects.filter(
+                    sala__in=Sala.objects.filter(**filtro_loja)
+                ).values('id', 'numero', 'sala__nome', 'ilha__nome')),
                 'lojas': list(Loja.objects.filter(status=True).values('id', 'nome').order_by('nome')),
-            }
+            },
+            'loja_selecionada': loja_selecionada
         }
         return JsonResponse({'success': True, 'data': data})
     except Exception as e:
@@ -2472,12 +2965,16 @@ def api_controle_salas_data(request):
         # Obter parâmetros de filtro da URL
         sala_id = request.GET.get('sala_id')
         ilha_id = request.GET.get('ilha_id')
+        loja_id = request.GET.get('loja_id')
         
-        # Carregar salas com suas ilhas (aplicando filtro se necessário)
+        # Aplicar filtro de loja se especificado
+        filtro_loja = {'loja_id': loja_id} if loja_id else {}
+        
+        # Carregar salas com suas ilhas (aplicando filtros se necessário)
         if sala_id:
-            salas = Sala.objects.filter(id=sala_id)
+            salas = Sala.objects.filter(id=sala_id, **filtro_loja)
         else:
-            salas = Sala.objects.all()
+            salas = Sala.objects.filter(**filtro_loja)
             
         salas_data = []
         
@@ -2565,7 +3062,18 @@ def api_controle_salas_data(request):
                 }
                 
                 # Carregar PAs para esta ilha
-                pas = PosicaoAtendimento.objects.filter(ilha=ilha).select_related('funcionario')
+                pas = PosicaoAtendimento.objects.filter(ilha=ilha)
+                
+                # Carregar funcionários atribuídos às PAs desta ilha
+                funcionarios_por_pa_ilha = {}
+                atribuicoes_funcionarios_ilha = AtribuicaoFuncionarioPA.objects.filter(
+                    ativo=True,
+                    posicao_atendimento__ilha=ilha
+                ).select_related('funcionario', 'posicao_atendimento')
+                
+                for atr_func in atribuicoes_funcionarios_ilha:
+                    funcionarios_por_pa_ilha[atr_func.posicao_atendimento_id] = atr_func.funcionario
+                
                 for pa in pas:
                     # Determinar quais tipos de periféricos estão faltando
                     tipos_faltantes = []
@@ -2573,12 +3081,15 @@ def api_controle_salas_data(request):
                         if pa.id not in tipos_atribuidos_por_pa or tipo_id not in tipos_atribuidos_por_pa[pa.id]:
                             tipos_faltantes.append(tipo_nome)
                     
+                    # Obter funcionário atribuído a esta PA
+                    funcionario_pa = funcionarios_por_pa_ilha.get(pa.id)
+                    
                     pa_dict = {
                         'id': pa.id,
                         'numero': pa.numero,
                         'status': pa.status,
                         'status_display': pa.get_status_display(),
-                        'funcionario': pa.funcionario.nome_completo if pa.funcionario else None,
+                        'funcionario': funcionario_pa.nome_completo if funcionario_pa else None,
                         'perifericos': perifericos_por_pa.get(pa.id, []),
                         'faltando': tipos_faltantes,
                         'computadores': computadores_por_pa.get(pa.id, [])
@@ -2813,21 +3324,11 @@ def api_auto_atribuicao_pa_data(request):
                 'sala': atribuicao_atual.posicao_atendimento.sala.nome,
                 'ilha': atribuicao_atual.posicao_atendimento.ilha.nome
             }
-        else:
-            # Verificar também diretamente na tabela de PAs como fallback
-            pa_direto = PosicaoAtendimento.objects.filter(funcionario=funcionario).first()
-            if pa_direto:
-                pa_atual = {
-                    'id': pa_direto.id,
-                    'numero': pa_direto.numero,
-                    'sala': pa_direto.sala.nome if pa_direto.sala else 'S/Sala',
-                    'ilha': pa_direto.ilha.nome if pa_direto.ilha else 'S/Ilha'
-                }
         
         # Buscar PAs livres ou ocupadas (para permitir troca)
         pas_disponiveis = PosicaoAtendimento.objects.filter(
             Q(status='livre') | Q(status='ocupada')
-        ).select_related('sala', 'ilha', 'funcionario')
+        ).select_related('sala', 'ilha')
         
         # Se o funcionário já tem uma PA, exclua ela da lista
         if pa_atual:
@@ -2842,7 +3343,7 @@ def api_auto_atribuicao_pa_data(request):
                 'ilha': pa.ilha.nome if pa.ilha else 'S/Ilha',
                 'status': pa.status,
                 'status_display': pa.get_status_display(),
-                'funcionario_atual': pa.funcionario.nome_completo if pa.funcionario else None
+                'funcionario_atual': pa.funcionario_atual.nome_completo if pa.funcionario_atual else None
             })
         
         return JsonResponse({
@@ -2881,7 +3382,11 @@ def api_listar_perifericos(request):
         if status:
             query = query.filter(status=status)
         if loja_id:
-            query = query.filter(loja_id=loja_id)
+            try:
+                loja_selecionada = int(loja_id)
+                query = query.filter(loja_id=loja_selecionada)
+            except (ValueError, TypeError):
+                pass
         
         # Paginação
         page = int(request.GET.get('page', 1))
@@ -2965,7 +3470,11 @@ def api_listar_computadores(request):
         if status:
             query = query.filter(status=status)
         if loja_id:
-            query = query.filter(loja_id=loja_id)
+            try:
+                loja_selecionada = int(loja_id)
+                query = query.filter(loja_id=loja_selecionada)
+            except (ValueError, TypeError):
+                pass
         
         # Paginação
         page = int(request.GET.get('page', 1))
@@ -3037,9 +3546,10 @@ def api_listar_posicoes_atendimento(request):
         sala_id = request.GET.get('sala')
         ilha_id = request.GET.get('ilha')
         status = request.GET.get('status')
+        loja_id = request.GET.get('loja')
         
         # Query base
-        query = PosicaoAtendimento.objects.all().select_related('sala', 'ilha', 'funcionario')
+        query = PosicaoAtendimento.objects.all().select_related('sala', 'ilha')
         
         # Aplicar filtros
         if sala_id:
@@ -3048,6 +3558,12 @@ def api_listar_posicoes_atendimento(request):
             query = query.filter(ilha_id=ilha_id)
         if status:
             query = query.filter(status=status)
+        if loja_id:
+            try:
+                loja_selecionada = int(loja_id)
+                query = query.filter(sala__loja_id=loja_selecionada)
+            except (ValueError, TypeError):
+                pass
         
         # Paginação
         page = int(request.GET.get('page', 1))
@@ -3071,6 +3587,17 @@ def api_listar_posicoes_atendimento(request):
         # Executar paginação
         paginator = Paginator(query, itens_por_pagina)
         page_obj = paginator.get_page(page)
+        
+        # Obter funcionários atribuídos às PAs da página atual
+        pa_ids = [pa.id for pa in page_obj]
+        funcionarios_por_pa = {}
+        atribuicoes_funcionarios = AtribuicaoFuncionarioPA.objects.filter(
+            ativo=True,
+            posicao_atendimento_id__in=pa_ids
+        ).select_related('funcionario', 'posicao_atendimento')
+        
+        for atr_func in atribuicoes_funcionarios:
+            funcionarios_por_pa[atr_func.posicao_atendimento_id] = atr_func.funcionario
         
         # Formatar resposta
         pas_data = []
@@ -3117,9 +3644,9 @@ def api_listar_posicoes_atendimento(request):
                 'status': pa.status,
                 'status_display': pa.get_status_display(),
                 'funcionario': {
-                    'id': pa.funcionario.id,
-                    'nome': pa.funcionario.nome_completo
-                } if pa.funcionario else None,
+                    'id': funcionarios_por_pa[pa.id].id,
+                    'nome': funcionarios_por_pa[pa.id].nome_completo
+                } if pa.id in funcionarios_por_pa else None,
                 'perifericos': perifericos_data,
                 'computadores': computadores_data
             })
@@ -3143,3 +3670,371 @@ def api_listar_posicoes_atendimento(request):
         })
     except Exception as e:
         return JsonResponse({'success': False, 'error': str(e)}, status=500)
+
+# APIs para AJAX
+@login_required
+def api_ilhas_por_sala(request, sala_id):
+    """API para retornar ilhas de uma sala específica."""
+    try:
+        ilhas = Ilha.objects.filter(sala_id=sala_id).values('id', 'nome')
+        return JsonResponse({'ilhas': list(ilhas)})
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=400)
+
+@login_required
+def api_salas_por_loja(request, loja_id):
+    """API para retornar salas de uma loja específica."""
+    try:
+        salas = Sala.objects.filter(loja_id=loja_id).values('id', 'nome')
+        return JsonResponse({'salas': list(salas)})
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=400)
+
+# ================================
+# Views AJAX para formulários
+# ================================
+
+@login_required
+def ajax_periferico_create(request):
+    """View AJAX para cadastrar periférico"""
+    if request.method == 'POST':
+        try:
+            # Verificar se é um envio em lote
+            if 'perifericos_lote' in request.POST:
+                perifericos_lote = json.loads(request.POST.get('perifericos_lote', '[]'))
+                if not perifericos_lote:
+                    return JsonResponse({'success': False, 'message': 'Nenhum periférico para cadastrar.'})
+                
+                total_cadastrados = 0
+                erros = []
+                
+                for item in perifericos_lote:
+                    try:
+                        tipo_id = item.get('tipo_id')
+                        marca = item.get('marca', '').strip()
+                        modelo = item.get('modelo', '').strip()
+                        data_aquisicao = item.get('data_aquisicao')
+                        loja_id = item.get('loja_id')
+                        quantidade = item.get('quantidade', 1)
+                        
+                        if not (tipo_id and marca and modelo and loja_id):
+                            erros.append(f"Dados incompletos para periférico: {marca} {modelo}")
+                            continue
+                        
+                        if data_aquisicao:
+                            try:
+                                data_aquisicao = timezone.datetime.strptime(data_aquisicao, '%Y-%m-%d').date()
+                            except (ValueError, TypeError):
+                                data_aquisicao = None
+                        
+                        for _ in range(quantidade):
+                            periferico = Periferico(
+                                tipo_id=tipo_id,
+                                marca=marca,
+                                modelo=modelo,
+                                data_aquisicao=data_aquisicao,
+                                loja_id=loja_id,
+                                quantidade=1,
+                                status='disponivel'
+                            )
+                            periferico.save()
+                            total_cadastrados += 1
+                    except Exception as e:
+                        erros.append(f"Erro ao cadastrar {marca} {modelo}: {str(e)}")
+                
+                if total_cadastrados > 0:
+                    message = f'{total_cadastrados} periférico(s) cadastrado(s) com sucesso!'
+                    if erros:
+                        message += f' ({len(erros)} erro(s) encontrado(s))'
+                    return JsonResponse({'success': True, 'message': message})
+                else:
+                    return JsonResponse({'success': False, 'message': 'Nenhum periférico foi cadastrado devido a erros.'})
+            
+            # Processo normal (formulário individual)
+            form = PerifericoForm(request.POST)
+            if form.is_valid():
+                quantidade = form.cleaned_data.get('quantidade', 1)
+                quantidade = min(quantidade, 100)  # Máximo de 100 periféricos por vez
+                
+                if quantidade > 1:
+                    perif_criados = 0
+                    modelo_base = form.save(commit=False)
+                    
+                    tipo = modelo_base.tipo
+                    marca = modelo_base.marca
+                    modelo = modelo_base.modelo
+                    data_aquisicao = modelo_base.data_aquisicao
+                    loja = modelo_base.loja
+                    status = modelo_base.status
+                    observacoes = modelo_base.observacoes
+                    
+                    modelo_base.quantidade = 1
+                    modelo_base.save()
+                    perif_criados += 1
+                    
+                    for _ in range(1, quantidade):
+                        periferico = Periferico(
+                            tipo=tipo,
+                            marca=marca,
+                            modelo=modelo,
+                            data_aquisicao=data_aquisicao,
+                            quantidade=1,
+                            loja=loja,
+                            status=status,
+                            observacoes=observacoes
+                        )
+                        periferico.save()
+                        perif_criados += 1
+                    
+                    return JsonResponse({
+                        'success': True, 
+                        'message': f'{perif_criados} periféricos cadastrados com sucesso!'
+                    })
+                else:
+                    form.save()
+                    return JsonResponse({
+                        'success': True, 
+                        'message': 'Periférico cadastrado com sucesso!'
+                    })
+            else:
+                errors = []
+                for field, error_list in form.errors.items():
+                    for error in error_list:
+                        errors.append(f"{field}: {error}")
+                return JsonResponse({
+                    'success': False, 
+                    'message': 'Erro de validação: ' + '; '.join(errors)
+                })
+        except Exception as e:
+            return JsonResponse({'success': False, 'message': str(e)})
+    
+    return JsonResponse({'success': False, 'message': 'Método não permitido'})
+
+@login_required 
+def ajax_computador_create(request):
+    """View AJAX para cadastrar computador"""
+    if request.method == 'POST':
+        try:
+            form = ComputadorForm(request.POST)
+            if form.is_valid():
+                computador = form.save(commit=False)
+                status = form.cleaned_data['status']
+                
+                if status == 'em_uso':
+                    pa_id = request.POST.get('pa_em_uso')
+                    if pa_id:
+                        computador.save()
+                        try:
+                            pa = PosicaoAtendimento.objects.get(id=pa_id)
+                            AtribuicaoComputadorPA.objects.create(
+                                computador=computador,
+                                posicao_atendimento=pa,
+                                data_atribuicao=timezone.now(),
+                                ativo=True
+                            )
+                            return JsonResponse({
+                                'success': True,
+                                'message': f'Computador cadastrado e atribuído à PA {pa.numero} com sucesso!'
+                            })
+                        except PosicaoAtendimento.DoesNotExist:
+                            computador.save()
+                            return JsonResponse({
+                                'success': True,
+                                'message': 'Computador cadastrado, mas PA não encontrada.'
+                            })
+                    else:
+                        computador.save()
+                        return JsonResponse({
+                            'success': True,
+                            'message': 'Computador cadastrado com sucesso.'
+                        })
+                
+                elif status == 'manutencao':
+                    observacoes_manutencao = request.POST.get('observacoes_manutencao')
+                    if observacoes_manutencao:
+                        computador.observacoes = f"MANUTENÇÃO: {observacoes_manutencao}"
+                    computador.save()
+                    return JsonResponse({
+                        'success': True,
+                        'message': 'Computador cadastrado e enviado para manutenção com sucesso!'
+                    })
+                else:
+                    computador.save()
+                    return JsonResponse({
+                        'success': True,
+                        'message': 'Computador cadastrado com sucesso!'
+                    })
+            else:
+                errors = []
+                for field, error_list in form.errors.items():
+                    for error in error_list:
+                        errors.append(f"{field}: {error}")
+                return JsonResponse({
+                    'success': False,
+                    'message': 'Erro de validação: ' + '; '.join(errors)
+                })
+        except Exception as e:
+            return JsonResponse({'success': False, 'message': str(e)})
+    
+    return JsonResponse({'success': False, 'message': 'Método não permitido'})
+
+@login_required
+def ajax_sala_create(request):
+    """View AJAX para cadastrar sala"""
+    if request.method == 'POST':
+        try:
+            form = SalaForm(request.POST)
+            if form.is_valid():
+                form.save()
+                return JsonResponse({
+                    'success': True,
+                    'message': 'Sala cadastrada com sucesso!'
+                })
+            else:
+                errors = []
+                for field, error_list in form.errors.items():
+                    for error in error_list:
+                        errors.append(f"{field}: {error}")
+                return JsonResponse({
+                    'success': False,
+                    'message': 'Erro de validação: ' + '; '.join(errors)
+                })
+        except Exception as e:
+            return JsonResponse({'success': False, 'message': str(e)})
+    
+    return JsonResponse({'success': False, 'message': 'Método não permitido'})
+
+@login_required
+def ajax_ilha_create(request):
+    """View AJAX para cadastrar ilha"""
+    if request.method == 'POST':
+        try:
+            form = IlhaForm(request.POST)
+            if form.is_valid():
+                form.save()
+                return JsonResponse({
+                    'success': True,
+                    'message': 'Ilha cadastrada com sucesso!'
+                })
+            else:
+                errors = []
+                for field, error_list in form.errors.items():
+                    for error in error_list:
+                        errors.append(f"{field}: {error}")
+                return JsonResponse({
+                    'success': False,
+                    'message': 'Erro de validação: ' + '; '.join(errors)
+                })
+        except Exception as e:
+            return JsonResponse({'success': False, 'message': str(e)})
+    
+    return JsonResponse({'success': False, 'message': 'Método não permitido'})
+
+@login_required
+def ajax_posicao_atendimento_create(request):
+    """View AJAX para cadastrar posição de atendimento"""
+    if request.method == 'POST':
+        try:
+            form = PosicaoAtendimentoForm(request.POST)
+            if form.is_valid():
+                # Obter a quantidade de PAs a serem criadas
+                quantidade_pas = form.cleaned_data.get('quantidade_pas', 1)
+                
+                # Dados base da primeira PA
+                pa_base = form.save(commit=False)
+                
+                pas_criadas = []
+                for i in range(quantidade_pas):
+                    # Criar nova instância para cada PA (exceto a primeira)
+                    if i == 0:
+                        pa = pa_base
+                    else:
+                        pa = PosicaoAtendimento(
+                            titulo=pa_base.titulo,
+                            ilha=pa_base.ilha,
+                            sala=pa_base.sala,
+                            status=pa_base.status,
+                            observacoes=pa_base.observacoes
+                        )
+                    
+                    # Não definir número manualmente - deixar o model.save() gerar automaticamente
+                    pa.numero = None
+                    pa.save()
+                    pas_criadas.append(pa)
+                
+                # Mensagem de sucesso
+                if quantidade_pas == 1:
+                    mensagem = f'PA {pas_criadas[0].numero} cadastrada com sucesso!'
+                else:
+                    numeros_pas = [pa.numero for pa in pas_criadas]
+                    mensagem = f'{quantidade_pas} PAs cadastradas com sucesso: {", ".join(numeros_pas)}'
+                
+                return JsonResponse({
+                    'success': True,
+                    'message': mensagem
+                })
+            else:
+                errors = []
+                for field, error_list in form.errors.items():
+                    for error in error_list:
+                        errors.append(f"{field}: {error}")
+                return JsonResponse({
+                    'success': False,
+                    'message': 'Erro de validação: ' + '; '.join(errors)
+                })
+        except Exception as e:
+            return JsonResponse({'success': False, 'message': str(e)})
+    
+    return JsonResponse({'success': False, 'message': 'Método não permitido'})
+
+@login_required
+def ajax_tipo_periferico_create(request):
+    """View AJAX para cadastrar tipo de periférico"""
+    if request.method == 'POST':
+        try:
+            form = TipoPerifericoForm(request.POST)
+            if form.is_valid():
+                form.save()
+                return JsonResponse({
+                    'success': True,
+                    'message': 'Tipo de Periférico cadastrado com sucesso!'
+                })
+            else:
+                errors = []
+                for field, error_list in form.errors.items():
+                    for error in error_list:
+                        errors.append(f"{field}: {error}")
+                return JsonResponse({
+                    'success': False,
+                    'message': 'Erro de validação: ' + '; '.join(errors)
+                })
+        except Exception as e:
+            return JsonResponse({'success': False, 'message': str(e)})
+    
+    return JsonResponse({'success': False, 'message': 'Método não permitido'})
+
+@login_required
+def ajax_monitor_create(request):
+    """View AJAX para cadastrar monitor"""
+    if request.method == 'POST':
+        try:
+            form = MonitorForm(request.POST)
+            if form.is_valid():
+                form.save()
+                return JsonResponse({
+                    'success': True,
+                    'message': 'Monitor cadastrado com sucesso!'
+                })
+            else:
+                errors = []
+                for field, error_list in form.errors.items():
+                    for error in error_list:
+                        errors.append(f"{field}: {error}")
+                return JsonResponse({
+                    'success': False,
+                    'message': 'Erro de validação: ' + '; '.join(errors)
+                })
+        except Exception as e:
+            return JsonResponse({'success': False, 'message': str(e)})
+    
+    return JsonResponse({'success': False, 'message': 'Método não permitido'})

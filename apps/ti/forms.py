@@ -10,6 +10,8 @@ from .models import (
     Ilha,
     Computador,
     AtribuicaoComputadorPA,
+    Monitor,
+    AtribuicaoMonitorPA,
     Loja
 )
 from apps.funcionarios.models import Funcionario
@@ -38,12 +40,15 @@ class TipoPerifericoForm(forms.ModelForm):
 class PerifericoForm(forms.ModelForm):
     class Meta:
         model = Periferico
-        fields = ['tipo', 'marca', 'modelo', 'data_aquisicao', 'quantidade', 'loja', 'observacoes']
+        fields = ['tipo', 'marca', 'modelo', 'numero_serie', 'condicao', 'estado', 'status', 'data_aquisicao', 'quantidade', 'loja', 'observacoes']
         widgets = {
-
             'tipo': forms.Select(attrs={'class': 'form-control'}),
             'marca': forms.TextInput(attrs={'class': 'form-control'}),
             'modelo': forms.TextInput(attrs={'class': 'form-control'}),
+            'numero_serie': forms.TextInput(attrs={'class': 'form-control'}),
+            'condicao': forms.Select(attrs={'class': 'form-control'}),
+            'estado': forms.Select(attrs={'class': 'form-control'}),
+            'status': forms.Select(attrs={'class': 'form-control'}),
             'data_aquisicao': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
             'quantidade': forms.NumberInput(attrs={'class': 'form-control', 'min': 0}),
             'loja': forms.Select(attrs={'class': 'form-control'}),
@@ -64,33 +69,52 @@ class PerifericoForm(forms.ModelForm):
 class SalaForm(forms.ModelForm):
     class Meta:
         model = Sala
-        fields = ['nome', 'descricao']
+        fields = ['nome', 'titulo', 'loja', 'setor', 'funcionario_responsavel', 'descricao']
         widgets = {
             'nome': forms.TextInput(attrs={'class': 'form-control'}),
+            'titulo': forms.TextInput(attrs={'class': 'form-control'}),
+            'loja': forms.Select(attrs={'class': 'form-select'}),
+            'setor': forms.Select(attrs={'class': 'form-select'}),
+            'funcionario_responsavel': forms.Select(attrs={'class': 'form-select'}),
             'descricao': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
         }
 
 class IlhaForm(forms.ModelForm):
     class Meta:
         model = Ilha
-        fields = ['nome', 'sala', 'quantidade_pas', 'descricao']
+        fields = ['nome', 'titulo', 'sala', 'funcionario_responsavel', 'quantidade_pas', 'descricao']
         widgets = {
             'nome': forms.TextInput(attrs={'class': 'form-control'}),
-            'sala': forms.Select(attrs={'class': 'form-control'}),
+            'titulo': forms.TextInput(attrs={'class': 'form-control'}),
+            'sala': forms.Select(attrs={'class': 'form-select'}),
+            'funcionario_responsavel': forms.Select(attrs={'class': 'form-select'}),
             'quantidade_pas': forms.NumberInput(attrs={'class': 'form-control', 'min': 1}),
             'descricao': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
         }
+    
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Se já tem uma instância com sala definida, filtrar por loja da sala
+        if self.instance and self.instance.pk and self.instance.sala and self.instance.sala.loja:
+            self.fields['sala'].queryset = Sala.objects.filter(loja=self.instance.sala.loja)
 
 class PosicaoAtendimentoForm(forms.ModelForm):
+    quantidade_pas = forms.IntegerField(
+        initial=1,
+        min_value=1,
+        max_value=12,
+        widget=forms.NumberInput(attrs={'class': 'form-control', 'min': 1, 'max': 12})
+    )
+    
     class Meta:
         model = PosicaoAtendimento
-        fields = ['numero', 'sala', 'ilha', 'funcionario', 'status', 'observacoes']
+        fields = ['numero', 'titulo', 'sala', 'ilha', 'status', 'observacoes']
         widgets = {
             'numero': forms.TextInput(attrs={'class': 'form-control'}),
-            'sala': forms.Select(attrs={'class': 'form-control'}),
-            'ilha': forms.Select(attrs={'class': 'form-control'}),
-            'funcionario': forms.Select(attrs={'class': 'form-control'}),
-            'status': forms.Select(attrs={'class': 'form-control'}),
+            'titulo': forms.TextInput(attrs={'class': 'form-control'}),
+            'sala': forms.Select(attrs={'class': 'form-select'}),
+            'ilha': forms.Select(attrs={'class': 'form-select'}),
+            'status': forms.Select(attrs={'class': 'form-select'}),
             'observacoes': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
         }
         
@@ -103,6 +127,17 @@ class PosicaoAtendimentoForm(forms.ModelForm):
                 self.fields['numero'].help_text = "Deixe em branco para numeração automática baseada na ilha."
             except (ValueError, TypeError):
                 pass
+                
+    def clean(self):
+        cleaned_data = super().clean()
+        sala = cleaned_data.get('sala')
+        ilha = cleaned_data.get('ilha')
+        
+        # Verificar se a ilha pertence à sala selecionada
+        if sala and ilha and ilha.sala != sala:
+            self.add_error('ilha', 'A ilha selecionada não pertence à sala escolhida.')
+            
+        return cleaned_data
 
 class AtribuicaoFuncionarioPAForm(forms.ModelForm):
     class Meta:
@@ -171,12 +206,16 @@ class AtribuicaoPerifericoPAForm(forms.ModelForm):
 class ComputadorForm(forms.ModelForm):
     class Meta:
         model = Computador
-        fields = ['marca', 'quantidade', 'loja', 'status', 'observacoes']
+        fields = ['marca', 'modelo', 'numero_serie', 'condicao', 'estado', 'status', 'quantidade', 'loja', 'observacoes']
         widgets = {
             'marca': forms.TextInput(attrs={'class': 'form-control'}),
+            'modelo': forms.TextInput(attrs={'class': 'form-control'}),
+            'numero_serie': forms.TextInput(attrs={'class': 'form-control'}),
+            'condicao': forms.Select(attrs={'class': 'form-control'}),
+            'estado': forms.Select(attrs={'class': 'form-control'}),
+            'status': forms.Select(attrs={'class': 'form-control'}),
             'quantidade': forms.NumberInput(attrs={'class': 'form-control', 'min': 1}),
             'loja': forms.Select(attrs={'class': 'form-control'}),
-            'status': forms.Select(attrs={'class': 'form-control'}),
             'observacoes': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
         }
 
@@ -227,5 +266,89 @@ class AtribuicaoComputadorPAForm(forms.ModelForm):
         else:
             # Definir valores básicos para retornar a instância não salva
             instance.data_atribuicao = timezone.now()
+            instance.ativo = True
+            return instance
+
+class MonitorForm(forms.ModelForm):
+    class Meta:
+        model = Monitor
+        fields = ['marca', 'modelo', 'numero_serie', 'tamanho', 'resolucao', 'condicao', 'estado', 'status', 'loja', 'data_aquisicao', 'observacoes']
+        widgets = {
+            'marca': forms.TextInput(attrs={'class': 'form-control'}),
+            'modelo': forms.TextInput(attrs={'class': 'form-control'}),
+            'numero_serie': forms.TextInput(attrs={'class': 'form-control'}),
+            'tamanho': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Ex: 24", 27"'}),
+            'resolucao': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Ex: 1920x1080'}),
+            'condicao': forms.Select(attrs={'class': 'form-control'}),
+            'estado': forms.Select(attrs={'class': 'form-control'}),
+            'status': forms.Select(attrs={'class': 'form-control'}),
+            'loja': forms.Select(attrs={'class': 'form-control'}),
+            'data_aquisicao': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
+            'observacoes': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
+        }
+
+class AtribuicaoMonitorPAForm(forms.ModelForm):
+    class Meta:
+        model = AtribuicaoMonitorPA
+        fields = ['monitor', 'posicao_atendimento']
+        widgets = {
+            'monitor': forms.Select(attrs={'class': 'form-control'}),
+            'posicao_atendimento': forms.Select(attrs={'class': 'form-control'}),
+        }
+        
+    def clean(self):
+        cleaned_data = super().clean()
+        monitor = cleaned_data.get('monitor')
+        posicao_atendimento = cleaned_data.get('posicao_atendimento')
+        
+        if monitor and posicao_atendimento:
+            # Verificar se o monitor já está atribuído a outra PA
+            atribuicao_existente = AtribuicaoMonitorPA.objects.filter(
+                monitor=monitor,
+                ativo=True
+            ).exclude(
+                posicao_atendimento=posicao_atendimento
+            ).first()
+            
+            if atribuicao_existente:
+                self.add_error('monitor', f'Monitor já está atribuído à PA {atribuicao_existente.posicao_atendimento.numero}')
+        
+        return cleaned_data
+        
+    def save(self, commit=True):
+        instance = super().save(commit=False)
+        
+        # Se estamos atualizando, retornamos a instância normalmente
+        if self.instance.pk:
+            if commit:
+                instance.save()
+            return instance
+        
+        # Se estamos criando, usamos nossa função auxiliar
+        if commit:
+            # Verificar se já existe atribuição ativa para este monitor
+            monitor = self.cleaned_data['monitor']
+            atribuicao_existente = AtribuicaoMonitorPA.objects.filter(
+                monitor=monitor,
+                ativo=True
+            ).first()
+            
+            if atribuicao_existente:
+                # Desativar atribuição existente
+                atribuicao_existente.ativo = False
+                atribuicao_existente.data_remocao = timezone.now()
+                atribuicao_existente.save()
+            
+            # Criar nova atribuição
+            instance.ativo = True
+            instance.save()
+            
+            # Atualizar status do monitor
+            monitor.status = 'em_uso'
+            monitor.save()
+            
+            return instance
+        else:
+            # Definir valores básicos para retornar a instância não salva
             instance.ativo = True
             return instance

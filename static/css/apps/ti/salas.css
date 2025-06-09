@@ -2029,3 +2029,84 @@ ul.nav-tabs li.nav-item {
   from { opacity: 0.7; }
   to { opacity: 1; }
 }
+
+/* ===== Estilos para o Seletor de Loja ===== */
+.filtro-loja-container {
+  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+  border-radius: 12px;
+  border: 1px solid #dee2e6;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  transition: all 0.3s ease;
+}
+
+.filtro-loja-container:hover {
+  box-shadow: 0 4px 15px rgba(0,0,0,0.15);
+}
+
+.filtro-loja-container .card-title {
+  color: #495057;
+  font-weight: 600;
+  font-size: 0.95rem;
+  margin-bottom: 1rem;
+}
+
+.filtro-loja-container .form-select {
+  border: 2px solid #ced4da;
+  border-radius: 8px;
+  padding: 0.5rem 0.75rem;
+  font-size: 0.9rem;
+  transition: all 0.3s ease;
+}
+
+.filtro-loja-container .form-select:focus {
+  border-color: #0d6efd;
+  box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.25);
+}
+
+.filtro-loja-container .btn {
+  border-radius: 8px;
+  padding: 0.5rem 1rem;
+  font-weight: 500;
+  transition: all 0.3s ease;
+}
+
+.filtro-loja-container .btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+}
+
+.loja-info-text {
+  background-color: rgba(13, 110, 253, 0.1);
+  border-left: 4px solid #0d6efd;
+  padding: 0.5rem 0.75rem;
+  border-radius: 0 6px 6px 0;
+  margin-top: 0.75rem;
+  font-size: 0.85rem;
+}
+
+.loja-info-text strong {
+  color: #0d6efd;
+}
+
+/* Responsividade para dispositivos móveis */
+@media (max-width: 768px) {
+  .filtro-loja-container {
+    margin-bottom: 1.5rem;
+  }
+  
+  .filtro-loja-container .input-group {
+    flex-wrap: wrap;
+  }
+  
+  .filtro-loja-container .form-select {
+    margin-bottom: 0.5rem;
+    border-radius: 8px;
+  }
+  
+  .filtro-loja-container .btn {
+    width: 100%;
+    border-radius: 8px;
+  }
+}
+
+/* ===== Fim dos Estilos para o Seletor de Loja ===== */

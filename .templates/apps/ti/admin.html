@@ -2,7 +2,7 @@
 {% load static %}
 
 {% block header_title %}
-Admin TI - Cadastros<span class="produto-text"></span>
+Administração TI<span class="produto-text"></span>
 <!-- Seletor de tema (claro/escuro) -->
 <div class="theme-switch-wrapper ms-3 d-inline-block">
   <label class="theme-switch" for="checkbox">
@@ -36,16 +36,16 @@ Admin TI - Cadastros<span class="produto-text"></span>
 {% block content %}
 <div class="container my-4 app-ti">
   <div class="d-flex justify-content-between align-items-center mb-4 header-container">
-    <h1 class="titulo-pagina"><i class='bx bxs-cog me-2'></i>Cadastros de TI</h1>
+    <h1 class="titulo-pagina"><i class='bx bxs-cog me-2'></i>Administração de TI</h1>
   </div>
 
   <div class="row">
-    <!-- Coluna 1 -->
+    <!-- Coluna 1: Infraestrutura -->
     <div class="col-md-6">
       <!-- Card Sala -->
       <div class="card mb-4" id="card-sala">
         <div class="card-header">
-          <i class='bx bx-door-open'></i> Cadastrar Nova Sala
+          <i class='bx bx-door-open'></i> Cadastro de Salas
         </div>
         <div class="card-body">
           <form method="post" action="{% url 'ti:sala_create' %}">
@@ -55,6 +55,17 @@ Admin TI - Cadastros<span class="produto-text"></span>
                 <i class='bx bx-label'></i>Nome da Sala *
               </label>
               <input type="text" id="nome_sala" name="nome" class="form-control" required>
+            </div>
+            <div class="mb-3">
+              <label for="loja_sala" class="form-label">
+                <i class='bx bx-store'></i>Loja *
+              </label>
+              <select id="loja_sala" name="loja" class="form-select" required>
+                <option value="">-- Selecione uma Loja --</option>
+                {% for loja in lojas_list %}
+                  <option value="{{ loja.id }}">{{ loja.nome }}</option>
+                {% endfor %}
+              </select>
             </div>
             <div class="mb-3">
               <label for="descricao_sala" class="form-label">
@@ -72,7 +83,7 @@ Admin TI - Cadastros<span class="produto-text"></span>
       <!-- Card Ilha -->
       <div class="card mb-4" id="card-ilha">
         <div class="card-header">
-          <i class='bx bx-grid-alt'></i> Cadastrar Nova Ilha
+          <i class='bx bx-grid-alt'></i> Cadastro de Ilhas
         </div>
         <div class="card-body">
           <form method="post" action="{% url 'ti:ilha_create' %}">
@@ -84,13 +95,24 @@ Admin TI - Cadastros<span class="produto-text"></span>
               <input type="text" id="nome_ilha" name="nome" class="form-control" required>
             </div>
             <div class="mb-3">
+              <label for="loja_ilha" class="form-label">
+                <i class='bx bx-store'></i>Loja *
+              </label>
+              <select id="loja_ilha" name="loja" class="form-select" required>
+                <option value="">-- Selecione uma Loja --</option>
+                {% for loja in lojas_list %}
+                  <option value="{{ loja.id }}">{{ loja.nome }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="mb-3">
               <label for="sala_ilha" class="form-label">
                 <i class='bx bx-door-open'></i>Sala *
               </label>
               <select id="sala_ilha" name="sala" class="form-select" required>
                 <option value="">-- Selecione uma Sala --</option>
                 {% for sala in salas_list %}
-                  <option value="{{ sala.id }}">{{ sala.nome }}</option>
+                  <option value="{{ sala.id }}" data-loja="{{ sala.loja_id|default:'' }}">{{ sala.nome }}</option>
                 {% endfor %}
               </select>
             </div>
@@ -116,7 +138,7 @@ Admin TI - Cadastros<span class="produto-text"></span>
       <!-- Card Computador -->
       <div class="card mb-4" id="card-computador">
         <div class="card-header">
-          <i class='bx bx-laptop'></i> Cadastrar Computador
+          <i class='bx bx-laptop'></i> Cadastro de Computadores
         </div>
         <div class="card-body">
           <form method="post" action="{% url 'ti:computador_create' %}">
@@ -156,6 +178,49 @@ Admin TI - Cadastros<span class="produto-text"></span>
               </select>
             </div>
 
+            <!-- Campos condicionais para status "Em Uso" -->
+            <div id="campos_em_uso" class="campos-condicionais" style="display: none;">
+              <div class="mb-3">
+                <label for="sala_em_uso" class="form-label">
+                  <i class='bx bx-door-open'></i>Sala *
+                </label>
+                <select id="sala_em_uso" name="sala_em_uso" class="form-select">
+                  <option value="">-- Selecione uma Sala --</option>
+                  {% for sala in salas_list %}
+                    <option value="{{ sala.id }}">{{ sala.nome }}</option>
+                  {% endfor %}
+                </select>
+              </div>
+              
+              <div class="mb-3">
+                <label for="ilha_em_uso" class="form-label">
+                  <i class='bx bx-grid-alt'></i>Ilha *
+                </label>
+                <select id="ilha_em_uso" name="ilha_em_uso" class="form-select">
+                  <option value="">-- Primeiro selecione uma sala --</option>
+                </select>
+              </div>
+              
+              <div class="mb-3">
+                <label for="pa_em_uso" class="form-label">
+                  <i class='bx bx-desktop'></i>Posição de Atendimento (PA) *
+                </label>
+                <select id="pa_em_uso" name="pa_em_uso" class="form-select">
+                  <option value="">-- Primeiro selecione uma ilha --</option>
+                </select>
+              </div>
+            </div>
+            
+            <!-- Campos condicionais para status "Em Manutenção" -->
+            <div id="campos_manutencao" class="campos-condicionais" style="display: none;">
+              <div class="mb-3">
+                <label for="observacoes_manutencao" class="form-label">
+                  <i class='bx bx-message-square-detail'></i>Motivo da Manutenção *
+                </label>
+                <textarea id="observacoes_manutencao" name="observacoes_manutencao" class="form-control" rows="3" placeholder="Descreva o problema ou motivo da manutenção"></textarea>
+              </div>
+            </div>
+
             <div class="mb-3">
               <label for="observacoes_computador" class="form-label">
                 <i class='bx bx-align-left'></i>Observações
@@ -170,20 +235,29 @@ Admin TI - Cadastros<span class="produto-text"></span>
           </form>
         </div>
       </div>
-
-      <!-- Card de Loja removido - funcionalidade já existe em outro módulo -->
     </div>
 
-    <!-- Coluna 2 -->
+    <!-- Coluna 2: Equipamentos e Periféricos -->
     <div class="col-md-6">
-      <!-- Card PA -->
+      <!-- Card Posição de Atendimento (PA) -->
       <div class="card mb-4" id="card-posicao-atendimento">
         <div class="card-header">
-          <i class='bx bx-desktop'></i> Cadastrar nova PA
+          <i class='bx bx-desktop'></i> Cadastro de Posições de Atendimento (PAs)
         </div>
         <div class="card-body">
-          <form method="post" action="{% url 'ti:posicao_atendimento_create' %}">
+          <form method="post" action="{% url 'ti:posicao_atendimento_create' %}" id="form-pa">
             {% csrf_token %}
+            <div class="mb-3">
+              <label for="loja_pa" class="form-label">
+                <i class='bx bx-store'></i>Loja *
+              </label>
+              <select id="loja_pa" name="loja" class="form-select" required>
+                <option value="">-- Selecione uma Loja --</option>
+                {% for loja in lojas_list %}
+                  <option value="{{ loja.id }}">{{ loja.nome }}</option>
+                {% endfor %}
+              </select>
+            </div>
             <div class="mb-3">
               <label for="sala" class="form-label">
                 <i class='bx bx-door-open'></i>Sala *
@@ -191,7 +265,7 @@ Admin TI - Cadastros<span class="produto-text"></span>
               <select id="sala" name="sala" class="form-select" required>
                 <option value="">-- Selecione uma Sala --</option>
                 {% for sala in salas_list %}
-                  <option value="{{ sala.id }}">{{ sala.nome }}</option>
+                  <option value="{{ sala.id }}" data-loja="{{ sala.loja_id|default:'' }}">{{ sala.nome }}</option>
                 {% endfor %}
               </select>
             </div>
@@ -245,7 +319,7 @@ Admin TI - Cadastros<span class="produto-text"></span>
       <!-- Card Tipo de Periférico -->
       <div class="card mb-4" id="card-tipo-periferico">
         <div class="card-header">
-          <i class='bx bx-tag'></i> Cadastrar Novo Tipo de Periférico
+          <i class='bx bx-tag'></i> Cadastro de Tipos de Periféricos
         </div>
         <div class="card-body">
           <form method="post" action="{% url 'ti:tipo_periferico_create' %}">
@@ -272,7 +346,7 @@ Admin TI - Cadastros<span class="produto-text"></span>
       <!-- Card Cadastro de Ramal -->
       <div class="card mb-4" id="card-ramal">
         <div class="card-header">
-          <i class='bx bx-phone'></i> Cadastrar Ramal
+          <i class='bx bx-phone'></i> Gestão de Ramais
         </div>
         <div class="card-body">
           <form method="post" action="{% url 'ti:ramal_update' %}" id="form-ramal">
@@ -303,10 +377,10 @@ Admin TI - Cadastros<span class="produto-text"></span>
         </div>
       </div>
       
-      <!-- Card Cadastrar Novo Periférico (Migrado de atribuicao_periferico.html) -->
+      <!-- Card Cadastrar Periféricos em Lote -->
       <div class="card mb-4" id="card-periferico">
         <div class="card-header">
-          <i class='bx bx-devices'></i> Cadastrar Novos Periféricos
+          <i class='bx bx-devices'></i> Cadastro de Periféricos em Lote
         </div>
         <div class="card-body">
           <form method="post" action="{% url 'ti:periferico_create' %}" id="perifericos-form-inputs" novalidate>
@@ -746,5 +820,106 @@ document.addEventListener('DOMContentLoaded', function() {
     // Inicialização
     atualizarContador();
 });
+</script>
+
+<!-- Scripts específicos da página -->
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    // Filtrar salas por loja selecionada no formulário de Ilha
+    const lojaIlhaSelect = document.getElementById('loja_ilha');
+    const salaIlhaSelect = document.getElementById('sala_ilha');
+    
+    if (lojaIlhaSelect && salaIlhaSelect) {
+      lojaIlhaSelect.addEventListener('change', function() {
+        const lojaId = this.value;
+        
+        if (lojaId) {
+          // Carregar salas da loja selecionada via API
+          fetch(`/ti/api/salas-por-loja/${lojaId}/`)
+            .then(response => response.json())
+            .then(data => {
+              salaIlhaSelect.innerHTML = '<option value="">-- Selecione uma Sala --</option>';
+              
+              data.salas.forEach(sala => {
+                const option = document.createElement('option');
+                option.value = sala.id;
+                option.textContent = sala.nome;
+                option.setAttribute('data-loja', lojaId);
+                salaIlhaSelect.appendChild(option);
+              });
+            })
+            .catch(error => console.error('Erro ao carregar salas:', error));
+        } else {
+          // Resetar o select de salas
+          salaIlhaSelect.innerHTML = '<option value="">-- Selecione uma Sala --</option>';
+        }
+      });
+    }
+    
+    // Filtrar salas por loja selecionada no formulário de PA
+    const lojaPASelect = document.getElementById('loja_pa');
+    const salaPASelect = document.getElementById('sala');
+    const ilhaPASelect = document.getElementById('ilha');
+    
+    if (lojaPASelect && salaPASelect) {
+      lojaPASelect.addEventListener('change', function() {
+        const lojaId = this.value;
+        
+        if (lojaId) {
+          // Carregar salas da loja selecionada via API
+          fetch(`/ti/api/salas-por-loja/${lojaId}/`)
+            .then(response => response.json())
+            .then(data => {
+              salaPASelect.innerHTML = '<option value="">-- Selecione uma Sala --</option>';
+              
+              data.salas.forEach(sala => {
+                const option = document.createElement('option');
+                option.value = sala.id;
+                option.textContent = sala.nome;
+                option.setAttribute('data-loja', lojaId);
+                salaPASelect.appendChild(option);
+              });
+            })
+            .catch(error => console.error('Erro ao carregar salas:', error));
+        } else {
+          // Resetar o select de salas
+          salaPASelect.innerHTML = '<option value="">-- Selecione uma Sala --</option>';
+        }
+        
+        // Limpar também a seleção da ilha
+        if (ilhaPASelect) {
+          ilhaPASelect.innerHTML = '<option value="">-- Selecione uma Ilha --</option>';
+        }
+      });
+    }
+    
+    // Função para carregar ilhas por sala selecionada
+    function carregarIlhasPorSala(salaId, ilhaSelectId) {
+      if (!salaId) return;
+      
+      fetch(`/ti/api/ilhas-por-sala/${salaId}/`)
+        .then(response => response.json())
+        .then(data => {
+          const ilhaSelect = document.getElementById(ilhaSelectId);
+          ilhaSelect.innerHTML = '<option value="">-- Selecione uma Ilha --</option>';
+          
+          data.ilhas.forEach(ilha => {
+            const option = document.createElement('option');
+            option.value = ilha.id;
+            option.textContent = ilha.nome;
+            ilhaSelect.appendChild(option);
+          });
+        })
+        .catch(error => console.error('Erro ao carregar ilhas:', error));
+    }
+    
+    // Carregar ilhas baseado na sala selecionada
+    if (salaPASelect && ilhaPASelect) {
+      salaPASelect.addEventListener('change', function() {
+        const salaId = this.value;
+        carregarIlhasPorSala(salaId, 'ilha');
+      });
+    }
+  });
 </script>
 {% endblock %} 

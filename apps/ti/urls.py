@@ -49,6 +49,13 @@ urlpatterns = [
     path('computadores/cadastrar/', views.computador_create, name='computador_create'),
     path('computadores/atribuir/', views.atribuicao_computador_pa_create, name='atribuicao_computador_pa_create'),
     
+    # URLs para Monitores
+    path('monitores/', views.monitor_list, name='monitor_list'),
+    path('monitores/cadastrar/', views.monitor_create, name='monitor_create'),
+    path('monitores/editar/<int:pk>/', views.monitor_update, name='monitor_update'),
+    path('monitores/excluir/<int:pk>/', views.monitor_delete, name='monitor_delete'),
+    path('monitores/atribuir/', views.atribuicao_monitor_pa_create, name='atribuicao_monitor_pa_create'),
+    
     # URLs para Salas
     path('salas/', views.sala_list, name='sala_list'),
     path('salas/cadastrar/', views.sala_create, name='sala_create'),
@@ -95,6 +102,12 @@ urlpatterns = [
     path('api/computador/<int:computador_id>/atualizar_status/', views.api_atualizar_status_computador, name='api_atualizar_status_computador'),
     path('api/perifericos-disponiveis-por-tipo/<int:tipo_id>/', views.api_listar_perifericos_disponiveis_por_tipo, name='api_listar_perifericos_disponiveis_por_tipo'),
     
+    # APIs para Monitores
+    path('api/monitores_disponiveis/', views.api_monitores_disponiveis, name='api_monitores_disponiveis'),
+    path('api/pa/<int:pa_id>/adicionar_monitor/', views.api_adicionar_monitor_pa, name='api_adicionar_monitor_pa'),
+    path('api/pa/<int:pa_id>/remover_monitor/', views.api_remover_monitor_pa, name='api_remover_monitor_pa'),
+    path('api/monitor/<int:monitor_id>/atualizar_status/', views.api_atualizar_status_monitor, name='api_atualizar_status_monitor'),
+    
     # URLs para gerenciamento de ramais
     # path('ramal/update/', views.ramal_update, name='ramal_update'),
     path('api/verificar-ramal/', views.api_verificar_ramal, name='api_verificar_ramal'),
@@ -112,4 +125,17 @@ urlpatterns = [
     path('api/listar-computadores/', views.api_listar_computadores, name='api_listar_computadores'),
     path('api/listar-posicoes-atendimento/', views.api_listar_posicoes_atendimento, name='api_listar_posicoes_atendimento'),
     path('api/funcionarios/', views.api_funcionarios, name='api_funcionarios'),
+
+    # Novas APIs para salas por loja e ilhas por sala
+    path('api/salas-por-loja/<int:loja_id>/', views.api_salas_por_loja, name='api_salas_por_loja'),
+    path('api/ilhas-por-sala/<int:sala_id>/', views.api_ilhas_por_sala, name='api_ilhas_por_sala'),
+    
+    # URLs AJAX para formulários (evitar reload da página)
+    path('ajax/periferico/cadastrar/', views.ajax_periferico_create, name='ajax_periferico_create'),
+    path('ajax/computador/cadastrar/', views.ajax_computador_create, name='ajax_computador_create'),
+    path('ajax/sala/cadastrar/', views.ajax_sala_create, name='ajax_sala_create'),
+    path('ajax/ilha/cadastrar/', views.ajax_ilha_create, name='ajax_ilha_create'),
+    path('ajax/posicao-atendimento/cadastrar/', views.ajax_posicao_atendimento_create, name='ajax_posicao_atendimento_create'),
+    path('ajax/tipo-periferico/cadastrar/', views.ajax_tipo_periferico_create, name='ajax_tipo_periferico_create'),
+    path('ajax/monitor/cadastrar/', views.ajax_monitor_create, name='ajax_monitor_create'),
 ] 
