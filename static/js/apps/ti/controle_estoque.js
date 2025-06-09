@@ -7,12 +7,102 @@
 $(document).ready(function() {
     console.log('Controle de Estoque - TI carregado com sucesso');
     
-    // Configurar o seletor de lojas
+    // Configurar o seletor de lojas com loading state
     $('#loja-selector').on('change', function() {
         const lojaId = $(this).val();
-        // Redirecionar para a mesma página com o parâmetro de loja
-        window.location.href = `${window.location.pathname}?loja=${lojaId}`;
+        
+        // Mostrar loading state
+        mostrarLoadingState();
+        
+        // Salvar o tamanho atual da tabela antes da transição
+        salvarTamanhoTabela();
+        
+        // Pequeno delay para mostrar o loading antes de redirecionar
+        setTimeout(() => {
+            // Redirecionar para a mesma página com o parâmetro de loja
+            window.location.href = `${window.location.pathname}?loja=${lojaId}`;
+        }, 200);
     });
+    
+    // Função para mostrar loading state durante transição
+    function mostrarLoadingState() {
+        const $cardEstoque = $('#card-estoque');
+        const $tableContainer = $cardEstoque.find('.table-responsive');
+        
+        // Adicionar overlay de loading
+        if (!$tableContainer.find('.loading-overlay').length) {
+            const loadingHtml = `
+                <div class="loading-overlay position-absolute w-100 h-100 d-flex align-items-center justify-content-center">
+                    <div class="text-center">
+                        <div class="spinner-border text-primary mb-2" role="status">
+                            <span class="visually-hidden">Carregando...</span>
+                        </div>
+                        <p class="mb-0 text-muted">Atualizando dados da loja...</p>
+                    </div>
+                </div>
+            `;
+            $tableContainer.css('position', 'relative').append(loadingHtml);
+        }
+        
+        // Adicionar classe de transição
+        $cardEstoque.addClass('store-transition');
+    }
+    
+    // Função para salvar o tamanho atual da tabela
+    function salvarTamanhoTabela() {
+        const $cardEstoque = $('#card-estoque');
+        const currentWidth = $cardEstoque.width();
+        const currentHeight = $cardEstoque.height();
+        
+        // Salvar no localStorage para manter consistência
+        localStorage.setItem('ti_estoque_width', currentWidth);
+        localStorage.setItem('ti_estoque_height', currentHeight);
+    }
+    
+    // Função para restaurar o tamanho da tabela
+    function restaurarTamanhoTabela() {
+        const savedWidth = localStorage.getItem('ti_estoque_width');
+        const savedHeight = localStorage.getItem('ti_estoque_height');
+        
+        if (savedWidth && savedHeight) {
+            const $cardEstoque = $('#card-estoque');
+            
+            // Aplicar temporariamente o tamanho salvo para evitar "pulo"
+            $cardEstoque.css({
+                'min-width': Math.max(900, parseInt(savedWidth)) + 'px',
+                'min-height': Math.max(400, parseInt(savedHeight)) + 'px'
+            });
+            
+            // Remover as restrições após um tempo para permitir ajuste natural
+            setTimeout(() => {
+                $cardEstoque.css({
+                    'min-height': '400px' // Manter apenas altura mínima
+                });
+            }, 1000);
+        }
+    }
+    
+    // Função para garantir tamanho mínimo consistente
+    function garantirTamanhoConsistente() {
+        const $cardEstoque = $('#card-estoque');
+        const $tableResponsive = $cardEstoque.find('.table-responsive');
+        const $table = $cardEstoque.find('.table');
+        
+        // Garantir largura mínima do card
+        if ($cardEstoque.width() < 900) {
+            $cardEstoque.css('min-width', '900px');
+        }
+        
+        // Garantir altura mínima da área da tabela
+        if ($tableResponsive.height() < 400) {
+            $tableResponsive.css('min-height', '400px');
+        }
+        
+        // Garantir largura mínima da tabela
+        if ($table.width() < 800) {
+            $table.css('min-width', '800px');
+        }
+    }
     
     // Corrigir a contagem total para não somar duplicado os periféricos associados a PAs
     // Movido para depois da definição da função
@@ -134,9 +224,23 @@ $(document).ready(function() {
     }
     
     // Inicializa as funcionalidades
+    restaurarTamanhoTabela();
+    garantirTamanhoConsistente();
     configurarDestaqueTabelaEstoque();
     configurarTooltips();
     destacarCelulasVazias();
     fixTotalInventoryCount();
     observarMudancaDeTema();
+    
+    // Garantir tamanho após carregamento completo
+    $(window).on('load', function() {
+        setTimeout(() => {
+            garantirTamanhoConsistente();
+        }, 500);
+    });
+    
+    // Ajustar tamanho quando a janela for redimensionada
+    $(window).on('resize', function() {
+        garantirTamanhoConsistente();
+    });
 }); 

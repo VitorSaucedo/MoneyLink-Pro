@@ -163,7 +163,9 @@ body {
     position: relative;
     overflow: hidden;
     background: linear-gradient(135deg, rgba(255, 255, 255, 1) 0%, rgba(245, 255, 245, 0.8) 100%);
-    min-height: 200px;
+    height: 550px; /* Altura fixa para consistência */
+    min-height: 550px; /* Altura mínima igual à altura fixa */
+    max-height: 550px; /* Altura máxima para evitar crescimento */
 }
 
 /* Estilo para botões dentro das abas de ilhas - Inativos iguais aos de Salas */
@@ -411,8 +413,9 @@ ul.nav-tabs li.nav-item {
 .tab-content {
     position: relative;
     overflow: hidden;
-    min-height: 300px; /* Altura mínima para evitar saltos */
-    transition: min-height 0.3s ease;
+    height: 600px; /* Altura fixa para manter consistência */
+    min-height: 600px; /* Altura mínima igual à altura fixa */
+    transition: none; /* Remove transição de altura */
 }
 
 /* Estilos específicos para o wrapper de animação de slide */
@@ -443,11 +446,15 @@ ul.nav-tabs li.nav-item {
    ========================================== */
 .pa-container {
     padding: 1rem 0.5rem;
+    height: 480px; /* Altura fixa para o container de PAs */
+    overflow-y: auto; /* Scroll vertical quando necessário */
 }
 
 .pa-grid-dual-column {
     display: flex;
     gap: 20px;
+    height: 100%; /* Ocupa toda altura do container pai */
+    overflow: visible; /* Permite que colunas tenham scroll independente */
 }
 
 .pa-column {
@@ -455,6 +462,48 @@ ul.nav-tabs li.nav-item {
     display: flex;
     flex-direction: column;
     gap: 20px;
+    height: 100%; /* Ocupa toda altura disponível */
+    overflow-y: auto; /* Scroll individual para cada coluna */
+    padding-right: 5px; /* Pequeno espaçamento para a scrollbar */
+}
+
+/* Scrollbar personalizada para modo claro */
+.pa-column::-webkit-scrollbar {
+    width: 8px;
+}
+
+.pa-column::-webkit-scrollbar-track {
+    background: #f0f0f0;
+    border-radius: 4px;
+}
+
+.pa-column::-webkit-scrollbar-thumb {
+    background-color: var(--color-secondary);
+    border-radius: 4px;
+    border: 2px solid #f0f0f0;
+}
+
+.pa-column::-webkit-scrollbar-thumb:hover {
+    background-color: var(--color-primary-dark);
+}
+
+.pa-container::-webkit-scrollbar {
+    width: 8px;
+}
+
+.pa-container::-webkit-scrollbar-track {
+    background: #f0f0f0;
+    border-radius: 4px;
+}
+
+.pa-container::-webkit-scrollbar-thumb {
+    background-color: var(--color-secondary);
+    border-radius: 4px;
+    border: 2px solid #f0f0f0;
+}
+
+.pa-container::-webkit-scrollbar-thumb:hover {
+    background-color: var(--color-primary-dark);
 }
 
 /* Ordenação das PAs agora é controlada pelo JavaScript */
@@ -871,6 +920,13 @@ ul.nav-tabs li.nav-item {
 @media (max-width: 992px) {
     .pa-grid-dual-column {
         flex-direction: column;
+        height: 100% !important; /* Mantém altura fixa */
+    }
+    
+    .pa-column {
+        height: auto !important; /* Permite altura automática em mobile */
+        max-height: 240px !important; /* Altura máxima para cada coluna */
+        overflow-y: auto !important;
     }
     
     .container {
@@ -890,6 +946,30 @@ ul.nav-tabs li.nav-item {
 @media (max-width: 576px) {
     .pa-grid-dual-column {
         flex-direction: column;
+        height: 100% !important; /* Mantém altura fixa */
+    }
+    
+    .pa-column {
+        height: auto !important; /* Altura automática em telas muito pequenas */
+        max-height: 200px !important; /* Altura máxima reduzida */
+        overflow-y: auto !important;
+    }
+    
+    .pa-container {
+        height: 450px !important; /* Altura reduzida para mobile */
+    }
+    
+    .salas-content,
+    .ilhas-content {
+        height: 500px !important; /* Altura reduzida para mobile */
+        min-height: 500px !important;
+        max-height: 500px !important;
+    }
+    
+    .tab-content {
+        height: 550px !important; /* Altura reduzida para mobile */
+        min-height: 550px !important;
+        max-height: 550px !important;
     }
     
     .pa-card {
@@ -1764,7 +1844,9 @@ ul.nav-tabs li.nav-item {
 }
 
 #salas-tab-content {
-  min-height: auto !important;
+  height: 600px !important;
+  min-height: 600px !important;
+  max-height: 600px !important;
 }
 
 /* ==========================================
@@ -2012,12 +2094,18 @@ ul.nav-tabs li.nav-item {
   transition: all 0.2s ease;
 }
 
-/* Garantir que não haja altura mínima definida em nenhum container de tabs */
-.tab-content,
+/* Garantir altura fixa em todos os containers de tabs para consistência */
+.tab-content {
+  height: 600px !important;
+  min-height: 600px !important;
+  max-height: 600px !important;
+}
+
 .salas-content, 
 .ilhas-content {
-  min-height: auto !important;
-  height: auto !important;
+  height: 550px !important;
+  min-height: 550px !important;
+  max-height: 550px !important;
 }
 
 /* Adicionar regra para evitar saltos abruptos durante transições */

@@ -310,9 +310,15 @@ def controle_estoque(request):
             loja_atual = primeira_loja
     
     # Obter todas as salas com ilhas pré-carregadas
-    salas = Sala.objects.all().prefetch_related(
-        Prefetch('ilhas', queryset=Ilha.objects.all().order_by('nome'))
-    )
+    if loja_selecionada:
+        salas = Sala.objects.filter(loja_id=loja_selecionada).prefetch_related(
+            Prefetch('ilhas', queryset=Ilha.objects.filter(sala__loja_id=loja_selecionada).order_by('nome'))
+        )
+    else:
+        salas = Sala.objects.all().prefetch_related(
+            Prefetch('ilhas', queryset=Ilha.objects.all().order_by('nome'))
+        )
+
     
     # Obter todos os tipos de periféricos
     tipos_perifericos = TipoPeriferico.objects.all().order_by('nome')

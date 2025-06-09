@@ -73,7 +73,8 @@ body {
     flex-direction: column;
     gap: 30px;
     justify-content: center;
-    max-width: 1200px;
+    max-width: none;
+    width: 100%;
     border: none;
     box-shadow: none;
 }
@@ -823,47 +824,49 @@ body,
 /* Estilos para a transição de loja e carregamento */
 .store-transition {
     position: relative;
-    transition: all 0.3s ease;
-    opacity: 0.7;
+    transition: all 0.3s ease-in-out;
+    opacity: 0.8;
 }
 
 .loading-overlay {
-    position: absolute;
+    position: absolute !important;
     top: 0;
     left: 0;
-    right: 0;
-    bottom: 0;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
+    width: 100% !important;
+    height: 100% !important;
+    background-color: rgba(255, 255, 255, 0.9);
+    backdrop-filter: blur(2px);
+    z-index: 1000;
+    display: flex !important;
     align-items: center;
-    background-color: rgba(255, 255, 255, 0.8);
-    z-index: 10;
+    justify-content: center;
     border-radius: 10px;
+    transition: opacity 0.3s ease;
 }
 
 [data-theme="dark"] .loading-overlay {
-    background-color: rgba(30, 30, 47, 0.8);
+    background-color: rgba(30, 30, 47, 0.9);
 }
 
 .loading-overlay p {
-    margin-top: 10px;
-    font-weight: 500;
-    color: var(--color-primary-dark);
+    color: var(--color-text-light);
+    font-size: 0.9rem;
+    margin: 0;
 }
 
 [data-theme="dark"] .loading-overlay p {
-    color: var(--color-text-dark);
+    color: var(--color-text-light);
 }
 
 .loading-overlay .spinner-border {
-    color: var(--color-secondary) !important;
-    width: 3rem;
-    height: 3rem;
+    width: 2rem;
+    height: 2rem;
+    border-width: 0.25rem;
 }
 
 [data-theme="dark"] .loading-overlay .spinner-border {
-    color: var(--ti-accent-tertiary) !important;
+    border-color: #6e42c1;
+    border-right-color: transparent;
 }
 
 /* Adicionar keyframes para animação de gradiente se não existir em outro lugar */
@@ -889,4 +892,265 @@ body,
   100% {
     background-position: 0% 50%;
   }
+}
+
+/* ==========================================
+   Estilos para manter tamanho da tabela consistente
+   ========================================== */
+
+/* Container da tabela com tamanho fixo */
+#card-estoque {
+    min-width: 900px; /* Largura mínima do card */
+    max-width: 100%;  /* Não exceder a largura do container pai */
+}
+
+/* Container da tabela responsiva com tamanho fixo */
+#card-estoque .table-responsive {
+    min-height: 400px; /* Altura mínima consistente */
+    max-height: 600px; /* Altura máxima para controlar scroll vertical se necessário */
+    overflow-x: auto;  /* Scroll horizontal se necessário */
+    overflow-y: auto;  /* Scroll vertical se necessário */
+    position: relative;
+}
+
+/* Tabela com largura mínima para garantir consistência */
+#card-estoque .table {
+    min-width: 800px; /* Largura mínima da tabela */
+    table-layout: auto; /* Permite que as colunas se ajustem automaticamente */
+    margin-bottom: 0;
+}
+
+/* Colunas com larguras consistentes */
+#card-estoque .table th:first-child,
+#card-estoque .table td:first-child {
+    min-width: 150px; /* Coluna de periférico */
+    width: 150px;
+    position: sticky;
+    left: 0;
+    background-color: var(--color-white);
+    z-index: 2;
+}
+
+[data-theme="dark"] #card-estoque .table th:first-child,
+[data-theme="dark"] #card-estoque .table td:first-child {
+    background-color: #1e1e2f;
+}
+
+#card-estoque .table th:nth-child(2),
+#card-estoque .table td:nth-child(2) {
+    min-width: 120px; /* Coluna de total no estoque */
+    width: 120px;
+    position: sticky;
+    left: 150px;
+    background-color: var(--color-white);
+    z-index: 2;
+}
+
+[data-theme="dark"] #card-estoque .table th:nth-child(2),
+[data-theme="dark"] #card-estoque .table td:nth-child(2) {
+    background-color: #1e1e2f;
+}
+
+#card-estoque .table th:last-child,
+#card-estoque .table td:last-child {
+    min-width: 100px; /* Coluna de total */
+    width: 100px;
+    position: sticky;
+    right: 0;
+    background-color: var(--color-white);
+    z-index: 2;
+}
+
+[data-theme="dark"] #card-estoque .table th:last-child,
+[data-theme="dark"] #card-estoque .table td:last-child {
+    background-color: #1e1e2f;
+}
+
+/* Colunas de salas/ilhas com largura fixa */
+#card-estoque .table th:not(:first-child):not(:nth-child(2)):not(:last-child),
+#card-estoque .table td:not(:first-child):not(:nth-child(2)):not(:last-child) {
+    min-width: 120px;
+    width: 120px;
+    text-align: center;
+}
+
+/* Garantir que o thead não quebre */
+#card-estoque .table thead {
+    position: sticky;
+    top: 0;
+    z-index: 3;
+}
+
+#card-estoque .table thead th {
+    background-color: var(--color-light-gray);
+    border-bottom: 2px solid var(--color-secondary);
+}
+
+[data-theme="dark"] #card-estoque .table thead th {
+    background-color: #2d2438;
+    border-bottom-color: #6e42c1;
+}
+
+/* Override específico para a página de controle de estoque */
+.ti-module .container {
+    max-width: none !important;
+}
+
+/* Responsividade para telas pequenas */
+@media (max-width: 768px) {
+    #card-estoque {
+        min-width: 100%;
+    }
+    
+    #card-estoque .table {
+        min-width: 600px;
+    }
+    
+    #card-estoque .table th:not(:first-child):not(:nth-child(2)):not(:last-child),
+    #card-estoque .table td:not(:first-child):not(:nth-child(2)):not(:last-child) {
+        min-width: 80px;
+        width: 80px;
+    }
+    
+    #card-estoque .table th:first-child,
+    #card-estoque .table td:first-child {
+        min-width: 120px;
+        width: 120px;
+    }
+    
+    #card-estoque .table th:nth-child(2),
+    #card-estoque .table td:nth-child(2) {
+        min-width: 100px;
+        width: 100px;
+        left: 120px;
+    }
+}
+
+/* Melhorias no loading overlay */
+.loading-overlay {
+    position: absolute !important;
+    top: 0;
+    left: 0;
+    width: 100% !important;
+    height: 100% !important;
+    background-color: rgba(255, 255, 255, 0.9);
+    backdrop-filter: blur(2px);
+    z-index: 1000;
+    display: flex !important;
+    align-items: center;
+    justify-content: center;
+    border-radius: 10px;
+    transition: opacity 0.3s ease;
+}
+
+[data-theme="dark"] .loading-overlay {
+    background-color: rgba(30, 30, 47, 0.9);
+}
+
+.loading-overlay p {
+    color: var(--color-text-light);
+    font-size: 0.9rem;
+    margin: 0;
+}
+
+[data-theme="dark"] .loading-overlay p {
+    color: var(--color-text-light);
+}
+
+.loading-overlay .spinner-border {
+    width: 2rem;
+    height: 2rem;
+    border-width: 0.25rem;
+}
+
+[data-theme="dark"] .loading-overlay .spinner-border {
+    border-color: #6e42c1;
+    border-right-color: transparent;
+}
+
+/* Transição suave para mudança de loja */
+.store-transition {
+    transition: all 0.3s ease-in-out;
+    opacity: 0.8;
+}
+
+/* Animação para a troca de conteúdo */
+@keyframes fadeInContent {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+#card-estoque .table-responsive {
+    animation: fadeInContent 0.5s ease-out;
+}
+
+/* Melhoria na estabilidade visual */
+#card-estoque .card-body {
+    min-height: 500px;
+    transition: min-height 0.3s ease;
+}
+
+/* Garantir que colunas sticky funcionem corretamente */
+#card-estoque .table th.sticky-col,
+#card-estoque .table td.sticky-col {
+    position: sticky;
+    background-color: inherit;
+    z-index: 2;
+}
+
+/* Sombras para as colunas sticky */
+#card-estoque .table th:first-child::after,
+#card-estoque .table td:first-child::after,
+#card-estoque .table th:nth-child(2)::after,
+#card-estoque .table td:nth-child(2)::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    right: -1px;
+    bottom: 0;
+    width: 1px;
+    background: linear-gradient(to bottom, 
+        rgba(0,0,0,0.1) 0%, 
+        rgba(0,0,0,0.15) 50%, 
+        rgba(0,0,0,0.1) 100%);
+    pointer-events: none;
+}
+
+[data-theme="dark"] #card-estoque .table th:first-child::after,
+[data-theme="dark"] #card-estoque .table td:first-child::after,
+[data-theme="dark"] #card-estoque .table th:nth-child(2)::after,
+[data-theme="dark"] #card-estoque .table td:nth-child(2)::after {
+    background: linear-gradient(to bottom, 
+        rgba(255,255,255,0.1) 0%, 
+        rgba(255,255,255,0.15) 50%, 
+        rgba(255,255,255,0.1) 100%);
+}
+
+#card-estoque .table th:last-child::before,
+#card-estoque .table td:last-child::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -1px;
+    bottom: 0;
+    width: 1px;
+    background: linear-gradient(to bottom, 
+        rgba(0,0,0,0.1) 0%, 
+        rgba(0,0,0,0.15) 50%, 
+        rgba(0,0,0,0.1) 100%);
+    pointer-events: none;
+}
+
+[data-theme="dark"] #card-estoque .table th:last-child::before,
+[data-theme="dark"] #card-estoque .table td:last-child::before {
+    background: linear-gradient(to bottom, 
+        rgba(255,255,255,0.1) 0%, 
+        rgba(255,255,255,0.15) 50%, 
+        rgba(255,255,255,0.1) 100%);
 }
