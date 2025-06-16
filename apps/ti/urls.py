@@ -144,6 +144,15 @@ urlpatterns = [
     path('emails/excluir/<int:pk>/', views.email_delete, name='email_delete'),
     path('api/emails-data/', views.api_emails_data, name='api_emails_data'),
     
+    # URLs para Controle de Acessos
+    path('controle-acessos/', views.controle_acessos, name='controle_acessos'),
+    path('storm/cadastrar/', views.storm_create, name='storm_create'),
+    path('storm/editar/<int:pk>/', views.storm_update, name='storm_update'),
+    path('storm/excluir/<int:pk>/', views.storm_delete, name='storm_delete'),
+    path('sistema/cadastrar/', views.sistema_create, name='sistema_create'),
+    path('sistema/editar/<int:pk>/', views.sistema_update, name='sistema_update'),
+    path('sistema/excluir/<int:pk>/', views.sistema_delete, name='sistema_delete'),
+    
     # URLs AJAX para formulários (evitar reload da página)
     path('ajax/periferico/cadastrar/', views.ajax_periferico_create, name='ajax_periferico_create'),
     path('ajax/computador/cadastrar/', views.ajax_computador_create, name='ajax_computador_create'),

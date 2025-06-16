@@ -14,7 +14,9 @@ from .models import (
     Monitor,
     AtribuicaoMonitorPA,
     Chip,
-    Email
+    Email,
+    Storm,
+    Sistema
 )
 
 # Classes base e inlines
@@ -382,6 +384,70 @@ class EmailAdmin(TIModelAdmin):
         return "-"
     get_ramal_info.short_description = 'Ramal'
     get_ramal_info.admin_order_field = 'ramal__nome_completo'
+
+# Admin para Storm
+@admin.register(Storm)
+class StormAdmin(TIModelAdmin):
+    list_display = ('id', 'get_funcionario_nome', 'usuario', 'email_administrativo', 'situacao')
+    list_filter = ('situacao', 'funcionario__loja', 'funcionario__setor')
+    search_fields = ('funcionario__nome_completo', 'usuario', 'email_administrativo')
+    autocomplete_fields = ['funcionario']
+    
+    fieldsets = (
+        ('Informações do Funcionário', {
+            'fields': ('funcionario',)
+        }),
+        ('Dados de Acesso Storm', {
+            'fields': ('usuario', 'senha', 'email_administrativo')
+        }),
+        ('Status', {
+            'fields': ('situacao',)
+        }),
+    )
+    
+    def get_funcionario_nome(self, obj):
+        if obj.funcionario:
+            return obj.funcionario.nome_completo
+        return "-"
+    get_funcionario_nome.short_description = 'Funcionário'
+    get_funcionario_nome.admin_order_field = 'funcionario__nome_completo'
+
+# Admin para Sistema
+@admin.register(Sistema)
+class SistemaAdmin(TIModelAdmin):
+    list_display = ('id', 'get_funcionario_nome', 'acesso', 'get_cargo', 'departamento_setor')
+    list_filter = ('funcionario__loja', 'funcionario__setor', 'funcionario__cargo')
+    search_fields = ('funcionario__nome_completo', 'acesso', 'departamento_setor')
+    autocomplete_fields = ['funcionario']
+    
+    fieldsets = (
+        ('Informações do Funcionário', {
+            'fields': ('funcionario',)
+        }),
+        ('Dados de Acesso Sistema', {
+            'fields': ('acesso', 'senha')
+        }),
+        ('Informações Profissionais', {
+            'fields': ('departamento_setor',)
+        }),
+    )
+    
+    def get_funcionario_nome(self, obj):
+        if obj.funcionario:
+            return obj.funcionario.nome_completo
+        return "-"
+    get_funcionario_nome.short_description = 'Funcionário'
+    get_funcionario_nome.admin_order_field = 'funcionario__nome_completo'
+    
+    def get_cargo(self, obj):
+        if obj.cargo:
+            return obj.cargo
+        elif obj.funcionario and obj.funcionario.cargo:
+            return obj.funcionario.cargo.nome
+        return "-"
+    get_cargo.short_description = 'Cargo'
+    
+
 
 # Removendo os registros individuais das atribuições que agora são inlines
 # Não registrar estes modelos diretamente no admin

@@ -394,7 +394,7 @@ Administração TI<span class="produto-text"></span>
               <label for="funcionario_chip" class="form-label">
                 <i class='bx bx-user'></i>Funcionário *
               </label>
-              <select id="funcionario_chip" name="ramal" class="form-select" required>
+              <select id="funcionario_chip" name="funcionario" class="form-select" required>
                 <option value="">-- Selecione um Funcionário --</option>
                 {% for funcionario in funcionarios_list %}
                   <option value="{{ funcionario.id }}">{{ funcionario.nome_completo }}</option>
@@ -585,7 +585,7 @@ Administração TI<span class="produto-text"></span>
           </h5>
         </div>
         <div class="card-body">
-          <form id="form-email" method="post">
+          <form id="form-email" method="post" action="{% url 'ti:email_create' %}">
             {% csrf_token %}
             
             <div class="mb-3">
@@ -634,6 +634,104 @@ Administração TI<span class="produto-text"></span>
         </div>
       </div>
     </div>
+    
+    <!-- Card Storm -->
+    <div class="col-md-6">
+      <div class="card mb-4" id="card-storm">
+        <div class="card-header">
+          <i class='bx bx-cloud-lightning'></i> Cadastro de Storm
+        </div>
+        <div class="card-body">
+          <form method="post" action="{% url 'ti:storm_create' %}">
+            {% csrf_token %}
+            <div class="mb-3">
+              <label for="funcionario_storm" class="form-label">
+                <i class='bx bx-user'></i>Funcionário *
+              </label>
+              <select id="funcionario_storm" name="funcionario" class="form-select" required>
+                <option value="">-- Selecione um Funcionário --</option>
+                {% for funcionario in funcionarios_list %}
+                  <option value="{{ funcionario.id }}">{{ funcionario.nome_completo }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="mb-3">
+              <label for="email_administrativo_storm" class="form-label">
+                <i class='bx bx-envelope'></i>E-mail Administrativo *
+              </label>
+              <input type="email" id="email_administrativo_storm" name="email_administrativo" class="form-control" required placeholder="email@empresa.com">
+            </div>
+            <div class="mb-3">
+              <label for="situacao_storm" class="form-label">
+                <i class='bx bx-info-circle'></i>Situação *
+              </label>
+              <select id="situacao_storm" name="situacao" class="form-select" required>
+                <option value="ativo">Ativo</option>
+                <option value="inativo">Inativo</option>
+                <option value="suspenso">Suspenso</option>
+                <option value="bloqueado">Bloqueado</option>
+              </select>
+            </div>
+
+            <div class="mb-3">
+              <label for="usuario_storm" class="form-label">
+                <i class='bx bx-user-circle'></i>Usuário *
+              </label>
+              <input type="text" id="usuario_storm" name="usuario" class="form-control" maxlength="4" pattern="[0-9]{1,4}" title="Máximo 4 números" placeholder="Ex: 1234" required>
+            </div>
+            <div class="mb-3">
+              <label for="senha_storm" class="form-label">
+                <i class='bx bx-lock'></i>Senha *
+              </label>
+              <input type="password" id="senha_storm" name="senha" class="form-control" required placeholder="Digite a senha">
+            </div>
+            <button type="submit" class="btn btn-primary w-100">
+              <i class='bx bx-save'></i> Salvar Storm
+            </button>
+          </form>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Card Sistema -->
+    <div class="col-md-6">
+      <div class="card mb-4" id="card-sistema">
+        <div class="card-header">
+          <i class='bx bx-desktop'></i> Cadastro de Sistema
+        </div>
+        <div class="card-body">
+          <form method="post" action="{% url 'ti:sistema_create' %}">
+            {% csrf_token %}
+            <div class="mb-3">
+              <label for="funcionario_sistema" class="form-label">
+                <i class='bx bx-user'></i>Funcionário *
+              </label>
+              <select id="funcionario_sistema" name="funcionario" class="form-select" required>
+                <option value="">-- Selecione um Funcionário --</option>
+                {% for funcionario in funcionarios_list %}
+                  <option value="{{ funcionario.id }}">{{ funcionario.nome_completo }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="mb-3">
+              <label for="acesso_sistema" class="form-label">
+                <i class='bx bx-key'></i>Acesso *
+              </label>
+              <input type="text" id="acesso_sistema" name="acesso" class="form-control" required placeholder="Ex: Sistema Interno, ERP, etc.">
+            </div>
+            <div class="mb-3">
+              <label for="senha_sistema" class="form-label">
+                <i class='bx bx-lock'></i>Senha *
+              </label>
+              <input type="password" id="senha_sistema" name="senha" class="form-control" required placeholder="Digite a senha">
+            </div>
+            <button type="submit" class="btn btn-primary w-100">
+              <i class='bx bx-save'></i> Salvar Sistema
+            </button>
+          </form>
+        </div>
+      </div>
+    </div>
   </div>
 </div>
 {% endblock %}
@@ -641,393 +739,5 @@ Administração TI<span class="produto-text"></span>
 {% block addjs_extra %}
 <script src="{% static 'js/apps/ti/admin.js' %}"></script>
 <script src="{% static 'js/darkmode.js' %}"></script>
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-    const perifericoSelect = document.querySelector('form[name="formAtribuicaoPa"] [name="periferico"]');
-    const paSelect = document.querySelector('form[name="formAtribuicaoPa"] [name="posicao_atendimento"]');
-
-    if (perifericoSelect && paSelect) {
-        perifericoSelect.addEventListener('change', function() {
-            const perifericoId = this.value;
-            // Limpar opções atuais de PA, exceto a primeira (placeholder)
-            while (paSelect.options.length > 1) {
-                paSelect.remove(1);
-            }
-            // Definir a primeira opção como placeholder e selecionada por padrão
-            paSelect.options[0].textContent = '-- Carregando PAs... --';
-            paSelect.options[0].selected = true;
-            paSelect.disabled = true;
-
-            if (perifericoId) {
-                const baseUrl = "{% url 'ti:api_pas_para_atribuicao_periferico' 0 %}".slice(0, -2); // Remove o '0/' do final
-                fetch(`${baseUrl}${perifericoId}/`)
-                    .then(response => {
-                        if (!response.ok) {
-                            throw new Error(`HTTP error! status: ${response.status}`);
-                        }
-                        return response.json();
-                    })
-                    .then(data => {
-                        paSelect.options[0].textContent = '-- Selecione uma PA --'; // Restaurar placeholder
-                        if (data.posicoes_atendimento && data.posicoes_atendimento.length > 0) {
-                            data.posicoes_atendimento.forEach(pa => {
-                                const option = new Option(pa.nome, pa.id);
-                                paSelect.add(option);
-                            });
-                        } else {
-                            paSelect.options[0].textContent = '-- Nenhuma PA compatível encontrada --';
-                        }
-                        paSelect.disabled = false;
-                    })
-                    .catch(error => {
-                        console.error('Erro ao carregar PAs:', error);
-                        paSelect.options[0].textContent = '-- Erro ao carregar PAs --';
-                        paSelect.disabled = false;
-                    });
-            } else {
-                paSelect.options[0].textContent = '-- Selecione um periférico primeiro --';
-                paSelect.disabled = true; // Mantém desabilitado se nenhum periférico for selecionado
-            }
-        });
-
-        // Disparar o evento change no carregamento da página se um periférico já estiver selecionado
-        // (útil se o formulário for re-renderizado com valores antigos após um POST inválido)
-        if (perifericoSelect.value) {
-            perifericoSelect.dispatchEvent(new Event('change'));
-        }
-    } else {
-        if (!perifericoSelect) console.error('Select de periférico não encontrado.');
-        if (!paSelect) console.error('Select de PA não encontrado.');
-    }
-});
-</script>
-
-<!-- Script para cadastro em lote de periféricos -->
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-    // Elementos do DOM
-    const addToListBtn = document.getElementById('add-to-list-btn');
-    const perifericos_form = document.getElementById('perifericos-form');
-    const perifericos_lote_input = document.getElementById('perifericos-lote-input');
-    const perifericos_pendentes_body = document.getElementById('perifericos-pendentes-body');
-    const empty_state_row = document.getElementById('empty-state-row');
-    const limpar_lista_btn = document.getElementById('limpar-lista-btn');
-    const save_all_btn = document.getElementById('save-all-btn');
-    const contagem_pendentes = document.getElementById('contagem-pendentes');
-    
-    // Formulário de inputs
-    const perifericos_form_inputs = document.getElementById('perifericos-form-inputs');
-    
-    // Inputs para adicionar novos periféricos
-    const tipo_input = document.querySelector('#perifericos-form-inputs [name="tipo"]');
-    const marca_input = document.querySelector('#perifericos-form-inputs [name="marca"]');
-    const modelo_input = document.querySelector('#perifericos-form-inputs [name="modelo"]');
-    const data_aquisicao_input = document.querySelector('#perifericos-form-inputs [name="data_aquisicao"]');
-    const loja_input = document.querySelector('#perifericos-form-inputs [name="loja"]');
-    const quantidade_input = document.querySelector('#perifericos-form-inputs [name="quantidade"]');
-    
-    // Prevenir submit do formulário de inputs (que deve apenas adicionar à lista)
-    if (perifericos_form_inputs) {
-        perifericos_form_inputs.addEventListener('submit', function(event) {
-            event.preventDefault();
-            adicionarPerifericos();
-            return false;
-        });
-    }
-    
-    // Lista de periféricos pendentes
-    let perifericos_pendentes = [];
-    
-    // Função para atualizar o contador e estado dos botões
-    function atualizarContador() {
-        const total = perifericos_pendentes.length;
-        contagem_pendentes.textContent = total.toString();
-        
-        // Atualizar estado dos botões
-        save_all_btn.disabled = total === 0;
-        limpar_lista_btn.disabled = total === 0;
-        
-        // Mostrar ou esconder a linha de estado vazio
-        if (total === 0) {
-            empty_state_row.style.display = 'table-row';
-        } else {
-            empty_state_row.style.display = 'none';
-        }
-    }
-    
-    // Função para atualizar o campo hidden com a lista de periféricos
-    function atualizarCampoHidden() {
-        perifericos_lote_input.value = JSON.stringify(perifericos_pendentes);
-    }
-    
-    // Função para validar os inputs do formulário
-    function validarInputs() {
-        if (!tipo_input.value) {
-            alert('Por favor, selecione o tipo de periférico.');
-            tipo_input.focus();
-            return false;
-        }
-        
-        if (!marca_input.value) {
-            alert('Por favor, informe a marca do periférico.');
-            marca_input.focus();
-            return false;
-        }
-        
-        if (!modelo_input.value) {
-            alert('Por favor, informe o modelo do periférico.');
-            modelo_input.focus();
-            return false;
-        }
-        
-        if (!loja_input.value) {
-            alert('Por favor, selecione a loja.');
-            loja_input.focus();
-            return false;
-        }
-        
-        if (!quantidade_input.value || parseInt(quantidade_input.value) < 1) {
-            alert('Por favor, informe uma quantidade válida (maior que zero).');
-            quantidade_input.focus();
-            return false;
-        }
-        
-        return true;
-    }
-    
-    // Função para obter o texto do elemento selecionado
-    function getSelectedOptionText(selectElement) {
-        if (!selectElement.value) return '';
-        return selectElement.options[selectElement.selectedIndex].text;
-    }
-    
-    // Função para adicionar um periférico à lista de pendentes
-    function adicionarPerifericos() {
-        if (!validarInputs()) return;
-        
-        const novo_periferico = {
-            tipo_id: parseInt(tipo_input.value),
-            tipo_nome: getSelectedOptionText(tipo_input),
-            marca: marca_input.value,
-            modelo: modelo_input.value,
-            data_aquisicao: data_aquisicao_input.value || null,
-            loja_id: parseInt(loja_input.value),
-            loja_nome: getSelectedOptionText(loja_input),
-            quantidade: parseInt(quantidade_input.value)
-        };
-        
-        // Adicionar à lista
-        perifericos_pendentes.push(novo_periferico);
-        
-        // Atualizar tabela
-        renderizarPerifericos();
-        
-        // Atualizar contador e campo hidden
-        atualizarContador();
-        atualizarCampoHidden();
-        
-        // Limpar inputs (exceto loja que pode ser a mesma)
-        // tipo_input.value = '';
-        marca_input.value = '';
-        modelo_input.value = '';
-        // data_aquisicao_input.value = '';
-        quantidade_input.value = '1';
-        
-        // Focar no tipo para próximo cadastro
-        tipo_input.focus();
-    }
-    
-    // Função para renderizar os periféricos na tabela
-    function renderizarPerifericos() {
-        // Limpar tbody (mantendo a linha de estado vazio)
-        const rows = perifericos_pendentes_body.querySelectorAll('tr:not(#empty-state-row)');
-        rows.forEach(row => row.remove());
-        
-        // Adicionar os periféricos pendentes
-        perifericos_pendentes.forEach((periferico, index) => {
-            const tr = document.createElement('tr');
-            tr.classList.add('periferico-row');
-            
-            // Adicionar classe para highlight temporário se for o último adicionado
-            if (index === perifericos_pendentes.length - 1) {
-                tr.classList.add('periferico-row-highlight');
-            }
-            
-            tr.innerHTML = `
-                <td>${periferico.tipo_nome}</td>
-                <td>${periferico.marca}</td>
-                <td>${periferico.modelo}</td>
-                <td>${periferico.quantidade}</td>
-                <td>${periferico.loja_nome}</td>
-                <td>
-                    <button type="button" class="btn-remover-periferico" data-index="${index}">
-                        <i class='bx bx-trash'></i> Remover
-                    </button>
-                </td>
-            `;
-            
-            perifericos_pendentes_body.appendChild(tr);
-        });
-        
-        // Adicionar event listeners aos botões de remover
-        const btns_remover = document.querySelectorAll('.btn-remover-periferico');
-        btns_remover.forEach(btn => {
-            btn.addEventListener('click', function() {
-                const index = parseInt(this.getAttribute('data-index'));
-                removerPerifericos(index);
-            });
-        });
-    }
-    
-    // Função para remover um periférico da lista
-    function removerPerifericos(index) {
-        if (index >= 0 && index < perifericos_pendentes.length) {
-            perifericos_pendentes.splice(index, 1);
-            renderizarPerifericos();
-            atualizarContador();
-            atualizarCampoHidden();
-        }
-    }
-    
-    // Função para limpar toda a lista
-    function limparLista() {
-        if (confirm('Tem certeza que deseja limpar toda a lista de periféricos pendentes?')) {
-            perifericos_pendentes = [];
-            renderizarPerifericos();
-            atualizarContador();
-            atualizarCampoHidden();
-        }
-    }
-    
-    // Event Listeners para os botões
-    if (addToListBtn) {
-        addToListBtn.addEventListener('click', function(event) {
-            event.preventDefault();
-            adicionarPerifericos();
-        });
-    }
-    
-    if (limpar_lista_btn) {
-        limpar_lista_btn.addEventListener('click', limparLista);
-    }
-    
-    // Validação do formulário de envio da lista
-    if (perifericos_form) {
-        perifericos_form.addEventListener('submit', function(event) {
-            if (perifericos_pendentes.length === 0) {
-                event.preventDefault();
-                alert('Não há periféricos para salvar.');
-                return false;
-            }
-            
-            // A lista já foi verificada e está pronta para envio
-            return true;
-        });
-    }
-    
-    // Inicialização
-    atualizarContador();
-});
-</script>
-
-<!-- Scripts específicos da página -->
-<script>
-  document.addEventListener('DOMContentLoaded', function() {
-    // Filtrar salas por loja selecionada no formulário de Ilha
-    const lojaIlhaSelect = document.getElementById('loja_ilha');
-    const salaIlhaSelect = document.getElementById('sala_ilha');
-    
-    if (lojaIlhaSelect && salaIlhaSelect) {
-      lojaIlhaSelect.addEventListener('change', function() {
-        const lojaId = this.value;
-        
-        if (lojaId) {
-          // Carregar salas da loja selecionada via API
-          fetch(`/ti/api/salas-por-loja/${lojaId}/`)
-            .then(response => response.json())
-            .then(data => {
-              salaIlhaSelect.innerHTML = '<option value="">-- Selecione uma Sala --</option>';
-              
-              data.salas.forEach(sala => {
-                const option = document.createElement('option');
-                option.value = sala.id;
-                option.textContent = sala.nome;
-                option.setAttribute('data-loja', lojaId);
-                salaIlhaSelect.appendChild(option);
-              });
-            })
-            .catch(error => console.error('Erro ao carregar salas:', error));
-        } else {
-          // Resetar o select de salas
-          salaIlhaSelect.innerHTML = '<option value="">-- Selecione uma Sala --</option>';
-        }
-      });
-    }
-    
-    // Filtrar salas por loja selecionada no formulário de PA
-    const lojaPASelect = document.getElementById('loja_pa');
-    const salaPASelect = document.getElementById('sala');
-    const ilhaPASelect = document.getElementById('ilha');
-    
-    if (lojaPASelect && salaPASelect) {
-      lojaPASelect.addEventListener('change', function() {
-        const lojaId = this.value;
-        
-        if (lojaId) {
-          // Carregar salas da loja selecionada via API
-          fetch(`/ti/api/salas-por-loja/${lojaId}/`)
-            .then(response => response.json())
-            .then(data => {
-              salaPASelect.innerHTML = '<option value="">-- Selecione uma Sala --</option>';
-              
-              data.salas.forEach(sala => {
-                const option = document.createElement('option');
-                option.value = sala.id;
-                option.textContent = sala.nome;
-                option.setAttribute('data-loja', lojaId);
-                salaPASelect.appendChild(option);
-              });
-            })
-            .catch(error => console.error('Erro ao carregar salas:', error));
-        } else {
-          // Resetar o select de salas
-          salaPASelect.innerHTML = '<option value="">-- Selecione uma Sala --</option>';
-        }
-        
-        // Limpar também a seleção da ilha
-        if (ilhaPASelect) {
-          ilhaPASelect.innerHTML = '<option value="">-- Selecione uma Ilha --</option>';
-        }
-      });
-    }
-    
-    // Função para carregar ilhas por sala selecionada
-    function carregarIlhasPorSala(salaId, ilhaSelectId) {
-      if (!salaId) return;
-      
-      fetch(`/ti/api/ilhas-por-sala/${salaId}/`)
-        .then(response => response.json())
-        .then(data => {
-          const ilhaSelect = document.getElementById(ilhaSelectId);
-          ilhaSelect.innerHTML = '<option value="">-- Selecione uma Ilha --</option>';
-          
-          data.ilhas.forEach(ilha => {
-            const option = document.createElement('option');
-            option.value = ilha.id;
-            option.textContent = ilha.nome;
-            ilhaSelect.appendChild(option);
-          });
-        })
-        .catch(error => console.error('Erro ao carregar ilhas:', error));
-    }
-    
-    // Carregar ilhas baseado na sala selecionada
-    if (salaPASelect && ilhaPASelect) {
-      salaPASelect.addEventListener('change', function() {
-        const salaId = this.value;
-        carregarIlhasPorSala(salaId, 'ilha');
-      });
-    }
-  });
-</script>
+<script src="{% static 'js/apps/ti/admin_custom.js' %}"></script>
 {% endblock %}

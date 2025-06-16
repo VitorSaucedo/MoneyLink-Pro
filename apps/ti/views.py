@@ -21,7 +21,9 @@ from .models import (
     AtribuicaoMonitorPA,
     Loja,
     Chip,
-    Email
+    Email,
+    Storm,
+    Sistema
 )
 from .forms import (
     TipoPerifericoForm,
@@ -36,7 +38,9 @@ from .forms import (
     MonitorForm,
     AtribuicaoMonitorPAForm,
     ChipForm,
-    EmailForm
+    EmailForm,
+    StormForm,
+    SistemaForm
 )
 from apps.funcionarios.models import Funcionario, Empresa
 import json
@@ -190,17 +194,24 @@ def controle_salas(request):
     # Aplicar filtro de loja nas consultas
     filtro_loja = {'loja_id': loja_selecionada} if loja_selecionada else {}
     
-    # Carregar salas com filtro de loja
-    salas = Sala.objects.filter(**filtro_loja)
-    ilhas = Ilha.objects.filter(sala__in=salas)
+    # Carregar salas com filtro de loja usando prefetch_related para otimizar
+    salas = Sala.objects.filter(**filtro_loja).prefetch_related('ilhas')
+    ilhas = Ilha.objects.filter(sala__in=salas).select_related('sala')
     
     # Carrega todas as posições de atendimento com seus relacionamentos (filtradas por salas da loja)
-    posicoes = PosicaoAtendimento.objects.filter(sala__in=salas).select_related('ilha', 'sala')
+    posicoes = PosicaoAtendimento.objects.filter(
+        sala__in=salas
+    ).select_related('ilha', 'sala').prefetch_related(
+        'atribuicaofuncionariopa_set',
+        'atribuicaoperifericopa_set__periferico__tipo',
+        'atribuicaocomputadorpa_set__computador'
+    )
     
-    # Obter funcionários atribuídos a cada PA
+    # Obter funcionários atribuídos a cada PA (otimizado com filtro de PA)
     funcionarios_por_pa = {}
     atribuicoes_funcionarios = AtribuicaoFuncionarioPA.objects.filter(
-        ativo=True
+        ativo=True,
+        posicao_atendimento__sala__in=salas
     ).select_related('funcionario', 'posicao_atendimento')
     
     for atribuicao in atribuicoes_funcionarios:
@@ -214,11 +225,14 @@ def controle_salas(request):
         'Mouse', 'Teclado', 'Monitor', 'Fone', 'Mousepad'
     ])
     
-    # Carrega os periféricos atribuídos a cada PA
+    # Carrega os periféricos atribuídos a cada PA (otimizado com filtro de PA)
     perifericos_por_pa = {}
     perifericos_faltando_por_pa = {} # Para rastrear tipos de periféricos faltantes em cada PA
     
-    atribuicoes = AtribuicaoPerifericoPA.objects.filter(ativo=True).select_related('periferico', 'periferico__tipo', 'posicao_atendimento')
+    atribuicoes = AtribuicaoPerifericoPA.objects.filter(
+        ativo=True,
+        posicao_atendimento__sala__in=salas
+    ).select_related('periferico', 'periferico__tipo', 'posicao_atendimento')
     
     # Inicializar o dicionário para rastrear periféricos faltantes para todas as PAs
     for pa in posicoes:
@@ -255,9 +269,12 @@ def controle_salas(request):
             status='disponivel'
         ).values('id', 'marca', 'modelo')
     
-    # Carrega os computadores atribuídos a cada PA
+    # Carrega os computadores atribuídos a cada PA (otimizado com filtro de PA)
     computadores_por_pa = {}
-    atribuicoes_computador = AtribuicaoComputadorPA.objects.filter(ativo=True).select_related('computador', 'posicao_atendimento')
+    atribuicoes_computador = AtribuicaoComputadorPA.objects.filter(
+        ativo=True,
+        posicao_atendimento__sala__in=salas
+    ).select_related('computador', 'posicao_atendimento')
     
     for atribuicao in atribuicoes_computador:
         pa_id = atribuicao.posicao_atendimento.id
@@ -1367,8 +1384,132 @@ def atualizar_status_pa(request):
             return JsonResponse({'success': True, 'message': f'Status da PA atualizado para {novo_status}'})
         except Exception as e:
             return JsonResponse({'success': False, 'message': str(e)})
+
+
+@login_required
+def storm_create(request):
+    """View para criar um novo registro Storm"""
+    if request.method == 'POST':
+        form = StormForm(request.POST)
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'Storm cadastrado com sucesso!')
+            return redirect('ti:admin')
+        else:
+            messages.error(request, 'Erro ao cadastrar Storm. Verifique os dados informados.')
+    else:
+        form = StormForm()
     
-    return JsonResponse({'success': False, 'message': 'Método não permitido'}, status=405)
+    context = {
+        'title': 'Cadastrar Storm',
+        'form': form,
+        'funcionarios_list': Funcionario.objects.filter(status=True).order_by('nome_completo'),
+    }
+    
+    return render(request, 'apps/ti/admin.html', context)
+
+
+@login_required
+def sistema_create(request):
+    """View para criar um novo registro Sistema"""
+    if request.method == 'POST':
+        form = SistemaForm(request.POST)
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'Sistema cadastrado com sucesso!')
+            return redirect('ti:admin')
+        else:
+            messages.error(request, 'Erro ao cadastrar Sistema. Verifique os dados informados.')
+    else:
+        form = SistemaForm()
+    
+    context = {
+        'title': 'Cadastrar Sistema',
+        'form': form,
+        'funcionarios_list': Funcionario.objects.filter(status=True).order_by('nome_completo'),
+    }
+    
+    return render(request, 'apps/ti/admin.html', context)
+
+@login_required
+def storm_update(request, pk):
+    """View para editar um registro Storm"""
+    storm = get_object_or_404(Storm, pk=pk)
+    if request.method == 'POST':
+        form = StormForm(request.POST, instance=storm)
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'Storm atualizado com sucesso!')
+            return redirect('ti:controle_acessos')
+        else:
+            messages.error(request, 'Erro ao atualizar Storm. Verifique os dados informados.')
+    else:
+        form = StormForm(instance=storm)
+    
+    context = {
+        'title': 'Editar Storm',
+        'form': form,
+        'funcionarios_list': Funcionario.objects.filter(status=True).order_by('nome_completo'),
+        'storm': storm,
+    }
+    
+    return render(request, 'apps/ti/admin.html', context)
+
+@login_required
+def storm_delete(request, pk):
+    """View para excluir um registro Storm"""
+    storm = get_object_or_404(Storm, pk=pk)
+    if request.method == 'POST':
+        storm.delete()
+        messages.success(request, 'Storm excluído com sucesso!')
+        return redirect('ti:controle_acessos')
+    
+    context = {
+        'title': 'Excluir Storm',
+        'storm': storm,
+    }
+    
+    return render(request, 'apps/ti/confirm_delete.html', context)
+
+@login_required
+def sistema_update(request, pk):
+    """View para editar um registro Sistema"""
+    sistema = get_object_or_404(Sistema, pk=pk)
+    if request.method == 'POST':
+        form = SistemaForm(request.POST, instance=sistema)
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'Sistema atualizado com sucesso!')
+            return redirect('ti:controle_acessos')
+        else:
+            messages.error(request, 'Erro ao atualizar Sistema. Verifique os dados informados.')
+    else:
+        form = SistemaForm(instance=sistema)
+    
+    context = {
+        'title': 'Editar Sistema',
+        'form': form,
+        'funcionarios_list': Funcionario.objects.filter(status=True).order_by('nome_completo'),
+        'sistema': sistema,
+    }
+    
+    return render(request, 'apps/ti/admin.html', context)
+
+@login_required
+def sistema_delete(request, pk):
+    """View para excluir um registro Sistema"""
+    sistema = get_object_or_404(Sistema, pk=pk)
+    if request.method == 'POST':
+        sistema.delete()
+        messages.success(request, 'Sistema excluído com sucesso!')
+        return redirect('ti:controle_acessos')
+    
+    context = {
+        'title': 'Excluir Sistema',
+        'sistema': sistema,
+    }
+    
+    return render(request, 'apps/ti/confirm_delete.html', context)
 
 @login_required
 def remover_periferico_pa(request):
@@ -4286,6 +4427,55 @@ def controle_chips(request):
     }
     
     return render(request, 'apps/ti/controle_chips.html', context)
+
+@login_required
+def controle_acessos(request):
+    """
+    View principal para o controle de acessos.
+    Exibe dashboard com dados de Storm e Sistema.
+    """
+    # Obter todas as lojas ativas para o seletor
+    lojas = Loja.objects.filter(status=True).order_by('nome')
+    
+    # Obter a loja selecionada, se houver
+    loja_id = request.GET.get('loja')
+    loja_selecionada = None
+    loja_atual = None
+    
+    # Filtrar por loja, se for selecionada
+    if loja_id:
+        try:
+            loja_selecionada = int(loja_id)
+            loja_atual = get_object_or_404(Loja, id=loja_selecionada)
+        except (ValueError, TypeError):
+            loja_selecionada = None
+    
+    # Filtro opcional por loja - não força seleção de loja
+    filtro_funcionario = {'funcionario__status': True}
+    if loja_selecionada:
+        filtro_funcionario['funcionario__loja_id'] = loja_selecionada
+    
+    # Obter dados Storm com relacionamentos
+    storm_data = Storm.objects.select_related(
+        'funcionario', 'funcionario__setor', 'funcionario__cargo'
+    ).filter(**filtro_funcionario).order_by('funcionario__nome_completo')
+    
+    # Obter dados Sistema com relacionamentos
+    sistema_data = Sistema.objects.select_related(
+        'funcionario', 'funcionario__setor', 'funcionario__cargo', 
+        'funcionario__departamento'
+    ).filter(**filtro_funcionario).order_by('funcionario__nome_completo')
+    
+    context = {
+        'title': 'Controle de Acessos - TI',
+        'lojas': lojas,
+        'loja_selecionada': loja_selecionada,
+        'loja_atual': loja_atual,
+        'storm_data': storm_data,
+        'sistema_data': sistema_data,
+    }
+    
+    return render(request, 'apps/ti/controle_acessos.html', context)
 
 @login_required
 def chip_create(request):

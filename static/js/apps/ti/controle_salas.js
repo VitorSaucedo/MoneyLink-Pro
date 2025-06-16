@@ -114,19 +114,35 @@ const STATE = {
 // =============================================================================
 
 function mostrarMensagem(mensagem, tipo) {
-  const config = MESSAGE_CONFIG[tipo] || MESSAGE_CONFIG.default;
-  $('#message-container').empty();
-  
-  const messageHTML = TEMPLATES.message(tipo, mensagem, config.icon, config.alertClass);
-  const $messageElement = $(messageHTML).appendTo('#message-container');
-  
-  setTimeout(() => {
-    try {
-      $messageElement.alert('close');
-    } catch (e) {
-      $messageElement.fadeOut(300, function() { $(this).remove(); });
+  try {
+    const config = MESSAGE_CONFIG[tipo] || MESSAGE_CONFIG.default;
+    const $messageContainer = $('#message-container');
+    
+    if (!$messageContainer.length) {
+      console.warn('Container de mensagens não encontrado');
+      return;
     }
-  }, CONFIG.timeouts.autoRemoveMessage);
+    
+    $messageContainer.empty();
+    
+    const messageHTML = TEMPLATES.message(tipo, mensagem, config.icon, config.alertClass);
+    const $messageElement = $(messageHTML).appendTo($messageContainer);
+    
+    setTimeout(() => {
+      try {
+        if ($messageElement.length && $messageElement.alert) {
+          $messageElement.alert('close');
+        } else {
+          $messageElement.fadeOut(300, function() { $(this).remove(); });
+        }
+      } catch (e) {
+        console.warn('Erro ao fechar mensagem:', e);
+        $messageElement.fadeOut(300, function() { $(this).remove(); });
+      }
+    }, CONFIG.timeouts.autoRemoveMessage);
+  } catch (error) {
+    console.error('Erro ao mostrar mensagem:', error);
+  }
 }
 
 function createSliderWrapper() {
@@ -182,44 +198,65 @@ function cleanupAnimation(container, sliderWrapper, currentPane, targetPane, tar
 // =============================================================================
 
 function animateTabTransition(containerSelector, currentSelector, targetSelector, direction) {
-  const container = document.querySelector(containerSelector);
-  const currentPane = document.querySelector(currentSelector);
-  const targetPane = document.querySelector(targetSelector);
+  try {
+    const container = document.querySelector(containerSelector);
+    const currentPane = document.querySelector(currentSelector);
+    const targetPane = document.querySelector(targetSelector);
+    
+    if (!container) {
+      console.error(`Container não encontrado: ${containerSelector}`);
+      return;
+    }
+    
+    if (!currentPane) {
+      console.error(`Painel atual não encontrado: ${currentSelector}`);
+      return;
+    }
+    
+    if (!targetPane) {
+      console.error(`Painel alvo não encontrado: ${targetSelector}`);
+      return;
+    }
+    
+    prepareAnimation(container, currentPane, targetPane);
   
-  if (!container || !currentPane || !targetPane) {
-    console.error('Elementos não encontrados para animação');
-    return;
-  }
-  
-  prepareAnimation(container, currentPane, targetPane);
-  
-  const sliderWrapper = createSliderWrapper();
-  sliderWrapper.appendChild(currentPane);
-  sliderWrapper.appendChild(targetPane);
-  container.appendChild(sliderWrapper);
-  
-  [currentPane, targetPane].forEach(pane => {
-    pane.style.width = '50%';
-    pane.style.flexShrink = '0';
-  });
-  
-  sliderWrapper.style.transform = 'translateX(0)';
-  void sliderWrapper.offsetWidth; // Forçar repaint
-  
-  if (direction === 'right') {
-    sliderWrapper.style.transform = 'translateX(-50%)';
-  } else {
-    sliderWrapper.style.transition = 'none';
-    sliderWrapper.insertBefore(targetPane, currentPane);
-    sliderWrapper.style.transform = 'translateX(-50%)';
-    void sliderWrapper.offsetWidth;
-    sliderWrapper.style.transition = `transform ${CONFIG.animation.duration / 1000}s ease-in-out`;
+    const sliderWrapper = createSliderWrapper();
+    sliderWrapper.appendChild(currentPane);
+    sliderWrapper.appendChild(targetPane);
+    container.appendChild(sliderWrapper);
+    
+    [currentPane, targetPane].forEach(pane => {
+      pane.style.width = '50%';
+      pane.style.flexShrink = '0';
+    });
+    
     sliderWrapper.style.transform = 'translateX(0)';
+    void sliderWrapper.offsetWidth; // Forçar repaint
+    
+    if (direction === 'right') {
+      sliderWrapper.style.transform = 'translateX(-50%)';
+    } else {
+      sliderWrapper.style.transition = 'none';
+      sliderWrapper.insertBefore(targetPane, currentPane);
+      sliderWrapper.style.transform = 'translateX(-50%)';
+      void sliderWrapper.offsetWidth;
+      sliderWrapper.style.transition = `transform ${CONFIG.animation.duration / 1000}s ease-in-out`;
+      sliderWrapper.style.transform = 'translateX(0)';
+    }
+    
+    setTimeout(() => {
+      cleanupAnimation(container, sliderWrapper, currentPane, targetPane, targetSelector);
+    }, CONFIG.animation.duration);
+  } catch (error) {
+    console.error('Erro na animação de transição de aba:', error);
+    // Fallback: transição simples sem animação
+    const currentPane = document.querySelector(currentSelector);
+    const targetPane = document.querySelector(targetSelector);
+    if (currentPane && targetPane) {
+      currentPane.classList.remove('show', 'active');
+      targetPane.classList.add('show', 'active');
+    }
   }
-  
-  setTimeout(() => {
-    cleanupAnimation(container, sliderWrapper, currentPane, targetPane, targetSelector);
-  }, CONFIG.animation.duration);
 }
 
 function organizarLayoutPAs() {
@@ -290,49 +327,95 @@ function atualizarStatusPA(paId, novoStatus, paCard) {
 }
 
 function atualizarVisualizacaoStatusPA(paCard, novoStatus) {
-  const config = STATUS_CONFIG[novoStatus];
-  if (!config) return;
-  
-  // Atualizar indicador de status
-  const statusIndicator = paCard.querySelector(CONFIG.classes.statusIndicator);
-  statusIndicator.className = `pa-status-indicator ${config.class}`;
-  statusIndicator.setAttribute('title', config.title);
-  
-  // Atualizar badge de status
-  const statusBadge = paCard.querySelector('.pa-status .badge');
-  statusBadge.className = `badge ${config.badgeClass}`;
-  statusBadge.textContent = config.text;
+  try {
+    const config = STATUS_CONFIG[novoStatus];
+    if (!config) {
+      console.warn(`Configuração de status não encontrada para: ${novoStatus}`);
+      return;
+    }
+    
+    if (!paCard) {
+      console.error('PA Card não fornecido para atualização de status');
+      return;
+    }
+    
+    // Atualizar indicador de status
+    const statusIndicator = paCard.querySelector(CONFIG.classes.statusIndicator);
+    if (statusIndicator) {
+      statusIndicator.className = `pa-status-indicator ${config.class}`;
+      statusIndicator.setAttribute('title', config.title);
+    } else {
+      console.warn('Indicador de status não encontrado na PA');
+    }
+    
+    // Atualizar badge de status
+    const statusBadge = paCard.querySelector('.pa-status .badge');
+    if (statusBadge) {
+      statusBadge.className = `badge ${config.badgeClass}`;
+      statusBadge.textContent = config.text;
+    } else {
+      console.warn('Badge de status não encontrado na PA');
+    }
+  } catch (error) {
+    console.error('Erro ao atualizar visualização do status da PA:', error);
+  }
 }
 
 function criarMenuStatus(statusIndicator, paId, paCard) {
-  document.querySelectorAll('.status-dropdown-menu').forEach(menu => menu.remove());
-  
-  document.body.insertAdjacentHTML('beforeend', TEMPLATES.statusMenu);
-  const menu = document.querySelector('.status-dropdown-menu');
-  
-  const rect = statusIndicator.getBoundingClientRect();
-  menu.style.top = (rect.bottom + 5) + 'px';
-  menu.style.left = (rect.left - 70) + 'px';
-  
-  // Adicionar hover effects e eventos
-  menu.querySelectorAll('.status-option').forEach(option => {
-    option.addEventListener('mouseover', () => option.style.backgroundColor = '#f5f5f5');
-    option.addEventListener('mouseout', () => option.style.backgroundColor = 'white');
-    option.addEventListener('click', function() {
-      const novoStatus = this.getAttribute('data-status');
-      menu.remove();
-      atualizarStatusPA(paId, novoStatus, paCard);
-    });
-  });
-  
-  // Fechar menu ao clicar fora
-  const closeHandler = (evt) => {
-    if (menu && !menu.contains(evt.target) && evt.target !== statusIndicator) {
-      menu.remove();
-      document.removeEventListener('click', closeHandler);
+  try {
+    if (!statusIndicator) {
+      console.error('Status indicator não fornecido para criar menu');
+      return;
     }
-  };
-  document.addEventListener('click', closeHandler);
+    
+    if (!paId || !paCard) {
+      console.error('PA ID ou PA Card não fornecidos para criar menu');
+      return;
+    }
+    
+    // Remover menus existentes
+    document.querySelectorAll('.status-dropdown-menu').forEach(menu => menu.remove());
+    
+    // Criar novo menu
+    document.body.insertAdjacentHTML('beforeend', TEMPLATES.statusMenu);
+    const menu = document.querySelector('.status-dropdown-menu');
+    
+    if (!menu) {
+      console.error('Falha ao criar menu de status');
+      return;
+    }
+    
+    // Posicionar menu
+    const rect = statusIndicator.getBoundingClientRect();
+    menu.style.top = (rect.bottom + 5) + 'px';
+    menu.style.left = (rect.left - 70) + 'px';
+  
+    // Adicionar hover effects e eventos
+    menu.querySelectorAll('.status-option').forEach(option => {
+      option.addEventListener('mouseover', () => option.style.backgroundColor = '#f5f5f5');
+      option.addEventListener('mouseout', () => option.style.backgroundColor = 'white');
+      option.addEventListener('click', function() {
+        const novoStatus = this.getAttribute('data-status');
+        if (menu && menu.parentNode) {
+          menu.remove();
+        }
+        atualizarStatusPA(paId, novoStatus, paCard);
+      });
+    });
+    
+    // Fechar menu ao clicar fora
+    const closeHandler = (evt) => {
+      if (menu && !menu.contains(evt.target) && evt.target !== statusIndicator) {
+        if (menu.parentNode) {
+          menu.remove();
+        }
+        document.removeEventListener('click', closeHandler);
+      }
+    };
+    document.addEventListener('click', closeHandler);
+  } catch (error) {
+    console.error('Erro ao criar menu de status:', error);
+  }
 }
 
 // =============================================================================
@@ -473,32 +556,69 @@ function handleIlhaNavigation(tab) {
 // =============================================================================
 
 function adicionarBotaoRecarga() {
-  $('.btn-reload-sala').remove();
-  
-  if (STATE.currentSalaId) {
+  try {
+    $('.btn-reload-sala').remove();
+    
+    if (!STATE.currentSalaId) {
+      console.warn('Nenhuma sala ativa para adicionar botão de recarga');
+      return;
+    }
+    
     const $salaPane = $(`#sala-${STATE.currentSalaId}`);
-    if ($salaPane.length > 0 && $salaPane.find('.btn-reload-sala').length === 0) {
-      const $headerSection = $salaPane.find('.sala-header').length > 0 ? 
-                            $salaPane.find('.sala-header') : 
-                            $salaPane.find('.container-fluid');
-      
-      if ($headerSection.length > 0) {
-        $headerSection.css('position', 'relative').append(TEMPLATES.reloadButton);
+    if ($salaPane.length === 0) {
+      console.warn(`Painel da sala ${STATE.currentSalaId} não encontrado`);
+      return;
+    }
+    
+    if ($salaPane.find('.btn-reload-sala').length > 0) {
+      return; // Botão já existe
+    }
+    
+    const $headerSection = $salaPane.find('.sala-header').length > 0 ? 
+                          $salaPane.find('.sala-header') : 
+                          $salaPane.find('.container-fluid');
+    
+    if ($headerSection.length === 0) {
+      console.warn('Seção de cabeçalho não encontrada para adicionar botão de recarga');
+      return;
+    }
+    
+    $headerSection.css('position', 'relative').append(TEMPLATES.reloadButton);
+    
+    $headerSection.find('.btn-reload-sala').on('click', function() {
+      try {
+        const $icon = $(this).find('i');
+        $icon.addClass('fa-spin');
+        $(this).prop('disabled', true);
         
-        $headerSection.find('.btn-reload-sala').on('click', function() {
-          const $icon = $(this).find('i');
-          $icon.addClass('fa-spin');
-          $(this).prop('disabled', true);
-          
-          const ilhaAtiva = STATE.currentIlhaIds[STATE.currentSalaId];
+        const ilhaAtiva = STATE.currentIlhaIds[STATE.currentSalaId];
+        
+        if (typeof window.mostrarLoadingNaSala === 'function') {
           window.mostrarLoadingNaSala(STATE.currentSalaId, ilhaAtiva);
+        }
+        
+        if (typeof window.carregarDadosSala === 'function') {
           window.carregarDadosSala(STATE.currentSalaId, ilhaAtiva, true).finally(() => {
             $icon.removeClass('fa-spin');
             $(this).prop('disabled', false);
           });
-        });
+        } else {
+          // Fallback se as funções não estiverem disponíveis
+          setTimeout(() => {
+            $icon.removeClass('fa-spin');
+            $(this).prop('disabled', false);
+            location.reload();
+          }, 1000);
+        }
+      } catch (error) {
+        console.error('Erro ao executar recarga da sala:', error);
+        const $icon = $(this).find('i');
+        $icon.removeClass('fa-spin');
+        $(this).prop('disabled', false);
       }
-    }
+    });
+  } catch (error) {
+    console.error('Erro ao adicionar botão de recarga:', error);
   }
 }
 
@@ -539,63 +659,112 @@ const EventHandlers = {
   },
   
   setupStatusIndicators() {
-    document.querySelectorAll(CONFIG.classes.statusIndicator).forEach(statusIndicator => {
-      statusIndicator.addEventListener('click', function(e) {
-        e.preventDefault();
-        e.stopPropagation();
-        
-        const paCard = this.closest(CONFIG.classes.paCard);
-        const paId = paCard.getAttribute('data-pa-id');
-        
-        criarMenuStatus(this, paId, paCard);
+    try {
+      document.querySelectorAll(CONFIG.classes.statusIndicator).forEach(statusIndicator => {
+        statusIndicator.addEventListener('click', function(e) {
+          try {
+            e.preventDefault();
+            e.stopPropagation();
+            
+            const paCard = this.closest(CONFIG.classes.paCard);
+            if (!paCard) {
+              console.warn('PA Card não encontrado para indicador de status');
+              return;
+            }
+            
+            const paId = paCard.getAttribute('data-pa-id');
+            if (!paId) {
+              console.warn('PA ID não encontrado no card');
+              return;
+            }
+            
+            criarMenuStatus(this, paId, paCard);
+          } catch (error) {
+            console.error('Erro ao processar clique no indicador de status:', error);
+          }
+        });
       });
-    });
+    } catch (error) {
+      console.error('Erro ao configurar indicadores de status:', error);
+    }
   },
   
   setupTabNavigation() {
-    // Salas
-    document.querySelectorAll(CONFIG.classes.salaTab).forEach(tab => {
-      tab.addEventListener('click', function(e) {
-        e.preventDefault();
-        handleSalaNavigation(this);
+    try {
+      // Salas
+      document.querySelectorAll(CONFIG.classes.salaTab).forEach(tab => {
+        tab.addEventListener('click', function(e) {
+          try {
+            e.preventDefault();
+            handleSalaNavigation(this);
+          } catch (error) {
+            console.error('Erro ao navegar para sala:', error);
+          }
+        });
       });
-    });
-    
-    // Ilhas
-    document.querySelectorAll(CONFIG.classes.ilhaTab).forEach(tab => {
-      tab.addEventListener('click', function(e) {
-        e.preventDefault();
-        handleIlhaNavigation(this);
+      
+      // Ilhas
+      document.querySelectorAll(CONFIG.classes.ilhaTab).forEach(tab => {
+        tab.addEventListener('click', function(e) {
+          try {
+            e.preventDefault();
+            handleIlhaNavigation(this);
+          } catch (error) {
+            console.error('Erro ao navegar para ilha:', error);
+          }
+        });
       });
-    });
+    } catch (error) {
+      console.error('Erro ao configurar navegação de abas:', error);
+    }
   },
   
   setupResponsiveLayout() {
-    adjustResponsiveLayout();
-    window.addEventListener('resize', adjustResponsiveLayout);
-    
-    document.querySelectorAll('.nav-tabs .nav-link').forEach(tabLink => {
-      tabLink.addEventListener('click', function() {
-        setTimeout(organizarLayoutPAs, 600);
+    try {
+      adjustResponsiveLayout();
+      window.addEventListener('resize', adjustResponsiveLayout);
+      
+      document.querySelectorAll('.nav-tabs .nav-link').forEach(tabLink => {
+        tabLink.addEventListener('click', function() {
+          try {
+            setTimeout(organizarLayoutPAs, 600);
+          } catch (error) {
+            console.error('Erro ao organizar layout das PAs:', error);
+          }
+        });
       });
-    });
+    } catch (error) {
+      console.error('Erro ao configurar layout responsivo:', error);
+    }
   },
   
   setupTabClicks() {
-    // Garantir que as abas de Bootstrap não controlem a exibição
-    $('button[data-bs-toggle="tab"]').on('click', function(e) {
-      e.preventDefault();
-      return false;
-    });
-    
-    // Adicionar botão de recarga nas mudanças de sala
-    document.querySelectorAll('#salas-tab .nav-link').forEach(tab => {
-      const originalClickHandler = tab.onclick;
-      tab.onclick = function(e) {
-        if (originalClickHandler) originalClickHandler.call(this, e);
-        setTimeout(adicionarBotaoRecarga, CONFIG.timeouts.reloadDelay);
-      };
-    });
+    try {
+      // Garantir que as abas de Bootstrap não controlem a exibição
+      $('button[data-bs-toggle="tab"]').on('click', function(e) {
+        e.preventDefault();
+        return false;
+      });
+      
+      // Adicionar botão de recarga nas mudanças de sala
+      document.querySelectorAll('#salas-tab .nav-link').forEach(tab => {
+        try {
+          const originalClickHandler = tab.onclick;
+          tab.onclick = function(e) {
+            try {
+              if (originalClickHandler) originalClickHandler.call(this, e);
+              setTimeout(adicionarBotaoRecarga, CONFIG.timeouts.reloadDelay);
+            } catch (error) {
+              console.error('Erro ao processar clique na aba:', error);
+            }
+          };
+        } catch (error) {
+          console.error('Erro ao configurar clique da aba:', error);
+        }
+      });
+    } catch (error) {
+      console.error('Erro ao configurar cliques das abas:', error);
+    }
   }
 };
 
@@ -604,17 +773,34 @@ const EventHandlers = {
 // =============================================================================
 
 $(document).ready(function() {
-  setupLojaFilter();
-  initializeTabState();
-  EventHandlers.init();
-  adicionarBotaoRecarga();
-  
-  // Executar organização do layout
-  organizarLayoutPAs();
-  setTimeout(organizarLayoutPAs, CONFIG.animation.duration);
-  
-  // Adicionar eventos para reorganizar PAs
-  document.addEventListener('DOMContentLoaded', organizarLayoutPAs);
+  try {
+    setupLojaFilter();
+    initializeTabState();
+    EventHandlers.init();
+    adicionarBotaoRecarga();
+    
+    // Executar organização do layout
+    organizarLayoutPAs();
+    setTimeout(() => {
+      try {
+        organizarLayoutPAs();
+      } catch (error) {
+        console.error('Erro ao organizar layout das PAs (timeout):', error);
+      }
+    }, CONFIG.animation.duration);
+    
+    // Adicionar eventos para reorganizar PAs
+    document.addEventListener('DOMContentLoaded', () => {
+      try {
+        organizarLayoutPAs();
+      } catch (error) {
+        console.error('Erro ao organizar layout das PAs (DOMContentLoaded):', error);
+      }
+    });
+  } catch (error) {
+    console.error('Erro durante a inicialização do controle de salas:', error);
+    mostrarMensagem('Erro ao inicializar a página. Recarregue a página.', 'error');
+  }
 });
 
 // =============================================================================

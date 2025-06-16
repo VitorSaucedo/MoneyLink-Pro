@@ -14,7 +14,9 @@ from .models import (
     AtribuicaoMonitorPA,
     Loja,
     Chip,
-    Email
+    Email,
+    Storm,
+    Sistema
 )
 from apps.funcionarios.models import Funcionario
 from .utils import atribuir_item_pa, desatribuir_item_pa, verificar_disponibilidade_periferico, verificar_disponibilidade_computador
@@ -427,3 +429,49 @@ class EmailForm(forms.ModelForm):
         if commit:
             email_obj.save()
         return email_obj
+
+
+class StormForm(forms.ModelForm):
+    class Meta:
+        model = Storm
+        fields = ['funcionario', 'email_administrativo', 'situacao', 'usuario', 'senha']
+        widgets = {
+            'funcionario': forms.Select(attrs={'class': 'form-select'}),
+            'email_administrativo': forms.EmailInput(attrs={'class': 'form-control'}),
+            'situacao': forms.Select(attrs={'class': 'form-select'}),
+            'usuario': forms.TextInput(attrs={'class': 'form-control', 'maxlength': '4', 'pattern': '[0-9]{1,4}'}),
+            'senha': forms.PasswordInput(attrs={'class': 'form-control'}),
+        }
+        labels = {
+            'funcionario': 'Funcionário',
+            'email_administrativo': 'E-mail Administrativo',
+            'situacao': 'Situação',
+            'usuario': 'Usuário',
+            'senha': 'Senha',
+        }
+    
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Filtrar funcionários ativos
+        self.fields['funcionario'].queryset = Funcionario.objects.filter(status=True).order_by('nome_completo')
+
+
+class SistemaForm(forms.ModelForm):
+    class Meta:
+        model = Sistema
+        fields = ['funcionario', 'acesso', 'senha']
+        widgets = {
+            'funcionario': forms.Select(attrs={'class': 'form-select'}),
+            'acesso': forms.TextInput(attrs={'class': 'form-control'}),
+            'senha': forms.PasswordInput(attrs={'class': 'form-control'}),
+        }
+        labels = {
+            'funcionario': 'Funcionário',
+            'acesso': 'Acesso',
+            'senha': 'Senha',
+        }
+    
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Filtrar funcionários ativos
+        self.fields['funcionario'].queryset = Funcionario.objects.filter(status=True).order_by('nome_completo')

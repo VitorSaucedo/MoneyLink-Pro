@@ -8,7 +8,7 @@
 // CONFIGURAÇÕES E CONSTANTES
 // =============================================================================
 
-const CONFIG = {
+const PERIFERICOS_CONFIG = {
   urls: {
     perifericosDisponiveis: '/ti/api/perifericos-disponiveis-por-tipo/',
     atribuirPeriferico: '/ti/atribuicoes-perifericos/cadastrar/',
@@ -32,7 +32,7 @@ const CONFIG = {
   }
 };
 
-const TEMPLATES = {
+const PERIFERICOS_TEMPLATES = {
   perifericoTag: (periferico, pendente = false) => `
     <span class="periferico-tag ${pendente ? 'pendente' : ''}" 
           data-periferico-id="${pendente ? 'pendente-' + periferico.id : periferico.id}"
@@ -109,7 +109,7 @@ const TEMPLATES = {
 // ELEMENTOS DOM E ESTADO
 // =============================================================================
 
-const DOM = {
+const PERIFERICOS_DOM = {
   modals: {
     confirmRemove: {
       backdrop: $('#confirm-remove-periferico-backdrop'),
@@ -136,7 +136,7 @@ const DOM = {
 };
 
 // Estado global
-const STATE = {
+const PERIFERICOS_STATE = {
   perifericosPendentes: [],
   perifericosPendentesPorTipo: {},
   activePerifericoActionMenu: null,
@@ -176,13 +176,13 @@ function posicionarMenu(menu, elemento) {
 }
 
 function fecharMenusAtivos() {
-  [STATE.activePerifericoActionMenu, STATE.activePerifericoStatusMenu].forEach(menu => {
+  [PERIFERICOS_STATE.activePerifericoActionMenu, PERIFERICOS_STATE.activePerifericoStatusMenu].forEach(menu => {
     if (menu) {
       menu.remove();
     }
   });
-  STATE.activePerifericoActionMenu = null;
-  STATE.activePerifericoStatusMenu = null;
+  PERIFERICOS_STATE.activePerifericoActionMenu = null;
+  PERIFERICOS_STATE.activePerifericoStatusMenu = null;
 }
 
 function gerenciarModal(modal, acao, opcoes = {}) {
@@ -193,20 +193,20 @@ function gerenciarModal(modal, acao, opcoes = {}) {
       if (opcoes.nome) modal.nome?.text(opcoes.nome);
       modal.backdrop.addClass('show').fadeIn(200);
       modal.modal.addClass('show').fadeIn(200);
-      if (modal === DOM.modals.confirmRemove) $('body').addClass('modal-open');
+      if (modal === PERIFERICOS_DOM.modals.confirmRemove) $('body').addClass('modal-open');
       if (opcoes.callback) opcoes.callback();
       break;
       
     case 'fechar':
       modal.backdrop.fadeOut(200, function() { $(this).removeClass('show'); });
       modal.modal.fadeOut(200, function() { $(this).removeClass('show'); });
-      if (modal === DOM.modals.confirmRemove) {
+      if (modal === PERIFERICOS_DOM.modals.confirmRemove) {
         $('body').removeClass('modal-open');
-        STATE.dadosPerifericoParaRemover = null;
+        PERIFERICOS_STATE.dadosPerifericoParaRemover = null;
       }
-      if (modal === DOM.modals.perifericosDisponiveis) {
-        STATE.modalDadosPa = null;
-        STATE.modalDadosTipo = null;
+      if (modal === PERIFERICOS_DOM.modals.perifericosDisponiveis) {
+        PERIFERICOS_STATE.modalDadosPa = null;
+        PERIFERICOS_STATE.modalDadosTipo = null;
       }
       if (opcoes.callback) opcoes.callback();
       break;
@@ -225,7 +225,7 @@ function gerenciarModal(modal, acao, opcoes = {}) {
 // =============================================================================
 
 function atualizarPerifericosNaPA(paCardElement, perifericos = [], tiposFaltantes = []) {
-  const perifericosList = paCardElement.querySelector(CONFIG.classes.perifericosList);
+  const perifericosList = paCardElement.querySelector(PERIFERICOS_CONFIG.classes.perifericosList);
   if (!perifericosList) return;
   
   renderizarListaPerifericos(perifericosList, perifericos);
@@ -235,12 +235,12 @@ function atualizarPerifericosNaPA(paCardElement, perifericos = [], tiposFaltante
 
 function renderizarListaPerifericos(container, perifericos) {
   container.innerHTML = perifericos.length > 0 
-    ? perifericos.map(p => TEMPLATES.perifericoTag(p)).join('')
-    : `<span class="text-muted">${CONFIG.messages.semPerifericos}</span>`;
+    ? perifericos.map(p => PERIFERICOS_TEMPLATES.perifericoTag(p)).join('')
+    : `<span class="text-muted">${PERIFERICOS_CONFIG.messages.semPerifericos}</span>`;
 }
 
 function gerenciarPerifericosFaltantes(paCardElement, tiposFaltantes) {
-  const faltantesContainer = paCardElement.querySelector(CONFIG.classes.faltantesContainer);
+  const faltantesContainer = paCardElement.querySelector(PERIFERICOS_CONFIG.classes.faltantesContainer);
   if (!faltantesContainer) return;
   
   const faltantesListElement = faltantesContainer.querySelector('.perifericos-faltantes-list');
@@ -251,7 +251,7 @@ function gerenciarPerifericosFaltantes(paCardElement, tiposFaltantes) {
       const paId = paCardElement.getAttribute('data-pa-id');
       faltantesListElement.innerHTML = tiposFaltantes.map(tipoNome => {
         const tipoId = window.tiposPerifericosComuns?.find(t => t.nome === tipoNome)?.id;
-        return TEMPLATES.botaoFaltante(paId, tipoId, tipoNome);
+        return PERIFERICOS_TEMPLATES.botaoFaltante(paId, tipoId, tipoNome);
       }).join('');
       
       // Adicionar eventos aos botões
@@ -269,7 +269,7 @@ function gerenciarPerifericosFaltantes(paCardElement, tiposFaltantes) {
 }
 
 function reativarEventosPerifericos(paCardElement) {
-  paCardElement.querySelectorAll(CONFIG.classes.perifericoTag).forEach(tag => {
+  paCardElement.querySelectorAll(PERIFERICOS_CONFIG.classes.perifericoTag).forEach(tag => {
     tag.addEventListener('click', function(e) {
       e.stopPropagation();
       abrirMenuAcoesPeriferico($(this));
@@ -281,17 +281,17 @@ function abrirMenuAcoesPeriferico(perifericoTag) {
   fecharMenusAtivos();
 
   const perifericoId = perifericoTag.data('periferico-id');
-  const paCard = perifericoTag.closest(CONFIG.classes.paCard);
+  const paCard = perifericoTag.closest(PERIFERICOS_CONFIG.classes.paCard);
   const paId = paCard.data('pa-id');
   const perifericoNomeCompleto = perifericoTag.text().trim();
   const perifericoTipo = perifericoTag.data('periferico-tipo') || perifericoNomeCompleto.split(' ')[0];
 
-  $('body').append(TEMPLATES.menuAcoes);
-  STATE.activePerifericoActionMenu = $('.periferico-action-menu');
+  $('body').append(PERIFERICOS_TEMPLATES.menuAcoes);
+  PERIFERICOS_STATE.activePerifericoActionMenu = $('.periferico-action-menu');
   
-  posicionarMenu(STATE.activePerifericoActionMenu, perifericoTag);
+  posicionarMenu(PERIFERICOS_STATE.activePerifericoActionMenu, perifericoTag);
 
-  STATE.activePerifericoActionMenu.find('.periferico-action-item').hover(
+  PERIFERICOS_STATE.activePerifericoActionMenu.find('.periferico-action-item').hover(
     function() { $(this).addClass('hover'); },
     function() { $(this).removeClass('hover'); }
   );
@@ -301,7 +301,7 @@ function abrirMenuAcoesPeriferico(perifericoTag) {
     'remove': () => abrirModalConfirmacao(perifericoId, paId, perifericoNomeCompleto, perifericoTag)
   };
 
-  STATE.activePerifericoActionMenu.find('.periferico-action-item').on('click', function(event) {
+  PERIFERICOS_STATE.activePerifericoActionMenu.find('.periferico-action-item').on('click', function(event) {
     event.stopPropagation();
     fecharMenusAtivos();
     const acao = $(this).data('action');
@@ -309,7 +309,7 @@ function abrirMenuAcoesPeriferico(perifericoTag) {
   });
 
   $(document).on('click.closePerifericoActionMenu', function(event) {
-    if (STATE.activePerifericoActionMenu && 
+    if (PERIFERICOS_STATE.activePerifericoActionMenu && 
         !$(event.target).closest('.periferico-action-menu').length && 
         !perifericoTag.is(event.target) && 
         !perifericoTag.find(event.target).length) {
@@ -322,18 +322,18 @@ function abrirMenuAcoesPeriferico(perifericoTag) {
 function abrirMenuAtualizarStatusPeriferico(perifericoId, perifericoNome, perifericoTipo, paId, perifericoTagElement) {
   fecharMenusAtivos();
 
-  $('body').append(TEMPLATES.menuStatus(perifericoNome));
-  STATE.activePerifericoStatusMenu = $('.periferico-status-menu');
+  $('body').append(PERIFERICOS_TEMPLATES.menuStatus(perifericoNome));
+  PERIFERICOS_STATE.activePerifericoStatusMenu = $('.periferico-status-menu');
   
-  posicionarMenu(STATE.activePerifericoStatusMenu, perifericoTagElement);
-  STATE.activePerifericoStatusMenu.show();
+  posicionarMenu(PERIFERICOS_STATE.activePerifericoStatusMenu, perifericoTagElement);
+  PERIFERICOS_STATE.activePerifericoStatusMenu.show();
 
-  STATE.activePerifericoStatusMenu.find('.periferico-status-item').hover(
+  PERIFERICOS_STATE.activePerifericoStatusMenu.find('.periferico-status-item').hover(
     function() { $(this).addClass('hover'); },
     function() { $(this).removeClass('hover'); }
   );
 
-  STATE.activePerifericoStatusMenu.find('.periferico-status-item').on('click', function(event) {
+  PERIFERICOS_STATE.activePerifericoStatusMenu.find('.periferico-status-item').on('click', function(event) {
     event.stopPropagation();
     const novoStatus = $(this).data('status');
     fecharMenusAtivos();
@@ -358,7 +358,7 @@ function abrirMenuAtualizarStatusPeriferico(perifericoId, perifericoNome, perife
   
   $(document).off('click.closePerifericoStatusMenu');
   $(document).on('click.closePerifericoStatusMenu', function(event) {
-    if (STATE.activePerifericoStatusMenu && 
+    if (PERIFERICOS_STATE.activePerifericoStatusMenu && 
         !$(event.target).closest('.periferico-status-menu').length && 
         !perifericoTagElement.is(event.target) && 
         !$(event.target).closest(perifericoTagElement).length) {
@@ -370,7 +370,7 @@ function abrirMenuAtualizarStatusPeriferico(perifericoId, perifericoNome, perife
 
 async function atualizarStatusPerifericoNoServidor(perifericoId, novoStatus, paId, perifericoTagElement, perifericoTipo, observacoes) {
   try {
-    const response = await requestAPI(`${CONFIG.urls.atualizarStatus}${perifericoId}/atualizar_status/`, {
+    const response = await requestAPI(`${PERIFERICOS_CONFIG.urls.atualizarStatus}${perifericoId}/atualizar_status/`, {
       method: 'POST',
       data: JSON.stringify({ status: novoStatus, pa_id: paId, observacoes: observacoes }),
       contentType: 'application/json; charset=utf-8',
@@ -378,14 +378,14 @@ async function atualizarStatusPerifericoNoServidor(perifericoId, novoStatus, paI
     });
 
     if (response.success) {
-      mostrarMensagem(response.message || CONFIG.messages.sucessoAtualizacao, 'success');
+      mostrarMensagem(response.message || PERIFERICOS_CONFIG.messages.sucessoAtualizacao, 'success');
       
       if (response.periferico_removido_da_pa) {
         perifericoTagElement.fadeOut(300, function() { 
-          const perifericosList = $(this).closest(CONFIG.classes.perifericosList);
+          const perifericosList = $(this).closest(PERIFERICOS_CONFIG.classes.perifericosList);
           $(this).remove();
-          if (perifericosList.children(CONFIG.classes.perifericoTag).length === 0) {
-            perifericosList.html(`<span class="text-muted">${CONFIG.messages.semPerifericos}</span>`);
+          if (perifericosList.children(PERIFERICOS_CONFIG.classes.perifericoTag).length === 0) {
+            perifericosList.html(`<span class="text-muted">${PERIFERICOS_CONFIG.messages.semPerifericos}</span>`);
           }
         });
       }
@@ -399,15 +399,15 @@ async function atualizarStatusPerifericoNoServidor(perifericoId, novoStatus, paI
 }
 
 function abrirModalConfirmacao(perifericoId, paId, perifericoNome, perifericoElement) {
-  STATE.dadosPerifericoParaRemover = { perifericoId, paId, perifericoElement };
-  gerenciarModal(DOM.modals.confirmRemove, 'abrir', { nome: perifericoNome });
+  PERIFERICOS_STATE.dadosPerifericoParaRemover = { perifericoId, paId, perifericoElement };
+  gerenciarModal(PERIFERICOS_DOM.modals.confirmRemove, 'abrir', { nome: perifericoNome });
 }
 
 async function removerPerifericoDaPA(perifericoId, paId, perifericoElement) {
-  const paCard = perifericoElement.closest(CONFIG.classes.paCard);
+  const paCard = perifericoElement.closest(PERIFERICOS_CONFIG.classes.paCard);
   
   try {
-    const response = await requestAPI(CONFIG.urls.removerPeriferico, {
+    const response = await requestAPI(PERIFERICOS_CONFIG.urls.removerPeriferico, {
       method: 'POST',
       data: JSON.stringify({ periferico_id: perifericoId, pa_id: paId }),
       contentType: 'application/json; charset=utf-8',
@@ -417,9 +417,9 @@ async function removerPerifericoDaPA(perifericoId, paId, perifericoElement) {
     if (response.success) {
       perifericoElement.fadeOut(300, function() { 
         $(this).remove(); 
-        const perifericosList = paCard.find(CONFIG.classes.perifericosList);
-        if (perifericosList.children(CONFIG.classes.perifericoTag).length === 0) {
-          perifericosList.html(`<span class="text-muted">${CONFIG.messages.semPerifericos}</span>`);
+        const perifericosList = paCard.find(PERIFERICOS_CONFIG.classes.perifericosList);
+        if (perifericosList.children(PERIFERICOS_CONFIG.classes.perifericoTag).length === 0) {
+          perifericosList.html(`<span class="text-muted">${PERIFERICOS_CONFIG.messages.semPerifericos}</span>`);
         }
       });
       
@@ -427,7 +427,7 @@ async function removerPerifericoDaPA(perifericoId, paId, perifericoElement) {
         atualizarPerifericosNaPA(paCard[0], response.perifericos || [], response.tipos_faltantes);
       }
       
-      mostrarMensagem(response.message || CONFIG.messages.sucessoRemocao, 'success');
+      mostrarMensagem(response.message || PERIFERICOS_CONFIG.messages.sucessoRemocao, 'success');
       
       // Forçar recarga dos dados da PA
       const salaId = paCard.closest('.tab-pane').attr('id')?.replace('sala-', '');
@@ -449,33 +449,33 @@ async function removerPerifericoDaPA(perifericoId, paId, perifericoElement) {
 // =============================================================================
 
 function atualizarContadorAtribuicoesPendentes() {
-  const contador = STATE.perifericosPendentes.length;
+  const contador = PERIFERICOS_STATE.perifericosPendentes.length;
   if (contador > 0) {
-    DOM.saveButton.html(TEMPLATES.contadorPendentes(contador)).removeClass('d-none');
+    PERIFERICOS_DOM.saveButton.html(PERIFERICOS_TEMPLATES.contadorPendentes(contador)).removeClass('d-none');
   } else {
-    DOM.saveButton.addClass('d-none');
+    PERIFERICOS_DOM.saveButton.addClass('d-none');
   }
 }
 
 function adicionarAtribuicaoPendente(perifericoId, paId, marca, modelo, tipo, tipoId) {
-  const existente = STATE.perifericosPendentes.find(p => p.perifericoId === perifericoId && p.paId === paId);
+  const existente = PERIFERICOS_STATE.perifericosPendentes.find(p => p.perifericoId === perifericoId && p.paId === paId);
   if (existente) {
-    mostrarMensagem(CONFIG.messages.jaExistePendente, 'warning');
+    mostrarMensagem(PERIFERICOS_CONFIG.messages.jaExistePendente, 'warning');
     return;
   }
   
-  const tipoIdFinal = tipoId || STATE.modalDadosTipo?.id;
+  const tipoIdFinal = tipoId || PERIFERICOS_STATE.modalDadosTipo?.id;
   if (!tipoIdFinal) {
     console.error('Erro: tipoId não fornecido');
     return;
   }
   
-  STATE.perifericosPendentes.push({ perifericoId, paId, marca, modelo, tipo, tipoId: tipoIdFinal });
+  PERIFERICOS_STATE.perifericosPendentes.push({ perifericoId, paId, marca, modelo, tipo, tipoId: tipoIdFinal });
   
-  if (!STATE.perifericosPendentesPorTipo[tipoIdFinal]) {
-    STATE.perifericosPendentesPorTipo[tipoIdFinal] = [];
+  if (!PERIFERICOS_STATE.perifericosPendentesPorTipo[tipoIdFinal]) {
+    PERIFERICOS_STATE.perifericosPendentesPorTipo[tipoIdFinal] = [];
   }
-  STATE.perifericosPendentesPorTipo[tipoIdFinal].push(perifericoId);
+  PERIFERICOS_STATE.perifericosPendentesPorTipo[tipoIdFinal].push(perifericoId);
   
   atualizarContadorAtribuicoesPendentes();
   adicionarPerifericoPendenteVisualmente(paId, perifericoId, tipo, marca, modelo);
@@ -485,19 +485,21 @@ function adicionarPerifericoPendenteVisualmente(paId, perifericoId, tipo, marca,
   const paCard = $(`.pa-card[data-pa-id="${paId}"]`);
   if (!paCard.length) return;
   
-  const perifericosList = paCard.find(CONFIG.classes.perifericosList);
+  const perifericosList = paCard.find(PERIFERICOS_CONFIG.classes.perifericosList);
   
-  if (perifericosList.text().trim() === CONFIG.messages.semPerifericos) {
+  if (perifericosList.text().trim() === PERIFERICOS_CONFIG.messages.semPerifericos) {
     perifericosList.empty();
   }
   
   const perifericoData = { id: perifericoId, tipo, marca, modelo };
-  perifericosList.append(TEMPLATES.perifericoTag(perifericoData, true));
+  perifericosList.append(PERIFERICOS_TEMPLATES.perifericoTag(perifericoData, true));
   
-  paCard.find(`.periferico-faltante-item:contains("${tipo}")`).fadeOut(300, function() {
+  paCard.find('.periferico-faltante-item').filter(function() {
+    return $(this).find('.periferico-faltante-nome').text().trim() === tipo;
+  }).fadeOut(300, function() {
     $(this).remove();
     if (paCard.find('.periferico-faltante-item').length === 0) {
-      paCard.find(CONFIG.classes.faltantesContainer).fadeOut(300);
+      paCard.find(PERIFERICOS_CONFIG.classes.faltantesContainer).fadeOut(300);
     }
   });
 }
@@ -507,7 +509,7 @@ function adicionarPerifericoPendenteVisualmente(paId, perifericoId, tipo, marca,
 // =============================================================================
 
 function abrirModalPerifericosDisponiveis(tipoId, tipoNome) {
-  gerenciarModal(DOM.modals.perifericosDisponiveis, 'abrir', { 
+  gerenciarModal(PERIFERICOS_DOM.modals.perifericosDisponiveis, 'abrir', { 
     resetar: true, 
     texto: tipoNome, 
     callback: () => carregarPerifericosDisponiveis(tipoId) 
@@ -516,94 +518,97 @@ function abrirModalPerifericosDisponiveis(tipoId, tipoNome) {
 
 async function carregarPerifericosDisponiveis(tipoId) {
   try {
-    const response = await requestAPI(`${CONFIG.urls.perifericosDisponiveis}${tipoId}/`);
+    const response = await requestAPI(`${PERIFERICOS_CONFIG.urls.perifericosDisponiveis}${tipoId}/`);
     
-    DOM.modals.perifericosDisponiveis.loading.hide();
+    PERIFERICOS_DOM.modals.perifericosDisponiveis.loading.hide();
     
     if (response.success && response.perifericos?.length > 0) {
-      const perifericosPendentesDesseTipo = STATE.perifericosPendentesPorTipo[tipoId] || [];
+      const perifericosPendentesDesseTipo = PERIFERICOS_STATE.perifericosPendentesPorTipo[tipoId] || [];
       const perifericosFiltrados = response.perifericos.filter(
         periferico => !perifericosPendentesDesseTipo.includes(periferico.id)
       );
       
       if (perifericosFiltrados.length > 0) {
         renderizarPerifericosDisponiveis(perifericosFiltrados);
-        DOM.modals.perifericosDisponiveis.content.show();
+        PERIFERICOS_DOM.modals.perifericosDisponiveis.content.show();
         
         if (perifericosPendentesDesseTipo.length > 0) {
-          DOM.modals.perifericosDisponiveis.content.prepend(TEMPLATES.notificacaoPendentes(perifericosPendentesDesseTipo.length));
+          PERIFERICOS_DOM.modals.perifericosDisponiveis.content.prepend(PERIFERICOS_TEMPLATES.notificacaoPendentes(perifericosPendentesDesseTipo.length));
         }
       } else {
         mostrarEstadoVazioComPendentes(perifericosPendentesDesseTipo.length);
       }
     } else {
-      DOM.modals.perifericosDisponiveis.empty.show();
+      PERIFERICOS_DOM.modals.perifericosDisponiveis.empty.show();
     }
   } catch (error) {
     console.error('Erro ao carregar periféricos disponíveis:', error);
-    DOM.modals.perifericosDisponiveis.loading.hide();
-    DOM.modals.perifericosDisponiveis.errorMessage.text(
+    PERIFERICOS_DOM.modals.perifericosDisponiveis.loading.hide();
+    PERIFERICOS_DOM.modals.perifericosDisponiveis.errorMessage.text(
       error.responseJSON?.error || error.statusText || error.message || 'Erro ao comunicar com o servidor'
     );
-    DOM.modals.perifericosDisponiveis.error.show();
+    PERIFERICOS_DOM.modals.perifericosDisponiveis.error.show();
   }
 }
 
 function mostrarEstadoVazioComPendentes(quantidadePendentes) {
   if (quantidadePendentes > 0) {
-    DOM.modals.perifericosDisponiveis.empty.html(TEMPLATES.estadoVazioComPendentes(quantidadePendentes));
+    PERIFERICOS_DOM.modals.perifericosDisponiveis.empty.html(PERIFERICOS_TEMPLATES.estadoVazioComPendentes(quantidadePendentes));
   }
-  DOM.modals.perifericosDisponiveis.empty.show();
+  PERIFERICOS_DOM.modals.perifericosDisponiveis.empty.show();
 }
 
 function renderizarPerifericosDisponiveis(perifericos) {
-  DOM.modals.perifericosDisponiveis.content.empty();
+  PERIFERICOS_DOM.modals.perifericosDisponiveis.content.empty();
   perifericos.forEach(periferico => {
-    DOM.modals.perifericosDisponiveis.content.append(TEMPLATES.itemDisponivel(periferico));
+    PERIFERICOS_DOM.modals.perifericosDisponiveis.content.append(PERIFERICOS_TEMPLATES.itemDisponivel(periferico));
   });
 }
 
 async function salvarTodasAsAtribuicoes($button) {
-  if (STATE.perifericosPendentes.length === 0) return;
+  if (PERIFERICOS_STATE.perifericosPendentes.length === 0) return;
   
   const originalHtml = $button.html();
   $button.prop('disabled', true).html('<i class="bx bx-loader-alt bx-spin me-2"></i> Salvando...');
   
-  mostrarMensagem(`Salvando ${STATE.perifericosPendentes.length} atribuições de periféricos...`, 'info');
+  mostrarMensagem(`Salvando ${PERIFERICOS_STATE.perifericosPendentes.length} atribuições de periféricos...`, 'info');
   
-  const dadosLote = STATE.perifericosPendentes.map(atribuicao => ({
+  const dadosLote = PERIFERICOS_STATE.perifericosPendentes.map(atribuicao => ({
     periferico: atribuicao.perifericoId,
     posicao_atendimento: atribuicao.paId,
     data_atribuicao: new Date().toISOString().replace('Z', '')
   }));
   
   try {
-    await requestAPI(CONFIG.urls.cadastrarLote, {
+    await requestAPI(PERIFERICOS_CONFIG.urls.cadastrarLote, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 
+        'Content-Type': 'application/json',
+        'X-CSRFToken': $('[name=csrfmiddlewaretoken]').val()
+      },
       data: JSON.stringify({ atribuicoes: dadosLote })
     });
     
-    STATE.perifericosPendentes = [];
-    STATE.perifericosPendentesPorTipo = {};
+    PERIFERICOS_STATE.perifericosPendentes = [];
+    PERIFERICOS_STATE.perifericosPendentesPorTipo = {};
     
-    mostrarMensagem(CONFIG.messages.sucessoAtribuicao, 'success');
+    mostrarMensagem(PERIFERICOS_CONFIG.messages.sucessoAtribuicao, 'success');
     window.location.reload();
   } catch (error) {
     console.error('Erro ao processar periféricos em lote:', error.responseText);
     $button.prop('disabled', false).html(originalHtml);
-    mostrarMensagem(CONFIG.messages.erroAtribuicao, 'error');
+    mostrarMensagem(PERIFERICOS_CONFIG.messages.erroAtribuicao, 'error');
   }
 }
 
 function cancelarTodasAsAtribuicoes() {
-  if (STATE.perifericosPendentes.length === 0) return;
+  if (PERIFERICOS_STATE.perifericosPendentes.length === 0) return;
   
-  if (confirm(`Tem certeza que deseja cancelar todas as ${STATE.perifericosPendentes.length} atribuições pendentes?`)) {
+  if (confirm(`Tem certeza que deseja cancelar todas as ${PERIFERICOS_STATE.perifericosPendentes.length} atribuições pendentes?`)) {
     $('.periferico-tag.pendente').fadeOut(200, function() { $(this).remove(); });
     
-    STATE.perifericosPendentes = [];
-    STATE.perifericosPendentesPorTipo = {};
+    PERIFERICOS_STATE.perifericosPendentes = [];
+    PERIFERICOS_STATE.perifericosPendentesPorTipo = {};
     
     atualizarContadorAtribuicoesPendentes();
     mostrarMensagem('Todas as atribuições pendentes foram canceladas.', 'info');
@@ -616,7 +621,7 @@ function cancelarTodasAsAtribuicoes() {
 // EVENT HANDLERS
 // =============================================================================
 
-const EventHandlers = {
+const PerifericosEventHandlers = {
   init() {
     this.setupPerifericoEvents();
     this.setupModalEvents();
@@ -624,7 +629,7 @@ const EventHandlers = {
   },
   
   setupPerifericoEvents() {
-    $(document).on('click', CONFIG.classes.perifericoTag, function(event) {
+    $(document).on('click', PERIFERICOS_CONFIG.classes.perifericoTag, function(event) {
       event.preventDefault();
       event.stopPropagation();
       abrirMenuAcoesPeriferico($(this));
@@ -633,21 +638,21 @@ const EventHandlers = {
   
   setupModalEvents() {
     // Modal de confirmação
-    DOM.modals.confirmRemove.confirmBtn.on('click', function() {
-      if (STATE.dadosPerifericoParaRemover) {
+    PERIFERICOS_DOM.modals.confirmRemove.confirmBtn.on('click', function() {
+      if (PERIFERICOS_STATE.dadosPerifericoParaRemover) {
         removerPerifericoDaPA(
-          STATE.dadosPerifericoParaRemover.perifericoId, 
-          STATE.dadosPerifericoParaRemover.paId, 
-          STATE.dadosPerifericoParaRemover.perifericoElement
+          PERIFERICOS_STATE.dadosPerifericoParaRemover.perifericoId, 
+          PERIFERICOS_STATE.dadosPerifericoParaRemover.paId, 
+          PERIFERICOS_STATE.dadosPerifericoParaRemover.perifericoElement
         );
-        gerenciarModal(DOM.modals.confirmRemove, 'fechar');
+        gerenciarModal(PERIFERICOS_DOM.modals.confirmRemove, 'fechar');
       }
     });
 
     // Eventos de fechar modal
     const eventosFecharModal = [
-      { elementos: [DOM.modals.confirmRemove.cancelBtn, DOM.modals.confirmRemove.closeBtn], modal: DOM.modals.confirmRemove },
-      { elementos: [DOM.modals.perifericosDisponiveis.close, DOM.modals.perifericosDisponiveis.cancel], modal: DOM.modals.perifericosDisponiveis }
+      { elementos: [PERIFERICOS_DOM.modals.confirmRemove.cancelBtn, PERIFERICOS_DOM.modals.confirmRemove.closeBtn], modal: PERIFERICOS_DOM.modals.confirmRemove },
+      { elementos: [PERIFERICOS_DOM.modals.perifericosDisponiveis.close, PERIFERICOS_DOM.modals.perifericosDisponiveis.cancel], modal: PERIFERICOS_DOM.modals.perifericosDisponiveis }
     ];
 
     eventosFecharModal.forEach(({ elementos, modal }) => {
@@ -660,7 +665,7 @@ const EventHandlers = {
     });
 
     // Fechar ao clicar no backdrop
-    [DOM.modals.confirmRemove, DOM.modals.perifericosDisponiveis].forEach(modal => {
+    [PERIFERICOS_DOM.modals.confirmRemove, PERIFERICOS_DOM.modals.perifericosDisponiveis].forEach(modal => {
       modal.backdrop.on('click', function(event) {
         if (event.target === this) {
           gerenciarModal(modal, 'fechar');
@@ -677,8 +682,8 @@ const EventHandlers = {
       
       const { paId, tipoId, tipoNome } = $(this).data();
       
-      STATE.modalDadosPa = { id: paId };
-      STATE.modalDadosTipo = { id: tipoId, nome: tipoNome };
+      PERIFERICOS_STATE.modalDadosPa = { id: paId };
+      PERIFERICOS_STATE.modalDadosTipo = { id: tipoId, nome: tipoNome };
       
       abrirModalPerifericosDisponiveis(tipoId, tipoNome);
     });
@@ -694,13 +699,14 @@ const EventHandlers = {
       const perifericoMarca = item.find('.periferico-disponivel-marca').text();
       const perifericoModelo = item.find('.periferico-disponivel-modelo').text();
       
-      if (STATE.modalDadosPa && STATE.modalDadosTipo) {
-        adicionarAtribuicaoPendente(perifericoId, STATE.modalDadosPa.id, perifericoMarca, perifericoModelo, STATE.modalDadosTipo.nome, STATE.modalDadosTipo.id);
+      if (PERIFERICOS_STATE.modalDadosPa && PERIFERICOS_STATE.modalDadosTipo) {
+        const tipoNome = PERIFERICOS_STATE.modalDadosTipo.nome;
+        adicionarAtribuicaoPendente(perifericoId, PERIFERICOS_STATE.modalDadosPa.id, perifericoMarca, perifericoModelo, PERIFERICOS_STATE.modalDadosTipo.nome, PERIFERICOS_STATE.modalDadosTipo.id);
         
         button.prop('disabled', true).html('<i class="bx bx-check me-1"></i>');
-        gerenciarModal(DOM.modals.perifericosDisponiveis, 'fechar');
+        gerenciarModal(PERIFERICOS_DOM.modals.perifericosDisponiveis, 'fechar');
         
-        mostrarMensagem(`${STATE.modalDadosTipo.nome} ${perifericoMarca} adicionado à lista de pendências.`, 'info');
+        mostrarMensagem(`${tipoNome} ${perifericoMarca} adicionado à lista de pendências.`, 'info');
       } else {
         console.error('Dados incompletos para atribuição de periférico');
         mostrarMensagem('Erro: Dados incompletos para atribuição', 'error');
@@ -726,7 +732,7 @@ const EventHandlers = {
 // =============================================================================
 
 $(document).ready(function() {
-  EventHandlers.init();
+  PerifericosEventHandlers.init();
 });
 
 // Exposição de funções para uso global (compatibilidade com código existente)
@@ -738,6 +744,6 @@ Object.assign(window, {
   adicionarPerifericoPendenteVisualmente,
   abrirModalPerifericosDisponiveis,
   atualizarStatusPerifericoNoServidor,
-  perifericosPendentes: STATE.perifericosPendentes,
-  perifericosPendentesPorTipo: STATE.perifericosPendentesPorTipo
+  perifericosPendentes: PERIFERICOS_STATE.perifericosPendentes,
+  perifericosPendentesPorTipo: PERIFERICOS_STATE.perifericosPendentesPorTipo
 });

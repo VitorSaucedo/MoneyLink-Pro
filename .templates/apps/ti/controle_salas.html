@@ -100,6 +100,11 @@ TI - Controle de Salas, Ilhas e PAs
                role="tabpanel" 
                aria-labelledby="sala-{{ sala.id }}-tab">
             
+            <!-- Header da sala para botões de ação -->
+            <div class="sala-header d-flex justify-content-between align-items-center mb-3">
+              <h5 class="mb-0"><i class='bx bx-door-open me-2'></i>{{ sala.nome }}</h5>
+            </div>
+            
             {% if sala.ilhas.all %}
               <!-- Abas para as ilhas desta sala específica -->
               <div class="ilhas-container mt-4">
@@ -557,6 +562,11 @@ TI - Controle de Salas, Ilhas e PAs
 {% block addjs_extra %}
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="{% static 'js/apps/ti/controle_salas.js' %}"></script>
+  <script src="{% static 'js/apps/ti/controle_salas_funcionarios.js' %}"></script>
+  <script src="{% static 'js/apps/ti/controle_salas_perifericos.js' %}"></script>
+  <script src="{% static 'js/apps/ti/controle_salas_computadores.js' %}"></script>
+  <script src="{% static 'js/apps/ti/controle_salas_manutencao.js' %}"></script>
+  <script src="{% static 'js/apps/ti/controle_salas_carregamento.js' %}"></script>
   {# Modo escuro #}
   <script src="{% static 'js/darkmode.js' %}"></script>
   

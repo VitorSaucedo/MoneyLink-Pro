@@ -1,4 +1,5 @@
 from django.db import models
+from django.core.exceptions import ValidationError
 from apps.funcionarios.models import Funcionario, Loja, Setor  # Importação específica em vez de "*"
 from django.utils import timezone
 
@@ -408,3 +409,75 @@ class Email(models.Model):
         verbose_name = 'Email'
         verbose_name_plural = 'Emails'
         ordering = ['email']
+
+class Storm(models.Model):
+    funcionario = models.ForeignKey(Funcionario, on_delete=models.CASCADE, related_name='storm_acessos', verbose_name="Funcionário")
+    email_administrativo = models.EmailField(verbose_name="E-mail administrativo")
+    
+    situacao_choices = [
+        ('ativo', 'Ativo'),
+        ('desativado', 'Desativado')
+    ]
+    situacao = models.CharField(max_length=20, choices=situacao_choices, default='ativo', verbose_name="Situação")
+    
+    usuario = models.CharField(max_length=4, verbose_name="Usuário (max 4 números)", help_text="Máximo 4 números")
+    senha = models.CharField(max_length=255, verbose_name="Senha")
+    
+    def clean(self):
+        """Validação customizada para o campo usuario"""
+        super().clean()
+        if self.usuario:
+            # Verificar se contém apenas números
+            if not self.usuario.isdigit():
+                raise ValidationError({'usuario': 'O campo usuário deve conter apenas números.'})
+            
+            # Verificar se tem no máximo 4 dígitos
+            if len(self.usuario) > 4:
+                raise ValidationError({'usuario': 'O campo usuário deve ter no máximo 4 dígitos.'})
+    
+    def save(self, *args, **kwargs):
+        """Override do save para executar validação"""
+        self.clean()
+        super().save(*args, **kwargs)
+    
+    def __str__(self):
+        return f"Storm - {self.funcionario.nome_completo} ({self.usuario})"
+    
+    @property
+    def ramal(self):
+        """Retorna o ramal do funcionário"""
+        return self.funcionario.ramal if self.funcionario else None
+    
+    class Meta:
+        verbose_name = 'Storm - Acesso'
+        verbose_name_plural = 'Storm - Acessos'
+        ordering = ['funcionario__nome_completo']
+        unique_together = ('funcionario', 'usuario')  # Garante que um funcionário não tenha usuários duplicados
+
+class Sistema(models.Model):
+    funcionario = models.ForeignKey(Funcionario, on_delete=models.CASCADE, related_name='sistema_acessos', verbose_name="Funcionário")
+    acesso = models.CharField(max_length=255, verbose_name="Acesso")
+    senha = models.CharField(max_length=255, verbose_name="Senha")
+    
+    def __str__(self):
+        return f"Sistema - {self.funcionario.nome_completo} ({self.acesso})"
+    
+    @property
+    def cargo(self):
+        """Retorna apenas o nome do cargo do funcionário sem a empresa"""
+        if self.funcionario and self.funcionario.cargo:
+            return self.funcionario.cargo.nome
+        return None
+    
+    @property
+    def departamento_setor(self):
+        """Retorna o departamento/setor do funcionário"""
+        if self.funcionario and self.funcionario.setor:
+            return f"{self.funcionario.setor.departamento.nome}/{self.funcionario.setor.nome}"
+        return None
+    
+    class Meta:
+        verbose_name = 'Sistema - Acesso'
+        verbose_name_plural = 'Sistema - Acessos'
+        ordering = ['funcionario__nome_completo']
+        unique_together = ('funcionario', 'acesso')  # Garante que um funcionário não tenha acessos duplicados
