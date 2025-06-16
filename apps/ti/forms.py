@@ -12,7 +12,9 @@ from .models import (
     AtribuicaoComputadorPA,
     Monitor,
     AtribuicaoMonitorPA,
-    Loja
+    Loja,
+    Chip,
+    Email
 )
 from apps.funcionarios.models import Funcionario
 from .utils import atribuir_item_pa, desatribuir_item_pa, verificar_disponibilidade_periferico, verificar_disponibilidade_computador
@@ -69,25 +71,23 @@ class PerifericoForm(forms.ModelForm):
 class SalaForm(forms.ModelForm):
     class Meta:
         model = Sala
-        fields = ['nome', 'titulo', 'loja', 'setor', 'funcionario_responsavel', 'descricao']
+        fields = ['nome', 'titulo', 'loja', 'setor', 'descricao']
         widgets = {
             'nome': forms.TextInput(attrs={'class': 'form-control'}),
             'titulo': forms.TextInput(attrs={'class': 'form-control'}),
             'loja': forms.Select(attrs={'class': 'form-select'}),
             'setor': forms.Select(attrs={'class': 'form-select'}),
-            'funcionario_responsavel': forms.Select(attrs={'class': 'form-select'}),
             'descricao': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
         }
 
 class IlhaForm(forms.ModelForm):
     class Meta:
         model = Ilha
-        fields = ['nome', 'titulo', 'sala', 'funcionario_responsavel', 'quantidade_pas', 'descricao']
+        fields = ['nome', 'titulo', 'sala', 'quantidade_pas', 'descricao']
         widgets = {
             'nome': forms.TextInput(attrs={'class': 'form-control'}),
             'titulo': forms.TextInput(attrs={'class': 'form-control'}),
             'sala': forms.Select(attrs={'class': 'form-select'}),
-            'funcionario_responsavel': forms.Select(attrs={'class': 'form-select'}),
             'quantidade_pas': forms.NumberInput(attrs={'class': 'form-control', 'min': 1}),
             'descricao': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
         }
@@ -352,3 +352,78 @@ class AtribuicaoMonitorPAForm(forms.ModelForm):
             # Definir valores básicos para retornar a instância não salva
             instance.ativo = True
             return instance
+
+class ChipForm(forms.ModelForm):
+    class Meta:
+        model = Chip
+        fields = ['numero', 'ramal', 'status', 'data_entrega', 'data_banimento']
+        widgets = {
+            'numero': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Número do chip'}),
+            'ramal': forms.Select(attrs={'class': 'form-select'}),
+            'setor': forms.Select(attrs={'class': 'form-select'}),
+            'status': forms.Select(attrs={'class': 'form-select'}),
+            'data_entrega': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
+            'data_banimento': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
+        }
+        labels = {
+            'numero': 'Número do Chip',
+            'ramal': 'Ramal (Funcionário)',
+
+            'status': 'Status',
+            'data_entrega': 'Data de Entrega',
+            'data_banimento': 'Data de Banimento',
+        }
+    
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Filtrar funcionários ativos
+        self.fields['ramal'].queryset = Funcionario.objects.filter(status=True).order_by('nome_completo')
+
+        
+        # Tornar campos opcionais conforme necessário
+        self.fields['data_banimento'].required = False
+        self.fields['ramal'].required = False
+
+class EmailForm(forms.ModelForm):
+    class Meta:
+        model = Email
+        fields = ['funcionario', 'email', 'senha', 'tipo', 'status', 'email_recuperacao']
+        widgets = {
+            'funcionario': forms.Select(attrs={'class': 'form-select'}),
+            'email': forms.EmailInput(attrs={'class': 'form-control', 'placeholder': 'email@exemplo.com'}),
+            'senha': forms.PasswordInput(attrs={'class': 'form-control', 'placeholder': 'Senha do e-mail'}),
+            'tipo': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Ex: Corporativo, Pessoal, etc.'}),
+            'status': forms.Select(attrs={'class': 'form-select'}),
+            'email_recuperacao': forms.EmailInput(attrs={'class': 'form-control', 'placeholder': 'email_recuperacao@exemplo.com'}),
+        }
+        labels = {
+            'funcionario': 'Funcionário',
+            'email': 'E-mail',
+            'senha': 'Senha',
+            'tipo': 'Tipo',
+            'status': 'Status',
+            'email_recuperacao': 'E-mail de Recuperação',
+        }
+    
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Filtrar funcionários ativos
+        self.fields['funcionario'].queryset = Funcionario.objects.filter(status=True).order_by('nome_completo')
+        
+        # Tornar campos opcionais conforme necessário
+        self.fields['funcionario'].required = False
+        self.fields['tipo'].required = False
+        self.fields['email_recuperacao'].required = False
+    
+    def save(self, commit=True):
+        email_obj = super().save(commit=False)
+        
+        # Se um funcionário foi selecionado, atribuir automaticamente ramal e setor
+        if self.cleaned_data.get('funcionario'):
+            funcionario = self.cleaned_data['funcionario']
+            email_obj.ramal = funcionario
+            email_obj.setor = funcionario
+        
+        if commit:
+            email_obj.save()
+        return email_obj

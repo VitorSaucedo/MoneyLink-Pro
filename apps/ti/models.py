@@ -139,7 +139,6 @@ class Sala(models.Model):
     descricao = models.TextField(blank=True, null=True, verbose_name="Descrição")
     loja = models.ForeignKey(Loja, on_delete=models.CASCADE, related_name='salas', null=True)
     setor = models.ForeignKey(Setor, on_delete=models.CASCADE, related_name='salas_ti', null=True, blank=True, verbose_name="Setor")
-    funcionario_responsavel = models.ForeignKey(Funcionario, on_delete=models.SET_NULL, null=True, blank=True, related_name='salas_responsavel', verbose_name="Funcionário Responsável")
     
     @property
     def status(self):
@@ -159,7 +158,6 @@ class Ilha(models.Model):
     sala = models.ForeignKey(Sala, on_delete=models.CASCADE, related_name='ilhas')
     quantidade_pas = models.PositiveIntegerField(default=1, verbose_name="Quantidade de PAs")
     descricao = models.TextField(blank=True, null=True, verbose_name="Descrição")
-    funcionario_responsavel = models.ForeignKey(Funcionario, on_delete=models.SET_NULL, null=True, blank=True, related_name='ilhas_responsavel', verbose_name="Funcionário Responsável")
     
     @property
     def loja(self):
@@ -354,3 +352,59 @@ class AtribuicaoMonitorPA(models.Model):
     class Meta:
         verbose_name = 'Atribuição de Monitor'
         verbose_name_plural = 'Monitores - Atribuições'
+
+class Chip(models.Model):
+    numero = models.CharField(max_length=50, unique=True, verbose_name="Número")
+    funcionario = models.ForeignKey(Funcionario, on_delete=models.CASCADE, null=True, blank=True, related_name='chips_funcionario', verbose_name="Funcionário")
+    ramal = models.ForeignKey(Funcionario, on_delete=models.SET_NULL, null=True, blank=True, related_name='chips_ramal', verbose_name="Ramal (Funcionário)")
+    setor = models.ForeignKey(Funcionario, on_delete=models.SET_NULL, null=True, blank=True, related_name='chips_setor', verbose_name="Setor (Funcionário)")
+    
+    status_choices = [
+        ('ativo', 'Ativo'),
+        ('inativo', 'Inativo'),
+        ('banido', 'Banido'),
+        ('livre', 'Livre'),
+        ('reutilizado', 'Reutilizado')
+    ]
+    status = models.CharField(max_length=20, choices=status_choices, default='livre', verbose_name="Status")
+    
+    data_entrega = models.DateField(blank=True, null=True, verbose_name="Data de Entrega")
+    data_criacao_recarga = models.DateField(auto_now_add=True, verbose_name="Data de Criação/Recarga")
+    data_banimento = models.DateField(blank=True, null=True, verbose_name="Data de Banimento")
+    
+    def __str__(self):
+        return f"Chip {self.numero} - {self.get_status_display()}"
+    
+    class Meta:
+        verbose_name = 'Chip'
+        verbose_name_plural = 'Chips'
+        ordering = ['numero']
+
+class Email(models.Model):
+    ramal = models.ForeignKey(Funcionario, on_delete=models.SET_NULL, null=True, blank=True, related_name='emails_ramal', verbose_name="Ramal (Funcionário)")
+    funcionario = models.ForeignKey(Funcionario, on_delete=models.CASCADE, null=True, blank=True, related_name='emails_funcionario', verbose_name="Funcionário")
+    email = models.EmailField(unique=True, verbose_name="Email")
+    senha = models.CharField(max_length=255, verbose_name="Senha")
+    setor = models.ForeignKey(Funcionario, on_delete=models.SET_NULL, null=True, blank=True, related_name='emails_setor', verbose_name="Setor (Funcionário)")
+    
+    status_choices = [
+        ('ativo', 'Ativo'),
+        ('inativo', 'Inativo'),
+        ('funcionario_desligado', 'Funcionário Desligado')
+    ]
+    status = models.CharField(max_length=25, choices=status_choices, default='ativo', verbose_name="Status")
+    
+    tipo = models.CharField(max_length=100, blank=True, null=True, verbose_name="Tipo")
+    email_recuperacao = models.EmailField(blank=True, null=True, verbose_name="Email de Recuperação")
+    
+    data_criacao = models.DateTimeField(auto_now_add=True, verbose_name="Data de Criação")
+    data_atualizacao = models.DateTimeField(auto_now=True, verbose_name="Data de Atualização")
+    
+    def __str__(self):
+        funcionario_nome = self.funcionario.nome_completo if self.funcionario else "S/ Funcionário"
+        return f"{self.email} - {funcionario_nome} ({self.get_status_display()})"
+    
+    class Meta:
+        verbose_name = 'Email'
+        verbose_name_plural = 'Emails'
+        ordering = ['email']

@@ -94,6 +94,78 @@ $(document).ready(function() {
   }
 
   // ==============================================
+  // Formulário de Cadastro de E-mail
+  // ==============================================
+  
+  // Atualizar campos automaticamente quando funcionário for selecionado
+  $('#email_funcionario').on('change', function() {
+    const funcionarioId = $(this).val();
+    
+    if (funcionarioId) {
+      // Aqui você pode fazer uma requisição AJAX para buscar dados do funcionário
+      // Por enquanto, vamos apenas indicar que os campos serão preenchidos automaticamente
+      console.log('Funcionário selecionado:', funcionarioId);
+      console.log('Ramal e setor serão atribuídos automaticamente no backend');
+    }
+  });
+  
+  $('#form-email').on('submit', function(e) {
+    e.preventDefault();
+    
+    const formData = new FormData(this);
+    const submitBtn = $(this).find('button[type="submit"]');
+    const originalText = submitBtn.html();
+    
+    // Desabilitar botão e mostrar loading
+    submitBtn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin me-2"></i>Salvando...');
+    
+    $.ajax({
+      url: '/ti/ajax/email/cadastrar/',
+      type: 'POST',
+      data: formData,
+      processData: false,
+      contentType: false,
+      success: function(response) {
+        if (response.success) {
+          // Mostrar mensagem de sucesso
+          if (window.TIAdminNotifications && window.TIAdminNotifications.showSuccess) {
+            window.TIAdminNotifications.showSuccess(response.message);
+          } else {
+            alert(response.message);
+          }
+          
+          // Limpar formulário
+          $('#form-email')[0].reset();
+          
+          // Atualizar dropdowns se disponível
+          if (window.TIAdminDropdowns && window.TIAdminDropdowns.atualizarDropdownsEmail) {
+            window.TIAdminDropdowns.atualizarDropdownsEmail();
+          }
+        } else {
+          // Mostrar mensagem de erro
+          if (window.TIAdminNotifications && window.TIAdminNotifications.showError) {
+            window.TIAdminNotifications.showError(response.message);
+          } else {
+            alert('Erro: ' + response.message);
+          }
+        }
+      },
+      error: function(xhr, status, error) {
+        const errorMsg = 'Erro ao cadastrar e-mail: ' + error;
+        if (window.TIAdminNotifications && window.TIAdminNotifications.showError) {
+          window.TIAdminNotifications.showError(errorMsg);
+        } else {
+          alert(errorMsg);
+        }
+      },
+      complete: function() {
+        // Reabilitar botão
+        submitBtn.prop('disabled', false).html(originalText);
+      }
+    });
+  });
+
+  // ==============================================
   // Campos condicionais no cadastro de computador
   // ==============================================
   const $statusComputador = $('#status_computador');

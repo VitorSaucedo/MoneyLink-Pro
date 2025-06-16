@@ -23,7 +23,6 @@ TI - Controle de Salas, Ilhas e PAs
   <link rel="stylesheet" href="{% static 'css/apps/ti/salas.css' %}">
   {# Adicionar CSS do modo escuro #}
   <link rel="stylesheet" href="{% static 'css/darkmode.css' %}">
-  <link rel="stylesheet" href="{% static 'css/apps/ti/ti-dark-mode.css' %}">
   
   <!-- jQuery -->
   <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
@@ -215,7 +214,7 @@ TI - Controle de Salas, Ilhas e PAs
                                         
                                         <!-- Periféricos atribuídos a esta PA -->
                                         <div class="pa-perifericos">
-                                          <h6 class="dark-mode-text"><i class='bx bx-devices me-1'></i> Periféricos</h6>
+                                          <h6><i class='bx bx-devices me-1'></i> Periféricos</h6>
                                           <div class="perifericos-list">
                                             {% if perifericos_por_pa|get_item:pa.id %}
                                               {% for periferico in perifericos_por_pa|get_item:pa.id %}
@@ -358,7 +357,7 @@ TI - Controle de Salas, Ilhas e PAs
                                         
                                         <!-- Periféricos atribuídos a esta PA -->
                                         <div class="pa-perifericos">
-                                          <h6 class="dark-mode-text"><i class='bx bx-devices me-1'></i> Periféricos</h6>
+                                          <h6><i class='bx bx-devices me-1'></i> Periféricos</h6>
                                           <div class="perifericos-list">
                                             {% if perifericos_por_pa|get_item:pa.id %}
                                               {% for periferico in perifericos_por_pa|get_item:pa.id %}
@@ -581,4 +580,4 @@ TI - Controle de Salas, Ilhas e PAs
       $('body').addClass('tabs-initialized');
     });
   </script>
-{% endblock %} 
+{% endblock %}

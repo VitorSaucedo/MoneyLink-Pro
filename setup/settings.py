@@ -99,9 +99,9 @@ WSGI_APPLICATION = 'setup.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'moneylink_pro2',
+        'NAME': 'moneylink_pro',
         'USER': 'root',
-        'PASSWORD': 'M@k9m3p1',
+        'PASSWORD': 'SanjioP2251!',
         'HOST': '127.0.0.1',
         'PORT': '3306',
         'OPTIONS': {

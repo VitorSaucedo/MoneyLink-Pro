@@ -272,3 +272,8 @@ class FuncionarioAdmin(admin.ModelAdmin):
         if obj.cpf and len(obj.cpf) == 11:
             return f"{obj.cpf[:3]}.{obj.cpf[3:6]}.{obj.cpf[6:9]}-{obj.cpf[9:]}"
         return obj.cpf
+    
+    def get_search_results(self, request, queryset, search_term):
+        # Personaliza a busca para autocomplete mostrando apenas nome completo
+        queryset, use_distinct = super().get_search_results(request, queryset, search_term)
+        return queryset, use_distinct

@@ -130,6 +130,20 @@ urlpatterns = [
     path('api/salas-por-loja/<int:loja_id>/', views.api_salas_por_loja, name='api_salas_por_loja'),
     path('api/ilhas-por-sala/<int:sala_id>/', views.api_ilhas_por_sala, name='api_ilhas_por_sala'),
     
+    # URLs para Controle de Chips
+    path('controle-chips/', views.controle_chips, name='controle_chips'),
+    path('chips/cadastrar/', views.chip_create, name='chip_create'),
+    path('chips/editar/<int:pk>/', views.chip_update, name='chip_update'),
+    path('chips/excluir/<int:pk>/', views.chip_delete, name='chip_delete'),
+    path('api/chips-data/', views.api_chips_data, name='api_chips_data'),
+    
+    # URLs para Controle de E-mails
+    path('controle-emails/', views.controle_emails, name='controle_emails'),
+    path('emails/cadastrar/', views.email_create, name='email_create'),
+    path('emails/editar/<int:pk>/', views.email_update, name='email_update'),
+    path('emails/excluir/<int:pk>/', views.email_delete, name='email_delete'),
+    path('api/emails-data/', views.api_emails_data, name='api_emails_data'),
+    
     # URLs AJAX para formulários (evitar reload da página)
     path('ajax/periferico/cadastrar/', views.ajax_periferico_create, name='ajax_periferico_create'),
     path('ajax/computador/cadastrar/', views.ajax_computador_create, name='ajax_computador_create'),
@@ -138,4 +152,6 @@ urlpatterns = [
     path('ajax/posicao-atendimento/cadastrar/', views.ajax_posicao_atendimento_create, name='ajax_posicao_atendimento_create'),
     path('ajax/tipo-periferico/cadastrar/', views.ajax_tipo_periferico_create, name='ajax_tipo_periferico_create'),
     path('ajax/monitor/cadastrar/', views.ajax_monitor_create, name='ajax_monitor_create'),
-] 
+    path('ajax/chip/cadastrar/', views.ajax_chip_create, name='ajax_chip_create'),
+    path('ajax/email/cadastrar/', views.ajax_email_create, name='ajax_email_create'),
+]

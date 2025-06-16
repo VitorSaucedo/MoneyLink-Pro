@@ -278,11 +278,8 @@ class Funcionario(models.Model):
         super(Funcionario, self).save(*args, **kwargs)
 
     def __str__(self):
-        display = self.apelido if self.apelido else (self.nome_completo.split()[0] if self.nome_completo else 'Sem Nome')
-        matricula_display = self.matricula or 'Sem Matrícula'
-        empresa_nome = self.empresa.nome if self.empresa else 'Sem Empresa'
-        ramal_display = f" (Ramal: {self.ramal})" if self.ramal else ""
-        return f"{display} ({matricula_display}){ramal_display} - {empresa_nome}"
+        # Retorna apenas o nome completo para simplificar a exibição no autocomplete
+        return self.nome_completo if self.nome_completo else 'Sem Nome'
 
     class Meta:
         verbose_name = "Funcionário"

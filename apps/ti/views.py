@@ -3,6 +3,7 @@ from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.http import JsonResponse, HttpResponse
 from django.db.models import Count, Q, Prefetch, Subquery, OuterRef, Sum
+from custom_tags_app.templatetags.custom_tags import format_chip_number
 from .utils import (atribuir_item_pa, desatribuir_item_pa, verificar_disponibilidade_periferico, 
                     verificar_disponibilidade_computador, gerar_resposta_api, listar_itens_atribuidos_pa)
 from .pagination_utils import paginate_queryset, get_pagination_data
@@ -18,7 +19,9 @@ from .models import (
     AtribuicaoComputadorPA,
     Monitor,
     AtribuicaoMonitorPA,
-    Loja
+    Loja,
+    Chip,
+    Email
 )
 from .forms import (
     TipoPerifericoForm,
@@ -31,7 +34,9 @@ from .forms import (
     ComputadorForm,
     AtribuicaoComputadorPAForm,
     MonitorForm,
-    AtribuicaoMonitorPAForm
+    AtribuicaoMonitorPAForm,
+    ChipForm,
+    EmailForm
 )
 from apps.funcionarios.models import Funcionario, Empresa
 import json
@@ -141,6 +146,7 @@ def admin(request):
         'loja_selecionada': loja_selecionada,
         'loja_atual': loja_atual,
         'lojas': lojas,
+        'funcionarios': selects['funcionarios_list'],  # Adicionar funcionarios para o template
         **contagens,
         **selects,
         **forms,
@@ -2174,24 +2180,52 @@ def api_verificar_ramal(request):
 
 @login_required
 def ramal_create(request):
-    # Implementar a criação de ramais
+    """View para criar/atribuir ramal a um funcionário"""
     if request.method == 'POST':
-        # Processar o formulário de criação de ramal
-        # form = RamalForm(request.POST)  # Criar um formulário real para ramais
-        # if form.is_valid():
-        #     form.save()
-        #     messages.success(request, 'Ramal cadastrado com sucesso!')
-        #     return redirect('ti:admin')
-        messages.success(request, 'Ramal cadastrado com sucesso!')
+        try:
+            funcionario_id = request.POST.get('funcionario_id')
+            ramal = request.POST.get('ramal')
+            
+            # Validação básica
+            if not funcionario_id or not ramal:
+                messages.error(request, 'Funcionário e ramal são obrigatórios.')
+                return redirect('ti:admin')
+            
+            # Buscar o funcionário
+            funcionario = Funcionario.objects.get(id=funcionario_id)
+            
+            # Verificar se o ramal já está em uso por outro funcionário
+            funcionario_com_ramal = Funcionario.objects.filter(
+                ramal=ramal
+            ).exclude(
+                id=funcionario_id
+            ).first()
+            
+            if funcionario_com_ramal:
+                messages.error(
+                    request, 
+                    f'O ramal {ramal} já está atribuído ao funcionário {funcionario_com_ramal.nome_completo}.'
+                )
+                return redirect('ti:admin')
+            
+            # Atualizar o ramal do funcionário
+            funcionario.ramal = ramal
+            funcionario.save()
+            
+            messages.success(
+                request, 
+                f'Ramal {ramal} atribuído com sucesso ao funcionário {funcionario.nome_completo}!'
+            )
+            
+        except Funcionario.DoesNotExist:
+            messages.error(request, 'Funcionário não encontrado.')
+        except Exception as e:
+            messages.error(request, f'Erro ao atribuir ramal: {str(e)}')
+        
         return redirect('ti:admin')
-    else:
-        # form = RamalForm()
-        pass
     
-    context = {
-        # 'form': form
-    }
-    return render(request, 'apps/ti/admin.html', context)
+    # Se não for POST, redirecionar para admin
+    return redirect('ti:admin')
 
 @login_required
 def ramal_update(request):
@@ -2201,9 +2235,15 @@ def ramal_update(request):
         ramal = request.POST.get('ramal')
         
         if funcionario_id and ramal:
-            # Aqui você implementaria a lógica para atualizar o ramal do funcionário
-            # Exemplo: Ramal.objects.update_or_create(funcionario_id=funcionario_id, defaults={'numero': ramal})
-            messages.success(request, 'Ramal atualizado com sucesso!')
+            try:
+                # Buscar o funcionário e atualizar o campo ramal
+                funcionario = get_object_or_404(Funcionario, id=funcionario_id)
+                funcionario.ramal = ramal
+                funcionario.save()
+                
+                messages.success(request, f'Ramal {ramal} atribuído com sucesso ao funcionário {funcionario.nome_completo}!')
+            except Exception as e:
+                messages.error(request, f'Erro ao atualizar ramal: {str(e)}')
         else:
             messages.error(request, 'Dados incompletos para atualizar o ramal.')
             
@@ -3816,6 +3856,172 @@ def ajax_periferico_create(request):
     
     return JsonResponse({'success': False, 'message': 'Método não permitido'})
 
+# ===== VIEWS PARA CONTROLE DE E-MAILS =====
+
+@login_required
+def controle_emails(request):
+    """
+    View principal para o controle de e-mails.
+    Exibe dashboard com estatísticas e lista de e-mails.
+    """
+    # Obter estatísticas dos e-mails
+    total_emails = Email.objects.count()
+    emails_ativos = Email.objects.filter(status='ativo').count()
+    emails_inativos = Email.objects.filter(status='inativo').count()
+    emails_funcionario_desligado = Email.objects.filter(status='funcionario_desligado').count()
+    
+    # Obter lista de funcionários para os selects
+    funcionarios = Funcionario.objects.filter(status=True).order_by('nome_completo')
+    
+    # Obter todos os e-mails com relacionamentos carregados
+    emails = Email.objects.select_related('ramal', 'setor').all().order_by('email')
+    
+    context = {
+        'title': 'Controle de E-mails - TI',
+        'total_emails': total_emails,
+        'emails_ativos': emails_ativos,
+        'emails_inativos': emails_inativos,
+        'emails_funcionario_desligado': emails_funcionario_desligado,
+        'funcionarios': funcionarios,
+        'emails': emails,
+        'form': EmailForm(),
+    }
+    
+    return render(request, 'apps/ti/controle_emails.html', context)
+
+@login_required
+def email_create(request):
+    """View para criar um novo e-mail"""
+    if request.method == 'POST':
+        form = EmailForm(request.POST)
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'E-mail cadastrado com sucesso!')
+            return redirect('ti:controle_emails')
+        else:
+            messages.error(request, 'Erro ao cadastrar e-mail. Verifique os dados informados.')
+    else:
+        form = EmailForm()
+    
+    context = {
+        'title': 'Cadastrar E-mail',
+        'form': form,
+        'funcionarios': Funcionario.objects.filter(status=True).order_by('nome_completo'),
+    }
+    
+    return render(request, 'apps/ti/email_form.html', context)
+
+@login_required
+def email_update(request, pk):
+    """View para editar um e-mail existente"""
+    email = get_object_or_404(Email, pk=pk)
+    
+    if request.method == 'POST':
+        form = EmailForm(request.POST, instance=email)
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'E-mail atualizado com sucesso!')
+            return redirect('ti:controle_emails')
+        else:
+            messages.error(request, 'Erro ao atualizar e-mail. Verifique os dados informados.')
+    else:
+        form = EmailForm(instance=email)
+    
+    context = {
+        'title': 'Editar E-mail',
+        'form': form,
+        'email': email,
+        'funcionarios': Funcionario.objects.filter(status=True).order_by('nome_completo'),
+    }
+    
+    return render(request, 'apps/ti/email_form.html', context)
+
+@login_required
+def email_delete(request, pk):
+    """View para excluir um e-mail"""
+    email = get_object_or_404(Email, pk=pk)
+    
+    if request.method == 'POST':
+        email.delete()
+        messages.success(request, 'E-mail excluído com sucesso!')
+        return redirect('ti:controle_emails')
+    
+    context = {
+        'title': 'Excluir E-mail',
+        'email': email,
+    }
+    
+    return render(request, 'apps/ti/confirm_delete.html', context)
+
+@login_required
+def api_emails_data(request):
+    """
+    API para retornar dados dos e-mails em formato JSON.
+    Usado para carregar dados dinamicamente na tabela.
+    """
+    # Obter parâmetros de busca
+    search = request.GET.get('search', '').strip()
+    
+    # Query base com relacionamentos
+    emails = Email.objects.select_related('ramal', 'setor').all()
+    
+    # Aplicar filtro de busca se fornecido
+    if search:
+        emails = emails.filter(
+            Q(email__icontains=search) |
+            Q(ramal__nome_completo__icontains=search) |
+            Q(setor__nome_completo__icontains=search)
+        )
+    
+    # Ordenar por e-mail
+    emails = emails.order_by('email')
+    
+    # Preparar dados para JSON
+    emails_data = []
+    for email in emails:
+        emails_data.append({
+            'id': email.id,
+            'email': email.email,
+            'status': email.get_status_display(),
+            'status_value': email.status,
+            'ramal': email.ramal.nome_completo if email.ramal else '-',
+            'setor': email.setor.nome_completo if email.setor else '-',
+            'email_recuperacao': email.email_recuperacao or '-',
+            'data_criacao': email.data_criacao.strftime('%d/%m/%Y %H:%M') if email.data_criacao else '-',
+        })
+    
+    return JsonResponse({
+        'success': True,
+        'emails': emails_data,
+        'total': len(emails_data)
+    })
+
+@login_required
+def ajax_email_create(request):
+    """View AJAX para cadastrar e-mail"""
+    if request.method == 'POST':
+        try:
+            form = EmailForm(request.POST)
+            if form.is_valid():
+                form.save()
+                return JsonResponse({
+                    'success': True,
+                    'message': 'E-mail cadastrado com sucesso!'
+                })
+            else:
+                errors = []
+                for field, error_list in form.errors.items():
+                    for error in error_list:
+                        errors.append(f"{field}: {error}")
+                return JsonResponse({
+                    'success': False,
+                    'message': 'Erro de validação: ' + '; '.join(errors)
+                })
+        except Exception as e:
+            return JsonResponse({'success': False, 'message': str(e)})
+    
+    return JsonResponse({'success': False, 'message': 'Método não permitido'})
+
 @login_required 
 def ajax_computador_create(request):
     """View AJAX para cadastrar computador"""
@@ -4030,6 +4236,183 @@ def ajax_monitor_create(request):
                 return JsonResponse({
                     'success': True,
                     'message': 'Monitor cadastrado com sucesso!'
+                })
+            else:
+                errors = []
+                for field, error_list in form.errors.items():
+                    for error in error_list:
+                        errors.append(f"{field}: {error}")
+                return JsonResponse({
+                    'success': False,
+                    'message': 'Erro de validação: ' + '; '.join(errors)
+                })
+        except Exception as e:
+            return JsonResponse({'success': False, 'message': str(e)})
+    
+    return JsonResponse({'success': False, 'message': 'Método não permitido'})
+
+# Views para Controle de Chips
+@login_required
+def controle_chips(request):
+    """
+    View principal para o controle de chips.
+    Exibe dashboard com estatísticas e lista de chips.
+    """
+    # Obter estatísticas dos chips
+    total_chips = Chip.objects.count()
+    chips_ativos = Chip.objects.filter(status='ativo').count()
+    chips_livres = Chip.objects.filter(status='livre').count()
+    chips_banidos = Chip.objects.filter(status='banido').count()
+    chips_inativos = Chip.objects.filter(status='inativo').count()
+    chips_reutilizados = Chip.objects.filter(status='reutilizado').count()
+    
+    # Obter lista de funcionários para os selects
+    funcionarios = Funcionario.objects.filter(status=True).order_by('nome_completo')
+    
+    # Obter todos os chips com relacionamentos carregados
+    chips = Chip.objects.select_related('ramal', 'setor').all().order_by('numero')
+    
+    context = {
+        'title': 'Controle de Chips - TI',
+        'total_chips': total_chips,
+        'chips_ativos': chips_ativos,
+        'chips_livres': chips_livres,
+        'chips_banidos': chips_banidos,
+        'chips_inativos': chips_inativos,
+        'chips_reutilizados': chips_reutilizados,
+        'funcionarios': funcionarios,
+        'chips': chips,
+        'form': ChipForm(),
+    }
+    
+    return render(request, 'apps/ti/controle_chips.html', context)
+
+@login_required
+def chip_create(request):
+    """View para criar um novo chip"""
+    if request.method == 'POST':
+        form = ChipForm(request.POST)
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'Chip cadastrado com sucesso!')
+            return redirect('ti:controle_chips')
+        else:
+            messages.error(request, 'Erro ao cadastrar chip. Verifique os dados informados.')
+    else:
+        form = ChipForm()
+    
+    context = {
+        'title': 'Cadastrar Chip',
+        'form': form,
+        'funcionarios': Funcionario.objects.filter(status=True).order_by('nome_completo'),
+    }
+    
+    return render(request, 'apps/ti/chip_form.html', context)
+
+@login_required
+def chip_update(request, pk):
+    """View para editar um chip existente"""
+    chip = get_object_or_404(Chip, pk=pk)
+    
+    if request.method == 'POST':
+        form = ChipForm(request.POST, instance=chip)
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'Chip atualizado com sucesso!')
+            return redirect('ti:controle_chips')
+        else:
+            messages.error(request, 'Erro ao atualizar chip. Verifique os dados informados.')
+    else:
+        form = ChipForm(instance=chip)
+    
+    context = {
+        'title': 'Editar Chip',
+        'form': form,
+        'chip': chip,
+        'funcionarios': Funcionario.objects.filter(status=True).order_by('nome_completo'),
+    }
+    
+    return render(request, 'apps/ti/chip_form.html', context)
+
+@login_required
+def chip_delete(request, pk):
+    """View para excluir um chip"""
+    chip = get_object_or_404(Chip, pk=pk)
+    
+    if request.method == 'POST':
+        chip.delete()
+        messages.success(request, 'Chip excluído com sucesso!')
+        return redirect('ti:controle_chips')
+    
+    context = {
+        'title': 'Excluir Chip',
+        'chip': chip,
+    }
+    
+    return render(request, 'apps/ti/confirm_delete.html', context)
+
+@login_required
+def api_chips_data(request):
+    """
+    API para retornar dados dos chips em formato JSON.
+    Usado para carregar dados dinamicamente na tabela.
+    """
+    # Filtros
+    status_filter = request.GET.get('status', '')
+    search = request.GET.get('search', '')
+    
+    # Query base
+    chips = Chip.objects.select_related('ramal', 'setor').all()
+    
+    # Aplicar filtros
+    if status_filter:
+        chips = chips.filter(status=status_filter)
+    
+    if search:
+        chips = chips.filter(
+            Q(numero__icontains=search) |
+            Q(ramal__nome_completo__icontains=search) |
+            Q(setor__nome_completo__icontains=search)
+        )
+    
+    # Ordenar por número
+    chips = chips.order_by('numero')
+    
+    # Preparar dados para JSON
+    chips_data = []
+    for chip in chips:
+        # Formatar número do chip
+        numero_formatado = format_chip_number(chip.numero)
+        
+        chips_data.append({
+            'id': chip.id,
+            'numero': numero_formatado,
+            'status': chip.get_status_display(),
+            'status_value': chip.status,
+            'ramal': chip.ramal.nome_completo if chip.ramal else '-',
+            'setor': chip.ramal.setor.nome if chip.ramal and chip.ramal.setor else '-',
+            'data_entrega': chip.data_entrega.strftime('%d/%m/%Y') if chip.data_entrega else '-',
+            'data_criacao_recarga': chip.data_criacao_recarga.strftime('%d/%m/%Y') if chip.data_criacao_recarga else '-',
+            'data_banimento': chip.data_banimento.strftime('%d/%m/%Y') if chip.data_banimento else '-',
+        })
+    
+    return JsonResponse({
+        'success': True,
+        'chips': chips_data,
+        'total': len(chips_data)
+    })
+
+@login_required
+def ajax_chip_create(request):
+    """View AJAX para cadastrar chip"""
+    if request.method == 'POST':
+        try:
+            form = ChipForm(request.POST)
+            if form.is_valid():
+                form.save()
+                return JsonResponse({
+                    'success': True,
+                    'message': 'Chip cadastrado com sucesso!'
                 })
             else:
                 errors = []

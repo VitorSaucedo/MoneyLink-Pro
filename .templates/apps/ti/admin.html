@@ -22,8 +22,7 @@ Administração TI<span class="produto-text"></span>
   <link rel="stylesheet" href="{% static 'css/darkmode.css' %}">
   {# Adicionar estilos personalizados para a página #}
   <link rel="stylesheet" href="{% static 'css/apps/ti/admin.css' %}">
-  {# Adicionar CSS do modo escuro #}
-  <link rel="stylesheet" href="{% static 'css/apps/ti/ti-dark-mode.css' %}">
+
   
   <!-- jQuery -->
   <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
@@ -349,7 +348,7 @@ Administração TI<span class="produto-text"></span>
           <i class='bx bx-phone'></i> Gestão de Ramais
         </div>
         <div class="card-body">
-          <form method="post" action="{% url 'ti:ramal_update' %}" id="form-ramal">
+          <form method="post" action="{% url 'ti:ramal_update' %}" id="form-ramal" data-no-ajax="true">
             {% csrf_token %}
             <div class="mb-3 full-width">
               <label for="funcionario_ramal" class="form-label">
@@ -372,6 +371,54 @@ Administração TI<span class="produto-text"></span>
             </div>
             <button type="submit" class="btn btn-primary w-100">
               <i class='bx bx-save'></i> Salvar Ramal
+            </button>
+          </form>
+        </div>
+      </div>
+      
+      <!-- Card Cadastro de Chips -->
+      <div class="card mb-4" id="card-chip">
+        <div class="card-header">
+          <i class='bx bx-chip'></i> Cadastro de Chips
+        </div>
+        <div class="card-body">
+          <form method="post" action="{% url 'ti:chip_create' %}" id="form-chip">
+            {% csrf_token %}
+            <div class="mb-3">
+              <label for="numero_chip" class="form-label">
+                <i class='bx bx-hash'></i>Número do Chip *
+              </label>
+              <input type="text" id="numero_chip" name="numero" class="form-control" placeholder="Número do chip" required>
+            </div>
+            <div class="mb-3">
+              <label for="funcionario_chip" class="form-label">
+                <i class='bx bx-user'></i>Funcionário *
+              </label>
+              <select id="funcionario_chip" name="ramal" class="form-select" required>
+                <option value="">-- Selecione um Funcionário --</option>
+                {% for funcionario in funcionarios_list %}
+                  <option value="{{ funcionario.id }}">{{ funcionario.nome_completo }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="mb-3">
+              <label for="data_entrega_chip" class="form-label">
+                <i class='bx bx-calendar'></i>Data de Entrega *
+              </label>
+              <input type="date" id="data_entrega_chip" name="data_entrega" class="form-control" required>
+            </div>
+            <div class="mb-3">
+              <label for="status_chip" class="form-label">
+                <i class='bx bx-info-circle'></i>Status
+              </label>
+              <select id="status_chip" name="status" class="form-select">
+                <option value="ativo">Ativo</option>
+                <option value="inativo">Inativo</option>
+                <option value="banido">Banido</option>
+              </select>
+            </div>
+            <button type="submit" class="btn btn-primary w-100">
+              <i class='bx bx-save'></i> Salvar Chip
             </button>
           </form>
         </div>
@@ -523,6 +570,67 @@ Administração TI<span class="produto-text"></span>
               </button>
             </div>
           </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Card de Cadastro de E-mail -->
+  <div class="row">
+    <div class="col-md-6 mb-4">
+      <div class="card shadow-sm">
+        <div class="card-header bg-info text-white">
+          <h5 class="mb-0">
+            <i class="fas fa-envelope me-2"></i>Cadastrar E-mail
+          </h5>
+        </div>
+        <div class="card-body">
+          <form id="form-email" method="post">
+            {% csrf_token %}
+            
+            <div class="mb-3">
+              <label for="email_email" class="form-label">E-mail *</label>
+              <input type="email" class="form-control" id="email_email" name="email" required placeholder="email@exemplo.com">
+            </div>
+            
+            <div class="mb-3">
+              <label for="email_senha" class="form-label">Senha *</label>
+              <input type="password" class="form-control" id="email_senha" name="senha" required placeholder="Digite a senha">
+            </div>
+            
+            <div class="mb-3">
+              <label for="email_funcionario" class="form-label">Funcionário</label>
+              <select class="form-select" id="email_funcionario" name="funcionario">
+                <option value="">-- Selecione um Funcionário --</option>
+                {% for funcionario in funcionarios_list %}
+                  <option value="{{ funcionario.id }}">{{ funcionario.nome_completo }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            
+            <div class="mb-3">
+              <label for="email_tipo" class="form-label">Tipo</label>
+              <input type="text" class="form-control" id="email_tipo" name="tipo" placeholder="Ex: Corporativo, Pessoal, etc.">
+            </div>
+            
+            <div class="mb-3">
+              <label for="email_status" class="form-label">Status *</label>
+              <select class="form-select" id="email_status" name="status" required>
+                <option value="ativo">Ativo</option>
+                <option value="inativo">Inativo</option>
+                <option value="funcionario_desligado">Funcionário Desligado</option>
+              </select>
+            </div>
+            
+            <div class="mb-3">
+              <label for="email_recuperacao" class="form-label">E-mail de Recuperação</label>
+              <input type="email" class="form-control" id="email_recuperacao" name="email_recuperacao" placeholder="email_recuperacao@exemplo.com">
+            </div>
+            
+            <button type="submit" class="btn btn-info w-100">
+              <i class="fas fa-save me-2"></i>Salvar E-mail
+            </button>
+          </form>
         </div>
       </div>
     </div>
@@ -922,4 +1030,4 @@ document.addEventListener('DOMContentLoaded', function() {
     }
   });
 </script>
-{% endblock %} 
+{% endblock %}

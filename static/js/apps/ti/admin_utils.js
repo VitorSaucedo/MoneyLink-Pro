@@ -183,6 +183,11 @@ function shouldUseAjax(formElement) {
   const formId = $form.attr('id') || '';
   const action = $form.attr('action') || '';
   
+  // Verificar se o formulário está explicitamente marcado para não usar AJAX
+  if ($form.attr('data-no-ajax') === 'true' || $form.hasClass('no-ajax')) {
+    return false;
+  }
+  
   // Verificar se é um formulário de cadastro que deveria usar AJAX
   const isCadastroForm = (
     formId.includes('form') && (
@@ -382,4 +387,4 @@ window.TIAdminUtils = {
   shouldUseAjax: shouldUseAjax,
   parseAjaxError: parseAjaxError,
   formAjaxUrls: formAjaxUrls
-}; 
+};

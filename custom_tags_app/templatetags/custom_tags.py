@@ -235,6 +235,36 @@ def sum_values(dictionary):
         return 0
     return sum(dictionary.values())
 
+@register.filter
+def format_chip_number(value):
+    """
+    Formata o número do chip no formato "xx x xxxx-xxxx".
+    Exemplo: "85988887777" -> "85 9 8888-7777"
+    """
+    if not value:
+        return value
+    
+    # Remove todos os caracteres não numéricos
+    numero_limpo = ''.join(filter(str.isdigit, str(value)))
+    
+    # Verifica se tem pelo menos 10 dígitos para formatação
+    if len(numero_limpo) < 10:
+        return value  # Retorna o valor original se não tiver dígitos suficientes
+    
+    # Formata no padrão "xx x xxxx-xxxx"
+    if len(numero_limpo) == 11:
+        # Formato: 85988887777 -> 85 9 8888-7777
+        return f"{numero_limpo[:2]} {numero_limpo[2]} {numero_limpo[3:7]}-{numero_limpo[7:]}"
+    elif len(numero_limpo) == 10:
+        # Formato: 8588887777 -> 85 8888-7777 (sem o dígito do meio)
+        return f"{numero_limpo[:2]} {numero_limpo[2:6]}-{numero_limpo[6:]}"
+    else:
+        # Para outros tamanhos, tenta adaptar
+        if len(numero_limpo) >= 11:
+            return f"{numero_limpo[:2]} {numero_limpo[2]} {numero_limpo[3:7]}-{numero_limpo[7:11]}"
+        else:
+            return value  # Retorna o valor original se não conseguir formatar
+
 @register.simple_tag
 def get_pagination_range(current_page, total_pages, adjacents=2):
     """
