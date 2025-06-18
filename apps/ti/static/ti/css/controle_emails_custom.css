@@ -1,0 +1,50 @@
+.email-address {
+  font-family: 'JetBrains Mono', 'Courier New', monospace;
+  font-weight: 600;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  font-size: 15px;
+  cursor: default;
+}
+
+.status-badge {
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.status-ativo {
+  background: #d4edda;
+  color: #155724;
+}
+
+.status-inativo {
+  background: #f8d7da;
+  color: #721c24;
+}
+
+.status-funcionario_desligado {
+  background: #fff3cd;
+  color: #856404;
+}
+
+.password-cell {
+  font-family: 'JetBrains Mono', 'Courier New', monospace;
+  font-size: 12px;
+  color: #6c757d;
+  max-width: 150px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  cursor: default;
+}
+
+/* Melhorar aparência dos tooltips */
+[title] {
+  position: relative;
+}

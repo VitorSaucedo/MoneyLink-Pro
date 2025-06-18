@@ -1,0 +1,590 @@
+/**
+ * admin.css - Estilos para administração do módulo TI
+ * 
+ * Este arquivo contém APENAS os estilos para o tema CLARO (padrão).
+ * Os estilos para o tema escuro estão no arquivo ti-dark-mode.css
+ * 
+ * Organização:
+ * 1. Variáveis CSS
+ * 2. Toggle de tema
+ * 3. Estilos gerais
+ * 4. Cards e cabeçalhos
+ * 5. Formulários
+ * 6. Botões
+ * 7. Validação de formulários
+ * 8. Cadastro em lote de periféricos
+ * 9. Responsividade
+ */
+
+/* ========================================
+   1. VARIÁVEIS CSS 
+   ======================================== */
+:root {
+    /* Cores primárias */
+    --color-primary-dark: #142650; /* Azul escuro */
+    --color-secondary: #70f611; /* Verde */
+    --color-tertiary: #0bd5f0; /* Azul claro (ciano) */
+    --color-accent: #6e42c1; /* Roxo - para compatibilidade com dark mode */
+    --color-white: #fff;
+    --color-gray: #ddd;
+    --color-light-gray: #f0f0f0;
+    --color-text-dark: #333;
+    --color-text-light: #666;
+    --color-danger: #dc3545;
+    --color-success: #198754; /* Verde escuro para sucesso */
+    --color-warning: #ffc107;
+    --color-info: #0dcaf0;
+
+    /* Variáveis para tema TI - equivalentes ao dark mode para consistência */
+    --ti-bg-primary: #ffffff;
+    --ti-bg-secondary: #f8f9fa;
+    --ti-bg-card: #ffffff;
+    --ti-bg-hover: #f0f0f0;
+    --ti-bg-input: #ffffff;
+    
+    --ti-text-primary: var(--color-text-dark);
+    --ti-text-secondary: var(--color-text-light);
+    --ti-text-muted: #6c757d;
+    
+    --ti-accent-primary: var(--color-secondary);
+    --ti-accent-secondary: var(--color-tertiary);
+    --ti-accent-tertiary: var(--color-accent);
+    
+    --ti-status-success: var(--color-success);
+    --ti-status-warning: var(--color-warning);
+    --ti-status-danger: var(--color-danger);
+    --ti-status-info: var(--color-info);
+    
+    --ti-border-color: var(--color-gray);
+    --ti-border-light: rgba(220, 220, 220, 0.5);
+
+    /* Sombreamentos */
+    --box-shadow-light: 0 2px 6px rgba(0,0,0,0.05);
+    --box-shadow-medium: 0 4px 12px rgba(0,0,0,0.1);
+    --box-shadow-card-hover: 0 6px 18px rgba(112, 246, 17, 0.15);
+
+    /* Gradientes */
+    --gradient-primary-green: linear-gradient(135deg, var(--color-secondary) 0%, var(--color-primary-dark) 100%);
+    --gradient-secondary-green: linear-gradient(135deg, var(--color-secondary) 0%, var(--color-tertiary) 50%, var(--color-secondary) 100%);
+    --gradient-card-header: linear-gradient(-45deg, var(--color-secondary), #5cb85c, var(--color-primary-dark), var(--color-secondary));
+    
+    /* Variável de gradiente compatível com dark mode */
+    --ti-gradient-header: var(--gradient-card-header);
+
+    /* Animação do Gradiente */
+    --gradient-animation: gradientBG 12s ease infinite;
+}
+
+/* ========================================
+   2. TOGGLE DE TEMA
+   ======================================== */
+.theme-switch-wrapper {
+    margin-top: -2px;
+    vertical-align: middle;
+}
+
+header .theme-switch {
+    width: 50px;
+    height: 28px;
+}
+
+header .theme-switch .slider:before {
+    height: 20px;
+    width: 20px;
+    left: 4px;
+    bottom: 4px;
+}
+
+header .theme-switch input:checked + .slider:before {
+    transform: translateX(22px);
+}
+
+header .slider i {
+    font-size: 12px;
+}
+
+/* ========================================
+   3. ESTILOS GERAIS
+   ======================================== */
+body {
+    background-color: var(--ti-bg-primary);
+    transition: background-color 0.3s ease;
+}
+
+.container {
+    align-items: center;
+    display: flex;
+    flex-direction: column;
+    max-width: 1200px !important;
+    margin: 0 auto;
+    border: none !important;
+    box-shadow: none !important;
+    outline: none !important;
+}
+
+/* Título da página */
+.titulo-pagina {
+    color: var(--ti-text-primary);
+    font-weight: 600;
+    border: none;
+    padding-bottom: 0.5rem;
+    display: inline-block;
+    transition: color 0.3s ease, background-color 0.3s ease;
+    background-color: transparent;
+    box-shadow: none;
+}
+
+.titulo-pagina i {
+    color: var(--ti-accent-primary);
+    transition: color 0.3s ease;
+}
+
+/* Container do título */
+.header-container {
+    align-items: center;
+    background-color: transparent;
+    display: flex;
+    justify-content: center;
+    transition: background-color 0.3s ease;
+    width: 100%;
+    padding: 0.5rem 0;
+    border: none !important;
+    box-shadow: none !important;
+    outline: none !important;
+}
+
+/* ========================================
+   4. CARDS E CABEÇALHOS
+   ======================================== */
+.card {
+    background-color: var(--ti-bg-card);
+    border: none !important;
+    border-radius: 10px;
+    box-shadow: none !important;
+    outline: none !important;
+    border-bottom: none !important;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    margin-bottom: 1.5rem;
+    transition: transform 0.3s ease, background-color 0.3s ease;
+    position: relative;
+}
+
+.card:hover {
+    transform: none;
+    box-shadow: none;
+}
+
+/* Cabeçalhos de Card */
+.card .card-header {
+    background: var(--ti-gradient-header) !important;
+    background-size: 400% 400% !important;
+    animation: var(--gradient-animation) !important;
+    color: var(--color-white) !important;
+    font-weight: 600;
+    font-size: 1.1em;
+    padding: 1rem 1.25rem;
+    letter-spacing: 0.5px;
+    text-shadow: 0 1px 2px rgba(0,0,0,0.1);
+    display: flex;
+    border: none !important;
+    align-items: center;
+    position: relative;
+    z-index: 1;
+    transition: color 0.3s ease;
+    overflow: hidden; /* Para conter o efeito de brilho */
+}
+
+.card .card-header i {
+    margin-right: 0.75rem;
+    font-size: 1.3rem;
+    vertical-align: middle;
+}
+
+/* Efeito de brilho metálico nos cabeçalhos */
+.card .card-header::before {
+    content: '';
+    position: absolute;
+    top: -150%;
+    left: -150%;
+    width: 300%;
+    height: 300%;
+    background: linear-gradient(
+      135deg,
+      rgba(255,255,255,0) 0%,
+      rgba(255,255,255,0.05) 40%,
+      rgba(255,255,255,0.3) 50%,
+      rgba(255,255,255,0.05) 60%,
+      rgba(255,255,255,0) 100%
+    );
+    transform: rotate(45deg);
+    transition: all 0.7s ease;
+    z-index: 0;
+}
+
+.card:hover .card-header::before {
+    top: 150%;
+    left: 150%;
+}
+
+/* Corpo do Card */
+.card .card-body {
+    padding: 1.25rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    background-color: var(--ti-bg-card);
+    transition: background-color 0.3s ease;
+    border-bottom: none !important;
+    box-shadow: none !important;
+}
+
+/* ========================================
+   5. FORMULÁRIOS
+   ======================================== */
+.card form {
+    width: 100%;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    gap: 1rem;
+}
+
+.card form .mb-3 {
+    flex: 1 1 45%;
+    min-width: 250px;
+}
+
+.card form .mb-3.full-width {
+    flex-basis: 100%;
+}
+
+/* Labels de formulário */
+.card form .form-label {
+    display: flex;
+    align-items: center;
+    font-weight: 600;
+    color: var(--ti-text-primary);
+    margin-bottom: 0.5rem;
+    font-size: 0.95rem;
+    transition: color 0.3s ease;
+}
+
+.card form .form-label i {
+    margin-right: 0.5rem;
+    color: var(--ti-accent-primary);
+    font-size: 1.1rem;
+    transition: color 0.3s ease;
+}
+
+/* Campos de formulário */
+.card form .form-control,
+.card form .form-select {
+    border: 2px solid var(--ti-border-color);
+    border-radius: 8px;
+    padding: 0.75rem 1rem;
+    font-size: 1rem;
+    transition: border-color 0.3s ease, box-shadow 0.3s ease, background-color 0.3s ease, color 0.3s ease;
+    background-color: var(--ti-bg-input);
+    width: 100%;
+    color: var(--ti-text-primary);
+}
+
+.card form .form-control:focus,
+.card form .form-select:focus {
+    border-color: var(--ti-accent-primary);
+    box-shadow: 0 0 0 3px rgba(112, 246, 17, 0.15);
+    background-color: var(--ti-bg-input);
+    outline: none;
+}
+
+/* ========================================
+   6. BOTÕES
+   ======================================== */
+/* Botão Primário e Botão de Submissão */
+.card form button[type="submit"],
+.btn-primary {
+    background: var(--gradient-secondary-green) !important;
+    background-size: 300% 300% !important;
+    animation: gradientBGButton 10s ease infinite !important;
+    border: none;
+    border-radius: 8px;
+    color: var(--ti-text-primary);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    padding: 0.75rem 1.5rem;
+    cursor: pointer;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+}
+
+.card form button[type="submit"]:hover,
+.btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 12px rgba(112, 246, 17, 0.2);
+}
+
+/* Estado desabilitado */
+.card form button[type="submit"]:disabled,
+.card form button[type="submit"].disabled,
+.btn-primary:disabled,
+.btn-primary.disabled {
+    background: linear-gradient(135deg, #cccccc, #999999) !important;
+    color: #666666;
+    cursor: not-allowed;
+    box-shadow: none;
+    opacity: 0.7;
+    transform: none;
+}
+
+.card form button[type="submit"]:disabled:hover,
+.card form button[type="submit"].disabled:hover,
+.btn-primary:disabled:hover,
+.btn-primary.disabled:hover {
+    transform: none;
+    box-shadow: none;
+}
+
+.card form button[type="submit"] i,
+.btn-primary i {
+    font-size: 1.2rem;
+    margin-right: 0.5rem;
+}
+
+/* Botões de Listagem */
+.btn-listagem {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    background-color: var(--color-primary-dark);
+    color: var(--color-white);
+    border: none;
+    border-radius: 8px;
+    padding: 0.75rem 1.5rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    transition: transform 0.3s ease, background-color 0.3s ease, box-shadow 0.3s ease, color 0.3s ease;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    margin-bottom: 1rem;
+    text-decoration: none;
+    width: 100%;
+    max-width: 300px;
+}
+
+.btn-listagem:hover {
+    background-color: var(--color-primary-dark);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 12px rgba(20, 38, 80, 0.2);
+    color: var(--ti-accent-primary);
+}
+
+.btn-listagem i {
+    font-size: 1.2rem;
+    margin-right: 0.5rem;
+}
+
+/* ========================================
+   7. VALIDAÇÃO DE FORMULÁRIOS
+   ======================================== */
+.is-loading {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24'%3E%3Cpath fill='%23333' d='M12,4a8,8,0,0,1,7.89,6.7A1.53,1.53,0,0,0,21.38,12h0a1.5,1.5,0,0,0,1.48-1.75,11,11,0,0,0-21.72,0A1.5,1.5,0,0,0,2.62,12h0a1.53,1.53,0,0,0,1.49-1.3A8,8,0,0,1,12,4Z'%3E%3CanimateTransform attributeName='transform' dur='0.75s' repeatCount='indefinite' type='rotate' values='0 12 12;360 12 12'/%3E%3C/path%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 10px center;
+    background-size: 20px;
+}
+
+.is-valid {
+    border-color: var(--ti-status-success) !important;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24'%3E%3Cpath fill='%23198754' d='M9,16.17L4.83,12l-1.42,1.41L9,19L21,7l-1.41-1.41L9,16.17z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 10px center;
+    background-size: 20px;
+}
+
+.invalid-feedback {
+    display: none;
+    color: var(--ti-status-danger);
+    font-size: 0.875rem;
+    margin-top: 0.25rem;
+}
+
+.form-control.is-invalid {
+    border-color: var(--ti-status-danger);
+    padding-right: calc(1.5em + 0.75rem);
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24'%3E%3Cpath fill='%23dc3545' d='M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 10px center;
+    background-size: 20px;
+}
+
+.form-control.is-invalid + .invalid-feedback {
+    display: block;
+}
+
+/* ========================================
+   8. CADASTRO EM LOTE DE PERIFÉRICOS
+   ======================================== */
+.perifericos-pendentes-container {
+    background-color: var(--ti-bg-secondary);
+    border-radius: 8px;
+    padding: 1.25rem;
+    margin-top: 1.5rem;
+    border: 1px solid var(--ti-border-color);
+    transition: background-color 0.3s ease;
+}
+
+.perifericos-pendentes-container h5 {
+    color: var(--ti-text-primary);
+    font-weight: 600;
+    font-size: 1.1rem;
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+}
+
+.perifericos-pendentes-container h5 i {
+    color: var(--ti-accent-primary);
+    font-size: 1.3rem;
+    margin-right: 0.5rem;
+}
+
+/* Tabela de periféricos pendentes */
+#perifericos-pendentes-table {
+    margin-bottom: 0;
+}
+
+#perifericos-pendentes-table thead th {
+    background-color: var(--color-primary-dark);
+    color: var(--color-white);
+    font-weight: 600;
+    border: none;
+    padding: 0.75rem 1rem;
+    font-size: 0.9rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+#perifericos-pendentes-table tbody tr:nth-child(even) {
+    background-color: rgba(112, 246, 17, 0.05);
+}
+
+#perifericos-pendentes-table tbody tr:hover {
+    background-color: rgba(112, 246, 17, 0.1);
+}
+
+/* Animação para destacar periféricos recém-adicionados */
+@keyframes highlight-row {
+    0% { background-color: rgba(112, 246, 17, 0.3); }
+    100% { background-color: transparent; }
+}
+
+.periferico-row-highlight {
+    animation: highlight-row 1.5s ease-out;
+}
+
+/* Botão de remover periférico */
+.btn-remover-periferico {
+    padding: 0.25rem 0.5rem;
+    background-color: transparent;
+    border: 1px solid var(--ti-status-danger);
+    color: var(--ti-status-danger);
+    border-radius: 4px;
+    font-size: 0.8rem;
+    transition: all 0.2s ease;
+}
+
+.btn-remover-periferico:hover {
+    background-color: var(--ti-status-danger);
+    color: white;
+}
+
+/* Estado vazio da tabela */
+#empty-state-row td {
+    color: var(--ti-text-muted);
+    font-style: italic;
+}
+
+/* Botões de ação na parte inferior */
+#limpar-lista-btn:disabled,
+#save-all-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+/* Contador de periféricos pendentes */
+#contagem-pendentes {
+    font-weight: bold;
+}
+
+/* Divisória entre formulário e lista pendente */
+.periferico-form-container {
+    border-bottom: 1px dashed var(--ti-border-color);
+    padding-bottom: 1.5rem;
+    margin-bottom: 1rem;
+}
+
+/* ========================================
+   9. RESPONSIVIDADE
+   ======================================== */
+@media (max-width: 992px) {
+    .card form .mb-3 {
+        flex: 1 1 100%;
+    }
+    
+    .btn-listagem {
+        max-width: 100%;
+    }
+}
+
+/* ========================================
+   10. ANIMAÇÕES
+   ======================================== */
+@keyframes gradientBG {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+}
+
+@keyframes gradientBGButton {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+}
+
+/* ========================================
+   11. UTILIDADES
+   ======================================== */
+/* Transição padrão para elementos */
+body, 
+.card, 
+.card-header, 
+.card-body, 
+.form-control, 
+.form-select, 
+.form-label, 
+.btn-listagem, 
+.titulo-pagina {
+    transition: all 0.3s ease;
+}
+
+/* Estilos para os ícones */
+.bx {
+    margin-right: 0.5rem;
+}
+
+/* Classe app-ti para especificidade */
+.app-ti .card,
+.app-ti .form-control,
+.app-ti .form-select,
+.app-ti .btn {
+    transition: all 0.3s ease;
+} 

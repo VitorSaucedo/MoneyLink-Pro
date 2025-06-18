@@ -1,0 +1,1156 @@
+/* ==========================================
+   CSS para a página de Controle de Estoque - TI
+   Baseado no estilo de consulta_cliente.css
+   Foco: Verde e Azul, com ênfase no Verde
+   ========================================== */
+
+/* ---------- Variáveis de Cores e Sombreamentos ---------- */
+:root {
+    --color-primary-dark: #142650; /* Azul escuro */
+    --color-secondary: #4CAF50; /* Verde mais suave */
+    --color-tertiary: #0bd5f0; /* Azul claro (ciano) */
+    --color-accent: #b4874c; /* Tom terroso */
+    --color-white: #fff;
+    --color-gray: #ddd;
+    --color-light-gray: #f8f9fa;
+    --color-text-dark: #333;
+    --color-text-light: #666;
+    --color-danger: #dc3545;
+    --color-success: #198754; /* Verde escuro para sucesso */
+
+    --box-shadow-light: 0 2px 6px rgba(0,0,0,0.05);
+    --box-shadow-medium: 0 4px 12px rgba(0,0,0,0.1);
+    --box-shadow-card-hover: 0 6px 18px rgba(76, 175, 80, 0.15); /* Sombra verde no hover */
+
+    /* Gradientes com foco no verde */
+    --gradient-primary-green: linear-gradient(135deg, var(--color-secondary) 0%, var(--color-primary-dark) 100%);
+    --gradient-secondary-green: linear-gradient(135deg, #6ab04c 0%, var(--color-tertiary) 50%, #6ab04c 100%);
+    --gradient-metallic-green-focus: linear-gradient(135deg, #ffffff 0%, var(--color-secondary) 30%, var(--color-tertiary) 50%, var(--color-secondary) 70%, #ffffff 100%);
+    --gradient-card-header: linear-gradient(-45deg, #4CAF50, #388e3c, var(--color-primary-dark), #4CAF50); /* Verde, verde mais escuro, azul, verde */
+
+    /* Animação do Gradiente */
+    --gradient-animation: gradientBG 12s ease infinite;
+}
+
+/* Dark Mode - Variáveis para o tema escuro */
+[data-theme="dark"] {
+    --color-primary-dark: #1e1e2f; /* Fundo principal muito escuro (quase preto azulado) */
+    --color-secondary: #6e42c1; /* Roxo para elementos secundários */
+    --color-tertiary: #29e3ff; /* Ciano mais brilhante */
+    --color-accent: #c79a5e; /* Tom terroso mais claro */
+    --color-white: #1a1625; /* Fundo escuro */
+    --color-gray: #3d3450; /* Cinza escuro */
+    --color-light-gray: #2d2438; /* Cinza claro escuro */
+    --color-text-dark: #ffffff; /* Texto branco */
+    --color-text-light: #b8b5c0; /* Texto cinza claro */
+    
+    --box-shadow-light: none;
+    --box-shadow-medium: none;
+    --box-shadow-card-hover: none;
+    
+    /* Gradientes escuros */
+    --gradient-primary-green: linear-gradient(135deg, #8659d4 0%, #213a77 100%);
+    --gradient-secondary-green: linear-gradient(135deg, #8659d4 0%, #29e3ff 50%, #8659d4 100%);
+    --gradient-metallic-green-focus: linear-gradient(135deg, #2d2438 0%, #8659d4 30%, #29e3ff 50%, #8659d4 70%, #2d2438 100%);
+    --gradient-card-header: linear-gradient(-45deg, #6e42c1, #8659d4, #3a4c8a, #6e42c1);
+}
+
+/* ==========================================
+   Estilos Gerais da Página
+   ========================================== */
+body {
+    background-color: var(--color-light-gray);
+    transition: background-color 0.3s ease;
+}
+
+[data-theme="dark"] body {
+    background-color: #1a1625; /* Cor de fundo muito escura */
+}
+
+.container {
+    align-items: center;
+    display: flex;
+    flex-direction: column;
+    gap: 30px;
+    justify-content: center;
+    max-width: none;
+    width: 100%;
+    border: none;
+    box-shadow: none;
+}
+
+[data-theme="dark"] .container.mt-4 {
+    background-color: transparent;
+    border: none !important;
+    box-shadow: none !important;
+    border-radius: 0;
+    /* padding: 15px; */ /* Removido para igualar ao tema claro */
+}
+
+/* Override para o container de histórico permitir layout de linha */
+.historico-container {
+    display: block !important;
+    flex-direction: unset !important;
+    align-items: unset !important;
+}
+
+.titulo-pagina {
+    color: var(--color-primary-dark);
+    font-weight: 600;
+    border-bottom: 3px solid var(--color-secondary);
+    padding-bottom: 0.5rem;
+    display: inline-block;
+    transition: color 0.3s ease, border-color 0.3s ease;
+}
+
+.titulo-pagina i {
+    color: var(--color-secondary);
+    transition: color 0.3s ease;
+}
+
+[data-theme="dark"] .titulo-pagina {
+    color: var(--color-text-dark);
+    border-bottom-color: #6e42c1; /* Roxo para a linha abaixo do texto */
+}
+
+[data-theme="dark"] .titulo-pagina i {
+    color: #8659d4; /* Roxo mais claro para o ícone */
+}
+
+/* ==========================================
+   Estilos Gerais de Cards
+   ========================================== */
+.card {
+    background-color: var(--color-white);
+    border: none;
+    border-radius: 10px;
+    box-shadow: var(--box-shadow-light) !important;
+    outline: none !important;
+    border-bottom: none !important;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    margin-bottom: 1.5rem;
+    transition: transform 0.3s ease, background-color 0.3s ease;
+    position: relative;
+}
+
+[data-theme="dark"] .card {
+    background-color: #1e1e2f;
+    border: none;
+    box-shadow: none;
+}
+
+.card:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--box-shadow-medium) !important;
+}
+
+/* Removida sombra para o hover no tema escuro */
+[data-theme="dark"] .card:hover {
+    box-shadow: none;
+    border-color: transparent;
+}
+
+.card .card-header {
+    background: var(--gradient-card-header) !important;
+    background-size: 400% 400% !important;
+    animation: var(--gradient-animation) !important;
+    color: var(--color-white) !important;
+    font-weight: 600;
+    font-size: 1.1em;
+    padding: 1rem 1.25rem;
+    letter-spacing: 0.5px;
+    text-shadow: 0 1px 2px rgba(0,0,0,0.1);
+    display: flex;
+    align-items: center;
+    position: relative; /* Necessário para o z-index do ::before */
+    z-index: 1; /* Garante que o conteúdo fique acima do ::before */
+    overflow: hidden; /* Importante para conter o efeito de brilho */
+}
+
+[data-theme="dark"] .card .card-header {
+    /* Opção 1: Gradiente roxo-azul (tema mais escuro e elegante) */
+    background: linear-gradient(-45deg, #6e42c1, #8659d4, #3a4c8a, #6e42c1) !important;
+    color: #ffffff !important;
+    text-shadow: 0 1px 2px rgba(0,0,0,0.2);
+}
+
+.card .card-header i {
+    margin-right: 0.75rem;
+    font-size: 1.3rem;
+    vertical-align: middle;
+}
+
+/* Efeito de brilho metálico */
+.card .card-header::before {
+    content: '';
+    position: absolute;
+    top: -150%;
+    left: -150%;
+    width: 300%;
+    height: 300%;
+    background: linear-gradient(
+      135deg,
+      rgba(255,255,255,0) 0%,
+      rgba(255,255,255,0.05) 40%,
+      rgba(255,255,255,0.3) 50%,
+      rgba(255,255,255,0.05) 60%,
+      rgba(255,255,255,0) 100%
+    );
+    transform: rotate(45deg);
+    transition: all 0.7s ease;
+    z-index: 0; /* Fica atrás do conteúdo */
+}
+
+.card:hover .card-header::before {
+    top: 150%;
+    left: 150%;
+}
+
+.card .card-body {
+    padding: 1.25rem;
+    display: flex;
+    flex-direction: column; /* Mantém os forms em coluna por padrão */
+    gap: 1rem;
+    background-color: var(--color-white);
+    transition: background-color 0.3s ease;
+    border-bottom: none !important;
+    box-shadow: none !important;
+}
+
+[data-theme="dark"] .card .card-body {
+    background-color: #1e1e2f;
+    color: var(--color-text-dark);
+    border: none;
+}
+
+/* ==========================================
+   Estilos Gerais para Formulários dentro dos Cards
+   ========================================== */
+.card form {
+    width: 100%;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between; /* Espaça os itens */
+    gap: 1rem; /* Espaço entre os itens do formulário */
+}
+
+/* Grupo de formulário (div com .mb-3) */
+.card form .mb-3 {
+    flex: 1 1 45%; /* Ocupa quase metade, permitindo 2 por linha */
+    min-width: 250px; /* Largura mínima para não ficar muito estreito */
+}
+
+/* Para campos que devem ocupar a linha inteira (como endereço, select multiple) */
+.card form .mb-3.full-width {
+    flex-basis: 100%;
+}
+
+/* Especificidade para Labels */
+.card form .form-label {
+    display: flex;
+    align-items: center;
+    font-weight: 600;
+    color: var(--color-primary-dark);
+    margin-bottom: 0.5rem;
+    font-size: 0.95rem;
+    transition: color 0.3s ease;
+}
+
+[data-theme="dark"] .card form .form-label {
+    color: var(--color-secondary);
+}
+
+.card form .form-label i {
+    margin-right: 0.5rem;
+    color: var(--color-secondary);
+    font-size: 1.1rem;
+    transition: color 0.3s ease;
+}
+
+[data-theme="dark"] .card form .form-label i {
+    color: #9c80e0; /* Roxo claro para os ícones dos formulários */
+}
+
+/* Especificidade para Inputs e Selects */
+.card form .form-control,
+.card form .form-select {
+    border: 2px solid var(--color-gray);
+    border-radius: 8px;
+    padding: 0.75rem 1rem;
+    font-size: 1rem;
+    transition: border-color 0.3s ease, box-shadow 0.3s ease, background-color 0.3s ease, color 0.3s ease;
+    background-color: var(--color-white);
+    color: var(--color-text-dark);
+    width: 100%; /* Garante que ocupem o espaço do .mb-3 */
+}
+
+[data-theme="dark"] .card form .form-control,
+[data-theme="dark"] .card form .form-select {
+    background-color: var(--color-white);
+    border-color: var(--color-gray);
+    color: var(--color-text-dark);
+}
+
+.card form .form-control:focus,
+.card form .form-select:focus {
+    border-color: var(--color-secondary);
+    box-shadow: 0 0 0 3px rgba(76, 175, 80, 0.15);
+    background-color: #fafffa;
+    outline: none;
+}
+
+[data-theme="dark"] .card form .form-control:focus,
+[data-theme="dark"] .card form .form-select:focus {
+    border-color: var(--color-secondary);
+    box-shadow: 0 0 0 3px rgba(110, 66, 193, 0.2);
+    background-color: #2a2235;
+    color: var(--color-text-dark);
+}
+
+/* Animação sutil para labels ao focar no input */
+.card form .form-control:focus ~ .form-label,
+.card form .form-select:focus ~ .form-label {
+    color: var(--color-secondary);
+}
+
+/* Switches */
+.card form .form-check.form-switch {
+    padding-left: 3em;
+    display: flex;
+    align-items: center;
+    min-height: auto;
+    flex-basis: 100%; /* Switch geralmente ocupa a linha toda */
+    margin-top: 0.5rem; /* Adiciona espaço acima */
+}
+
+.card form .form-switch .form-check-input {
+    width: 2.5em;
+    height: 1.25em;
+    margin-left: -3em;
+    background-color: var(--color-gray);
+    border-color: #bbb;
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='-4 -4 8 8'%3e%3ccircle r='3' fill='%23bbb'/%3e%3c/svg%3e");
+    transition: background-color 0.2s ease-in-out, border-color 0.2s ease-in-out, background-position 0.2s ease-in-out;
+    cursor: pointer;
+}
+
+[data-theme="dark"] .card form .form-switch .form-check-input {
+    background-color: #3d3450;
+    border-color: #4d4060;
+}
+
+.card form .form-switch .form-check-input:focus {
+    border-color: var(--color-secondary);
+    outline: 0;
+    box-shadow: 0 0 0 0.25rem rgba(76, 175, 80, 0.2);
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='-4 -4 8 8'%3e%3ccircle r='3' fill='rgba(76, 175, 80, 0.8)'/%3e%3c/svg%3e");
+}
+
+[data-theme="dark"] .card form .form-switch .form-check-input:focus {
+    border-color: #6e42c1;
+    box-shadow: 0 0 0 0.25rem rgba(110, 66, 193, 0.2);
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='-4 -4 8 8'%3e%3ccircle r='3' fill='rgba(110, 66, 193, 0.8)'/%3e%3c/svg%3e");
+}
+
+.card form .form-switch .form-check-input:checked {
+    background-color: var(--color-secondary);
+    border-color: var(--color-secondary);
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='-4 -4 8 8'%3e%3ccircle r='3' fill='%23fff'/%3e%3c/svg%3e");
+    background-position: right center;
+}
+
+[data-theme="dark"] .card form .form-switch .form-check-input:checked {
+    background-color: #6e42c1;
+    border-color: #8659d4;
+}
+
+.card form .form-switch .form-check-label {
+    padding-top: 0.1em;
+    color: var(--color-text-dark);
+    font-weight: 500;
+    cursor: pointer;
+}
+
+[data-theme="dark"] .card form .form-switch .form-check-label {
+    color: var(--color-text-dark);
+}
+
+/* Botão de Submissão */
+.card form button[type="submit"] {
+    background: var(--gradient-secondary-green) !important;
+    background-size: 300% 300% !important;
+    animation: gradientBGButton 10s ease infinite !important;
+    border: none;
+    border-radius: 8px;
+    color: white !important;
+    font-weight: 600;
+    padding: 0.8rem 1.5rem;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 4px 10px rgba(76, 175, 80, 0.15);
+    width: 100%; /* Ocupa a largura total do container flex do form */
+    margin-top: 1rem; /* Espaço acima do botão */
+    flex-basis: 100%; /* Garante que o botão fique em linha própria */
+}
+
+[data-theme="dark"] .card form button[type="submit"] {
+    background: linear-gradient(135deg, #6e42c1, #7e56d1, #4b6dd4, #6e42c1) !important;
+    background-size: 300% 300% !important;
+    color: #ffffff !important;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+}
+
+.card form button[type="submit"]:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 6px 15px rgba(76, 175, 80, 0.25);
+}
+
+[data-theme="dark"] .card form button[type="submit"]:hover {
+    box-shadow: 0 6px 15px rgba(110, 66, 193, 0.3);
+}
+
+.card form button[type="submit"]:active {
+    transform: translateY(1px);
+    box-shadow: 0 2px 5px rgba(76, 175, 80, 0.2);
+}
+
+[data-theme="dark"] .card form button[type="submit"]:active {
+    box-shadow: 0 2px 5px rgba(110, 66, 193, 0.2);
+}
+
+.card form button[type="submit"] i {
+    margin-right: 0.5rem;
+    font-size: 1.1rem;
+}
+
+/* ==========================================
+   Estilo para Tabela de Histórico
+   ========================================== */
+.table-responsive {
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: var(--box-shadow-light);
+}
+
+[data-theme="dark"] .table-responsive {
+    box-shadow: var(--box-shadow-medium);
+}
+
+.table {
+    margin-bottom: 0;
+    width: 100%;
+    border-collapse: collapse;
+    color: var(--color-text-dark);
+}
+
+[data-theme="dark"] .table {
+    color: var(--color-text-dark);
+}
+
+.table thead th {
+    background-color: var(--color-primary-dark);
+    color: var(--color-white);
+    font-weight: 600;
+    border: none;
+    padding: 0.75rem 1rem;
+    font-size: 0.9rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+[data-theme="dark"] .table thead th {
+    background-color: #3a2b70;
+    color: #ffffff;
+}
+
+.table thead th:nth-child(2) {  /* Coluna 'Total no estoque' */
+    border-right: 1px solid rgba(0,0,0,0.05);
+}
+
+[data-theme="dark"] .table thead th:nth-child(2) {
+    background-color: rgba(110, 66, 193, 0.2);
+    border-right: 1px solid rgba(255,255,255,0.05);
+}
+
+.table tbody tr:nth-child(even) {
+    background-color: rgba(76, 175, 80, 0.05);
+}
+
+[data-theme="dark"] .table tbody tr:nth-child(even) {
+    background-color: rgba(110, 66, 193, 0.1);
+}
+
+.table tbody tr:hover {
+    background-color: rgba(76, 175, 80, 0.1);
+}
+
+[data-theme="dark"] .table tbody tr:hover {
+    background-color: rgba(110, 66, 193, 0.2);
+}
+
+.table tbody td {
+    padding: 0.75rem 1rem;
+    vertical-align: middle;
+    border-top: 1px solid var(--color-gray);
+    color: var(--color-text-dark);
+}
+
+[data-theme="dark"] .table tbody td {
+    border-top: 1px solid rgba(110, 66, 193, 0.1);
+}
+
+.table tbody td:nth-child(2) {  /* Células da coluna 'Total no estoque' */
+    background-color: rgba(76, 175, 80, 0.1);
+    border-right: 1px solid rgba(0,0,0,0.05);
+}
+
+[data-theme="dark"] .table tbody td:nth-child(2) {
+    background-color: rgba(110, 66, 193, 0.1);
+    border-right: 1px solid rgba(255,255,255,0.05);
+}
+
+/* Estilos específicos para tabelas no modo claro */
+.table-striped>tbody>tr:nth-of-type(odd)>* {
+    color: var(--color-text-dark);
+}
+
+.table-striped>tbody>tr:nth-of-type(even)>* {
+    color: var(--color-text-dark);
+}
+
+/* Classes de coloração específicas */
+.table-info {
+    background-color: rgba(13, 202, 240, 0.15) !important;
+}
+
+.table-success {
+    background-color: rgba(76, 175, 80, 0.15) !important;
+}
+
+/* Estilos específicos para tabelas no modo escuro */
+[data-theme="dark"] .table-striped>tbody>tr:nth-of-type(odd)>* {
+    color: var(--color-text-dark);
+}
+
+[data-theme="dark"] .table-striped>tbody>tr:nth-of-type(even)>* {
+    color: var(--color-text-dark);
+}
+
+/* Classes de coloração específicas */
+[data-theme="dark"] .table-info {
+    background-color: rgba(41, 227, 255, 0.15) !important;
+}
+
+[data-theme="dark"] .table-success {
+    background-color: rgba(110, 66, 193, 0.15) !important;
+}
+
+/* Botões de ação na tabela */
+.table .btn-action {
+    padding: 0.25rem 0.5rem;
+    margin-right: 0.25rem;
+    font-size: 0.8rem;
+    border-radius: 4px;
+    background-color: var(--color-primary-dark);
+    color: white;
+}
+
+[data-theme="dark"] .table .btn-action {
+    background-color: #3a2b70;
+    color: #ffffff;
+}
+
+/* ==========================================
+   Estilos para Lista de Computadores Disponíveis
+   ================================================== */
+
+.inventory-summary-computadores {
+    padding: 0.75rem 1rem;
+    background-color: rgba(248, 249, 250, 0.7); /* Fundo levemente destacado */
+    border-radius: 8px;
+    border: 1px solid rgba(0,0,0,0.05);
+    margin-top: 1rem; /* Garante margem superior */
+    transition: background-color 0.3s ease, border-color 0.3s ease;
+}
+
+[data-theme="dark"] .inventory-summary-computadores {
+    background-color: rgba(58, 43, 112, 0.15);
+    border: 1px solid rgba(110, 66, 193, 0.1);
+}
+
+.inventory-summary-computadores h6 {
+    font-weight: 600;
+    color: var(--color-primary-dark);
+    font-size: 1em; /* Tamanho um pouco maior para o título da seção */
+    margin-bottom: 0.75rem; /* Estilo para o Card de Estoque */
+}
+
+#card-estoque {
+    transition: all 0.3s ease;
+}
+
+[data-theme="dark"] .inventory-summary-computadores h6 {
+    color: var(--color-text-dark);
+}
+
+.inventory-summary-computadores h6 i {
+    color: var(--color-secondary); /* Cor do ícone */
+    font-size: 1.2em;
+    transition: color 0.3s ease;
+}
+
+[data-theme="dark"] .inventory-summary-computadores h6 i {
+    color: #8659d4;
+}
+
+.computadores-disponiveis-lista {
+    display: flex;
+    flex-direction: column; /* Itens empilhados verticalmente */
+    gap: 0.5rem; /* Espaço entre os itens da marca */
+}
+
+.marca-item {
+    display: flex;
+    justify-content: space-between; /* Alinha nome da marca à esquerda e quantidade à direita */
+    align-items: center;
+    padding: 0.3rem 0.2rem; /* Pequeno padding interno */
+    font-size: 0.9em; /* Tamanho da fonte para os itens */
+    border-bottom: 1px dashed rgba(0,0,0,0.08); /* Linha sutil separadora */
+    transition: border-color 0.3s ease;
+}
+
+[data-theme="dark"] .marca-item {
+    border-bottom: 1px dashed rgba(110, 66, 193, 0.1);
+}
+
+.marca-item:last-child {
+    border-bottom: none; /* Remove a borda do último item */
+}
+
+.marca-nome {
+    color: var(--color-text-dark);
+    font-weight: 500;
+    transition: color 0.3s ease;
+}
+
+[data-theme="dark"] .marca-nome {
+    color: var(--color-text-dark);
+}
+
+.marca-quantidade {
+    font-size: 0.9em; /* Tamanho da fonte dentro do badge */
+    padding: 0.35em 0.6em; /* Padding do badge */
+    background-color: var(--color-primary-dark) !important; /* Cor de fundo do badge */
+    color: var(--color-white) !important; /* Cor do texto do badge */
+    transition: background-color 0.3s ease;
+}
+
+[data-theme="dark"] .marca-quantidade {
+    background-color: #6e42c1 !important;
+}
+
+.inventory-summary-computadores .text-muted {
+    font-style: italic;
+    font-size: 0.9em;
+    color: #6c757d !important;
+    transition: color 0.3s ease;
+}
+
+[data-theme="dark"] .inventory-summary-computadores .text-muted,
+[data-theme="dark"] .text-muted {
+    color: #9c80e0 !important;
+}
+
+/* ==========================================
+   Estilos para Paginação Customizada
+   ========================================== */
+.custom-pagination {
+    display: flex; /* Organiza os itens da lista horizontalmente */
+    justify-content: center; /* Centraliza a paginação */
+    padding-left: 0; /* Remove o padding padrão da ul */
+    list-style: none; /* Remove os marcadores de lista */
+    border-radius: 0.25rem; /* Cantos arredondados como os do Bootstrap */
+}
+
+.custom-page-item {
+    margin: 0 2px; /* Pequeno espaçamento entre os itens */
+}
+
+.custom-page-link {
+    display: block;
+    padding: 0.5rem 0.75rem; /* Espaçamento interno similar ao Bootstrap */
+    color: var(--color-primary-dark); /* Azul escuro para links de página */
+    background-color: var(--color-white);
+    border: 1px solid var(--color-gray);
+    text-decoration: none;
+    transition: all 0.3s ease;
+    border-radius: 0.25rem; /* Cantos arredondados para cada link */
+}
+
+[data-theme="dark"] .custom-page-link {
+    color: var(--color-text-dark);
+    background-color: var(--color-white);
+    border: 1px solid var(--color-gray);
+}
+
+.custom-page-item.active .custom-page-link {
+    z-index: 3;
+    color: white; /* Texto branco para melhor contraste */
+    background-color: var(--color-secondary); /* Verde para página ativa */
+    border-color: var(--color-secondary);
+    font-weight: 600;
+}
+
+[data-theme="dark"] .custom-page-item.active .custom-page-link {
+    color: #ffffff;
+    background-color: #6e42c1;
+    border-color: #6e42c1;
+}
+
+.custom-page-item:not(.active) .custom-page-link:hover {
+    background-color: rgba(76, 175, 80, 0.1); /* Verde claro no hover */
+    border-color: rgba(76, 175, 80, 0.3);
+    color: var(--color-primary-dark);
+}
+
+[data-theme="dark"] .custom-page-item:not(.active) .custom-page-link:hover {
+    background-color: rgba(110, 66, 193, 0.2);
+    border-color: rgba(110, 66, 193, 0.4);
+    color: #ffffff;
+}
+
+.custom-page-item.disabled .custom-page-link {
+    color: #aaa; /* Cinza mais claro para links desabilitados */
+    pointer-events: none; /* Impede cliques em links desabilitados */
+    background-color: #f8f9fa;
+    border-color: var(--color-gray);
+}
+
+[data-theme="dark"] .custom-page-item.disabled .custom-page-link {
+    color: #665c7a;
+    background-color: #2d2438;
+    border-color: #3d3450;
+}
+
+/* Transição para todos os elementos */
+body, 
+.card, 
+.card-header, 
+.card-body, 
+.form-control, 
+.form-select, 
+.form-label, 
+.titulo-pagina,
+.table,
+.table th,
+.table td,
+.inventory-summary-computadores,
+.marca-item,
+.custom-page-link {
+    transition: all 0.3s ease;
+} 
+
+/* ==============================================
+   Estilos para o Seletor de Loja
+   ============================================== */
+.store-selector-container {
+    background-color: var(--color-white);
+    border-radius: 10px;
+    padding: 15px;
+    box-shadow: var(--box-shadow-light);
+    transition: all 0.3s ease;
+}
+
+[data-theme="dark"] .store-selector-container {
+    background-color: var(--color-primary-dark);
+    box-shadow: none;
+    border: 1px solid var(--color-gray);
+}
+
+.store-selector-container .form-label {
+    color: var(--color-primary-dark);
+    font-weight: 600;
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+}
+
+[data-theme="dark"] .store-selector-container .form-label {
+    color: var(--color-text-dark);
+}
+
+.store-selector-container .form-label i {
+    margin-right: 5px;
+    font-size: 1.2rem;
+    color: var(--color-secondary);
+}
+
+[data-theme="dark"] .store-selector-container .form-label i {
+    color: var(--color-secondary);
+}
+
+#store-selector {
+    border: 2px solid var(--color-gray);
+    border-radius: 8px;
+    padding: 0.75rem 1rem;
+    font-size: 1rem;
+    transition: border-color 0.3s ease, box-shadow 0.3s ease;
+    background-color: var(--color-white);
+    color: var(--color-text-dark);
+    cursor: pointer;
+}
+
+#store-selector:focus {
+    border-color: var(--color-secondary);
+    box-shadow: 0 0 0 0.25rem rgba(76, 175, 80, 0.25);
+    outline: none;
+}
+
+[data-theme="dark"] #store-selector {
+    background-color: var(--color-primary-dark);
+    border-color: var(--color-gray);
+    color: var(--color-text-dark);
+}
+
+[data-theme="dark"] #store-selector:focus {
+    border-color: var(--color-secondary);
+    box-shadow: 0 0 0 0.25rem rgba(110, 66, 193, 0.25);
+}
+
+/* Estilos para a transição de loja e carregamento */
+.store-transition {
+    position: relative;
+    transition: all 0.3s ease-in-out;
+    opacity: 0.8;
+}
+
+.loading-overlay {
+    position: absolute !important;
+    top: 0;
+    left: 0;
+    width: 100% !important;
+    height: 100% !important;
+    background-color: rgba(255, 255, 255, 0.9);
+    backdrop-filter: blur(2px);
+    z-index: 1000;
+    display: flex !important;
+    align-items: center;
+    justify-content: center;
+    border-radius: 10px;
+    transition: opacity 0.3s ease;
+}
+
+[data-theme="dark"] .loading-overlay {
+    background-color: rgba(30, 30, 47, 0.9);
+}
+
+.loading-overlay p {
+    color: var(--color-text-light);
+    font-size: 0.9rem;
+    margin: 0;
+}
+
+[data-theme="dark"] .loading-overlay p {
+    color: var(--color-text-light);
+}
+
+.loading-overlay .spinner-border {
+    width: 2rem;
+    height: 2rem;
+    border-width: 0.25rem;
+}
+
+[data-theme="dark"] .loading-overlay .spinner-border {
+    border-color: #6e42c1;
+    border-right-color: transparent;
+}
+
+/* Adicionar keyframes para animação de gradiente se não existir em outro lugar */
+@keyframes gradientBG {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+@keyframes gradientBGButton {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+/* ==========================================
+   Estilos para manter tamanho da tabela consistente
+   ========================================== */
+
+/* Container da tabela com tamanho fixo */
+#card-estoque {
+    min-width: 900px; /* Largura mínima do card */
+    max-width: 100%;  /* Não exceder a largura do container pai */
+}
+
+/* Container da tabela responsiva com tamanho fixo */
+#card-estoque .table-responsive {
+    min-height: 400px; /* Altura mínima consistente */
+    max-height: 600px; /* Altura máxima para controlar scroll vertical se necessário */
+    overflow-x: auto;  /* Scroll horizontal se necessário */
+    overflow-y: auto;  /* Scroll vertical se necessário */
+    position: relative;
+}
+
+/* Tabela com largura mínima para garantir consistência */
+#card-estoque .table {
+    min-width: 800px; /* Largura mínima da tabela */
+    table-layout: auto; /* Permite que as colunas se ajustem automaticamente */
+    margin-bottom: 0;
+}
+
+/* Colunas com larguras consistentes */
+#card-estoque .table th:first-child,
+#card-estoque .table td:first-child {
+    min-width: 150px; /* Coluna de periférico */
+    width: 150px;
+    position: sticky;
+    left: 0;
+    background-color: var(--color-white);
+    z-index: 2;
+}
+
+[data-theme="dark"] #card-estoque .table th:first-child,
+[data-theme="dark"] #card-estoque .table td:first-child {
+    background-color: #1e1e2f;
+}
+
+#card-estoque .table th:nth-child(2),
+#card-estoque .table td:nth-child(2) {
+    min-width: 120px; /* Coluna de total no estoque */
+    width: 120px;
+    position: sticky;
+    left: 150px;
+    background-color: var(--color-white);
+    z-index: 2;
+}
+
+[data-theme="dark"] #card-estoque .table th:nth-child(2),
+[data-theme="dark"] #card-estoque .table td:nth-child(2) {
+    background-color: #1e1e2f;
+}
+
+#card-estoque .table th:last-child,
+#card-estoque .table td:last-child {
+    min-width: 100px; /* Coluna de total */
+    width: 100px;
+    position: sticky;
+    right: 0;
+    background-color: var(--color-white);
+    z-index: 2;
+}
+
+[data-theme="dark"] #card-estoque .table th:last-child,
+[data-theme="dark"] #card-estoque .table td:last-child {
+    background-color: #1e1e2f;
+}
+
+/* Colunas de salas/ilhas com largura fixa */
+#card-estoque .table th:not(:first-child):not(:nth-child(2)):not(:last-child),
+#card-estoque .table td:not(:first-child):not(:nth-child(2)):not(:last-child) {
+    min-width: 120px;
+    width: 120px;
+    text-align: center;
+}
+
+/* Garantir que o thead não quebre */
+#card-estoque .table thead {
+    position: sticky;
+    top: 0;
+    z-index: 3;
+}
+
+#card-estoque .table thead th {
+    background-color: var(--color-light-gray);
+    border-bottom: 2px solid var(--color-secondary);
+}
+
+[data-theme="dark"] #card-estoque .table thead th {
+    background-color: #2d2438;
+    border-bottom-color: #6e42c1;
+}
+
+/* Override específico para a página de controle de estoque */
+.ti-module .container {
+    max-width: none !important;
+}
+
+/* Responsividade para telas pequenas */
+@media (max-width: 768px) {
+    #card-estoque {
+        min-width: 100%;
+    }
+    
+    #card-estoque .table {
+        min-width: 600px;
+    }
+    
+    #card-estoque .table th:not(:first-child):not(:nth-child(2)):not(:last-child),
+    #card-estoque .table td:not(:first-child):not(:nth-child(2)):not(:last-child) {
+        min-width: 80px;
+        width: 80px;
+    }
+    
+    #card-estoque .table th:first-child,
+    #card-estoque .table td:first-child {
+        min-width: 120px;
+        width: 120px;
+    }
+    
+    #card-estoque .table th:nth-child(2),
+    #card-estoque .table td:nth-child(2) {
+        min-width: 100px;
+        width: 100px;
+        left: 120px;
+    }
+}
+
+/* Melhorias no loading overlay */
+.loading-overlay {
+    position: absolute !important;
+    top: 0;
+    left: 0;
+    width: 100% !important;
+    height: 100% !important;
+    background-color: rgba(255, 255, 255, 0.9);
+    backdrop-filter: blur(2px);
+    z-index: 1000;
+    display: flex !important;
+    align-items: center;
+    justify-content: center;
+    border-radius: 10px;
+    transition: opacity 0.3s ease;
+}
+
+[data-theme="dark"] .loading-overlay {
+    background-color: rgba(30, 30, 47, 0.9);
+}
+
+.loading-overlay p {
+    color: var(--color-text-light);
+    font-size: 0.9rem;
+    margin: 0;
+}
+
+[data-theme="dark"] .loading-overlay p {
+    color: var(--color-text-light);
+}
+
+.loading-overlay .spinner-border {
+    width: 2rem;
+    height: 2rem;
+    border-width: 0.25rem;
+}
+
+[data-theme="dark"] .loading-overlay .spinner-border {
+    border-color: #6e42c1;
+    border-right-color: transparent;
+}
+
+/* Transição suave para mudança de loja */
+.store-transition {
+    transition: all 0.3s ease-in-out;
+    opacity: 0.8;
+}
+
+/* Animação para a troca de conteúdo */
+@keyframes fadeInContent {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+#card-estoque .table-responsive {
+    animation: fadeInContent 0.5s ease-out;
+}
+
+/* Melhoria na estabilidade visual */
+#card-estoque .card-body {
+    min-height: 500px;
+    transition: min-height 0.3s ease;
+}
+
+/* Garantir que colunas sticky funcionem corretamente */
+#card-estoque .table th.sticky-col,
+#card-estoque .table td.sticky-col {
+    position: sticky;
+    background-color: inherit;
+    z-index: 2;
+}
+
+/* Sombras para as colunas sticky */
+#card-estoque .table th:first-child::after,
+#card-estoque .table td:first-child::after,
+#card-estoque .table th:nth-child(2)::after,
+#card-estoque .table td:nth-child(2)::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    right: -1px;
+    bottom: 0;
+    width: 1px;
+    background: linear-gradient(to bottom, 
+        rgba(0,0,0,0.1) 0%, 
+        rgba(0,0,0,0.15) 50%, 
+        rgba(0,0,0,0.1) 100%);
+    pointer-events: none;
+}
+
+[data-theme="dark"] #card-estoque .table th:first-child::after,
+[data-theme="dark"] #card-estoque .table td:first-child::after,
+[data-theme="dark"] #card-estoque .table th:nth-child(2)::after,
+[data-theme="dark"] #card-estoque .table td:nth-child(2)::after {
+    background: linear-gradient(to bottom, 
+        rgba(255,255,255,0.1) 0%, 
+        rgba(255,255,255,0.15) 50%, 
+        rgba(255,255,255,0.1) 100%);
+}
+
+#card-estoque .table th:last-child::before,
+#card-estoque .table td:last-child::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -1px;
+    bottom: 0;
+    width: 1px;
+    background: linear-gradient(to bottom, 
+        rgba(0,0,0,0.1) 0%, 
+        rgba(0,0,0,0.15) 50%, 
+        rgba(0,0,0,0.1) 100%);
+    pointer-events: none;
+}
+
+[data-theme="dark"] #card-estoque .table th:last-child::before,
+[data-theme="dark"] #card-estoque .table td:last-child::before {
+    background: linear-gradient(to bottom, 
+        rgba(255,255,255,0.1) 0%, 
+        rgba(255,255,255,0.15) 50%, 
+        rgba(255,255,255,0.1) 100%);
+}

@@ -1373,17 +1373,30 @@ def api_ilha_info(request, ilha_id):
 def atualizar_status_pa(request):
     if request.method == 'POST':
         try:
-            data = json.loads(request.body)
-            pa_id = data.get('pa_id')
-            novo_status = data.get('status')
+            # Aceitar tanto dados JSON quanto form data
+            if request.content_type == 'application/json':
+                data = json.loads(request.body)
+                pa_id = data.get('pa_id')
+                novo_status = data.get('status')
+            else:
+                # Dados enviados como form data (padrão do jQuery)
+                pa_id = request.POST.get('pa_id')
+                novo_status = request.POST.get('status')
+            
+            if not pa_id or not novo_status:
+                return JsonResponse({'success': False, 'error': 'PA ID e status são obrigatórios'})
             
             pa = PosicaoAtendimento.objects.get(id=pa_id)
             pa.status = novo_status
             pa.save()
             
             return JsonResponse({'success': True, 'message': f'Status da PA atualizado para {novo_status}'})
+        except PosicaoAtendimento.DoesNotExist:
+            return JsonResponse({'success': False, 'error': 'PA não encontrada'})
         except Exception as e:
-            return JsonResponse({'success': False, 'message': str(e)})
+            return JsonResponse({'success': False, 'error': str(e)})
+    
+    return JsonResponse({'success': False, 'error': 'Método não permitido'})
 
 
 @login_required

@@ -1,0 +1,136 @@
+{% extends 'base-plus.html' %}
+{% load static %}
+{% load custom_tags %}
+
+{% block title %}Controle de Chips - TI{% endblock %}
+
+{% block body_classes %}bg-body-tertiary ti-module{% endblock %}
+
+{% block addcss_extra %}
+<link rel="stylesheet" href="{% static 'ti/css/controle_chips.css' %}">
+<link rel="stylesheet" href="{% static 'ti/css/controle_chips_custom.css' %}">
+
+<link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+<link rel="stylesheet" href="{% static 'css/darkmode.css' %}">
+
+<!-- jQuery -->
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+{% endblock %}
+
+{% block header_title %}
+Controle de Chips - TI
+<!-- Seletor de tema (claro/escuro) -->
+<div class="theme-switch-wrapper ms-3 d-inline-block">
+  <label class="theme-switch" for="checkbox">
+    <input type="checkbox" id="checkbox" />
+    <div class="slider">
+      <i class="bx bx-sun fa-sun"></i>
+      <i class="bx bx-moon fa-moon"></i>
+    </div>
+  </label>
+</div>
+{% endblock %}
+
+{% block pre_content %}
+{% include 'partials/_messages.html' %}
+{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h1 class="titulo-pagina mb-0"><i class='bx bx-chip me-2'></i>Controle de Chips</h1>
+  </div>
+
+
+
+  <!-- Tabela Moderna -->
+  <div class="row">
+    <div class="col-12">
+      <div class="modern-table-container">
+        <div class="table-toolbar">
+          <div class="search-container">
+            <i class='bx bx-search search-icon'></i>
+            <input type="text" id="search-chips" class="search-input" placeholder="Buscar por ramal, funcionário ou número...">
+          </div>
+        </div>
+        
+        <div class="table-container">
+          <table class="modern-table" id="chips-table">
+            <thead>
+              <tr>
+                <th class="table-header">Ramal</th>
+                <th class="table-header">Número</th>
+                <th class="table-header">Funcionário</th>
+                <th class="table-header">Setor</th>
+                <th class="table-header">Data Entrega</th>
+                <th class="table-header">Data Criação/Recarga</th>
+                <th class="table-header">Data Ban</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for chip in chips %}
+                <tr class="table-row" data-status="{{ chip.status }}">
+                  <td class="table-cell">
+                    {% if chip.ramal and chip.ramal.ramal %}
+                      {{ chip.ramal.ramal }}
+                    {% else %}
+                      -
+                    {% endif %}
+                  </td>
+                  <td class="table-cell chip-number">
+                    {{ chip.numero|format_chip_number }}
+                  </td>
+                  <td class="table-cell employee-name">
+                    {% if chip.ramal %}
+                      {{ chip.ramal.nome_completo }}
+                    {% else %}
+                      -
+                    {% endif %}
+                  </td>
+                  <td class="table-cell sector-name">
+                    {% if chip.ramal and chip.ramal.setor %}
+                      {{ chip.ramal.setor.nome }}
+                    {% else %}
+                      -
+                    {% endif %}
+                  </td>
+                  <td class="table-cell date-cell">
+                    {% if chip.data_entrega %}
+                      {{ chip.data_entrega|date:"d/m/Y" }}
+                    {% else %}
+                      -
+                    {% endif %}
+                  </td>
+                  <td class="table-cell date-cell">
+                    {{ chip.data_criacao_recarga|date:"d/m/Y" }}
+                  </td>
+                  <td class="table-cell date-cell">
+                    {% if chip.data_banimento %}
+                      {{ chip.data_banimento|date:"d/m/Y" }}
+                    {% else %}
+                      -
+                    {% endif %}
+                  </td>
+                </tr>
+              {% empty %}
+                <tr>
+                  <td colspan="7" class="table-cell empty-state">
+                    <i class='bx bx-info-circle me-2'></i>
+                    Nenhum chip cadastrado
+                  </td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+{% endblock %}
+
+{% block addjs_extra %}
+<script src="{% static 'ti/js/controle_chips.js' %}"></script>
+{% endblock %}

@@ -1,0 +1,593 @@
+{% extends 'base-plus.html' %}
+{% load static %}
+{% load custom_tags %}
+
+{% block header_title %}
+TI - Controle de Salas, Ilhas e PAs
+<!-- Seletor de tema (claro/escuro) -->
+<div class="theme-switch-wrapper ms-3 d-inline-block">
+  <label class="theme-switch" for="checkbox">
+    <input type="checkbox" id="checkbox" />
+    <div class="slider">
+      <i class="bx bx-sun fa-sun"></i>
+      <i class="bx bx-moon fa-moon"></i>
+    </div>
+  </label>
+</div>
+{% endblock %}
+
+{% block addcss_extra %}
+  {# Boxicons e CSS do app #}
+  <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+  <link rel="stylesheet" href="{% static 'css/mensagens.css' %}">
+  <link rel="stylesheet" href="{% static 'ti/css/salas.css' %}">
+  {# Adicionar CSS do modo escuro #}
+  <link rel="stylesheet" href="{% static 'css/darkmode.css' %}">
+  
+  <!-- jQuery -->
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+{% endblock %}
+
+{% block pre_content %}
+  {% include 'partials/_messages.html' %}
+{% endblock %}
+
+{% block content %}
+<div class="container my-4">
+  <h1 class="titulo-pagina mb-4"><i class='bx bx-building me-2'></i>Controle de Salas, Ilhas e PAs</h1>
+  
+  {# Seletor de Loja #}
+  <div class="row mb-4">
+    <div class="col-md-4">
+      <div class="card filtro-loja-container">
+        <div class="card-body">
+          <h6 class="card-title"><i class='bx bx-store me-2'></i>Filtrar por Loja</h6>
+          <form method="GET" id="form-filtro-loja">
+            <div class="input-group">
+              <select name="loja" id="select-loja" class="form-select">
+                {% for loja in lojas %}
+                  <option value="{{ loja.id }}" {% if loja.id == loja_selecionada %}selected{% endif %}>
+                    {{ loja.nome }}
+                  </option>
+                {% endfor %}
+              </select>
+              <button type="submit" class="btn btn-primary">
+                <i class='bx bx-search'></i>
+              </button>
+            </div>
+          </form>
+          {% if loja_atual %}
+            <div class="loja-info-text">
+              <i class='bx bx-info-circle me-1'></i>
+              Mostrando salas de: <strong>{{ loja_atual.nome }}</strong>
+            </div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  {# Container para mensagens de feedback (gerenciado pelo JS) #}
+  <div id="message-container"></div>
+
+  {# Token CSRF para requisições AJAX #}
+  {% csrf_token %}
+
+  {% if salas %}
+    <!-- Abas para as salas -->
+    <div class="salas-container">
+      <ul class="nav nav-tabs salas-tabs" id="salas-tab" role="tablist">
+        {% for sala in salas %}
+          <li class="nav-item" role="presentation" style="list-style-type: none;">
+            <button class="nav-link {% if forloop.first %}active{% endif %}" 
+                    id="sala-{{ sala.id }}-tab" 
+                    data-sala-id="{{ sala.id }}"
+                    type="button" 
+                    role="tab" 
+                    aria-controls="sala-{{ sala.id }}" 
+                    aria-selected="{% if forloop.first %}true{% else %}false{% endif %}">
+              <i class='bx bx-door-open'></i> {{ sala.nome }}
+            </button>
+          </li>
+        {% endfor %}
+      </ul>
+      
+      <!-- Conteúdo das abas das salas -->
+      <div class="tab-content salas-content" id="salas-tab-content">
+        {% for sala in salas %}
+          <div class="tab-pane fade {% if forloop.first %}show active{% endif %}" 
+               id="sala-{{ sala.id }}" 
+               role="tabpanel" 
+               aria-labelledby="sala-{{ sala.id }}-tab">
+            
+            <!-- Header da sala para botões de ação -->
+            <div class="sala-header d-flex justify-content-between align-items-center mb-3">
+              <h5 class="mb-0"><i class='bx bx-door-open me-2'></i>{{ sala.nome }}</h5>
+            </div>
+            
+            {% if sala.ilhas.all %}
+              <!-- Abas para as ilhas desta sala específica -->
+              <div class="ilhas-container mt-4">
+                <ul class="nav nav-tabs ilhas-tabs" id="ilhas-sala-{{ sala.id }}-tab" role="tablist">
+                  {% for ilha in sala.ilhas.all %}
+                    <li class="nav-item" role="presentation" style="list-style-type: none;">
+                      <button class="nav-link {% if forloop.first %}active{% endif %}" 
+                              id="ilha-{{ ilha.id }}-tab" 
+                              data-ilha-id="{{ ilha.id }}"
+                              type="button" 
+                              role="tab" 
+                              aria-controls="ilha-{{ ilha.id }}-sala-{{ sala.id }}" 
+                              aria-selected="{% if forloop.first %}true{% else %}false{% endif %}">
+                        <i class='bx bx-grid'></i> {{ ilha.nome }}
+                      </button>
+                    </li>
+                  {% endfor %}
+                </ul>
+                
+                <!-- Conteúdo das abas das ilhas desta sala específica -->
+                <div class="tab-content ilhas-content" id="ilhas-sala-{{ sala.id }}-content">
+                  {% for ilha in sala.ilhas.all %}
+                    <div class="tab-pane fade {% if forloop.first %}show active{% endif %}" 
+                         id="ilha-{{ ilha.id }}-sala-{{ sala.id }}" 
+                         role="tabpanel" 
+                         aria-labelledby="ilha-{{ ilha.id }}-tab">
+                      
+                      {% if ilha.posicoes_atendimento.all %}
+                        <!-- Layout de PAs em duas colunas ordenado conforme o modelo -->
+                        <div class="pa-container mt-4">
+                          <div class="pa-grid-dual-column">
+                            <!-- Coluna da esquerda - PAs ímpares de cima para baixo -->
+                            <div class="pa-column pa-column-left">
+                              {% with pas_list=ilha.posicoes_atendimento.all|dictsort:"numero" %}
+                                {% for pa in pas_list %}
+                                  {% if forloop.counter|divisibleby:2 != 0 %}
+                                    <div class="pa-card" data-pa-id="{{ pa.id }}">
+                                      <div class="pa-header">
+                                        <div class="pa-title">
+                                          <span>PA {{ pa.numero }}</span>
+                                        </div>
+                                        <div class="pa-status-group"> 
+                                          <div class="pa-status-indicator status-{{ pa.status }}" 
+                                             title="{% if pa.status == 'livre' %}Livre{% elif pa.status == 'ocupada' %}Ocupada{% elif pa.status == 'manutencao' %}Em Manutenção{% elif pa.status == 'inativa' %}Vazia{% endif %}">
+                                          </div>
+                                          <div class="pa-status">
+                                            {% if pa.status == 'livre' %}
+                                              <span class="badge bg-success">Livre</span>
+                                            {% elif pa.status == 'ocupada' %}
+                                              <span class="badge bg-primary">Ocupada</span>
+                                            {% elif pa.status == 'manutencao' %}
+                                              <span class="badge bg-warning text-dark">Em Manutenção</span>
+                                            {% elif pa.status == 'inativa' %}
+                                              <span class="badge bg-danger">Vazia</span>
+                                            {% endif %}
+                                          </div>
+                                        </div>
+                                      </div>
+                                      
+                                      <div class="pa-content">
+                                        <div class="pa-funcionario d-flex justify-content-between align-items-center">
+                                          <div class="d-flex justify-content-between align-items-center flex-grow-1"> {# Flex container para nome e botão #}
+                                            <span> {# Grupo Nome #}
+                                              <strong>Funcionário:</strong> 
+                                              {% with funcionario=funcionarios_por_pa|get_item:pa.id %}
+                                                {% if funcionario %}
+                                                  <span class="funcionario-nome ms-1">{{ funcionario.nome_completo }}</span>
+                                                {% else %}
+                                                  <span class="text-muted ms-1">Não atribuído</span>
+                                                {% endif %}
+                                              {% endwith %}
+                                            </span>
+                                            <span> {# Grupo Botão #}
+                                              {% with funcionario=funcionarios_por_pa|get_item:pa.id %}
+                                                {% if funcionario %}
+                                                  {% if funcionario.ramal %}
+                                                    <button type="button" class="btn btn-sm ramal-badge" data-pa-id="{{ pa.id }}" data-action="change"> {# Removido ms-2 #}
+                                                      Ramal: {{ funcionario.ramal }} <i class='bx bxs-down-arrow bx-xs ms-1'></i>
+                                                    </button>
+                                                  {% else %}
+                                                    {# Caso funcionário não tenha ramal, ainda permitir troca #}
+                                                    <button type="button" class="btn btn-sm ramal-badge" data-pa-id="{{ pa.id }}" data-action="change"> {# Removido ms-2 #}
+                                                      Sem Ramal <i class='bx bxs-down-arrow bx-xs ms-1'></i>
+                                                    </button>
+                                                  {% endif %}
+                                                {% else %}
+                                                  <button type="button" class="btn btn-sm btn-outline-primary assign-funcionario-btn" data-pa-id="{{ pa.id }}" data-action="assign"> {# Removido ms-2 #}
+                                                    <i class='bx bx-user-plus me-1'></i> Atribuir
+                                                  </button>
+                                                {% endif %}
+                                              {% endwith %}
+                                            </span>
+                                          </div>
+                                          {# Adicionado: Bloco para Cargo e Setor - CORRIGIDO #}
+                                          {% with funcionario=funcionarios_por_pa|get_item:pa.id %}
+                                            {% if funcionario %} {# Primeiro checa se existe funcionário #}
+                                              {% if funcionario.cargo or funcionario.departamento %} {# Depois checa cargo OU depto #}
+                                                <div class="funcionario-info small text-muted mt-1">
+                                                  {% if funcionario.cargo %}
+                                                    <span class="funcionario-cargo me-2"><i class='bx bx-id-card me-1'></i>{{ funcionario.cargo.nome }}</span>
+                                                  {% endif %}
+                                                  {% if funcionario.departamento %}
+                                                    <span class="funcionario-departamento"><i class='bx bx-buildings me-1'></i>{{ funcionario.departamento.nome }}</span>
+                                                  {% endif %}
+                                                </div>
+                                              {% endif %}
+                                            {% endif %}
+                                          {% endwith %}
+                                          {# Placeholder para o dropdown - será posicionado via JS #}
+                                          <div class="funcionario-dropdown-container position-relative"></div> 
+                                        </div>
+                                        
+                                        <!-- Periféricos atribuídos a esta PA -->
+                                        <div class="pa-perifericos">
+                                          <h6><i class='bx bx-devices me-1'></i> Periféricos</h6>
+                                          <div class="perifericos-list">
+                                            {% if perifericos_por_pa|get_item:pa.id %}
+                                              {% for periferico in perifericos_por_pa|get_item:pa.id %}
+                                                <span class="periferico-tag" data-periferico-id="{{ periferico.id }}">{{ periferico.tipo }} {{ periferico.marca }}</span>
+                                              {% endfor %}
+                                            {% else %}
+                                              <span class="text-muted">Nenhum periférico atribuído</span>
+                                            {% endif %}
+                                          </div>
+                                          
+                                          <!-- Periféricos faltantes -->
+                                          {% if perifericos_faltando_por_pa|get_item:pa.id and perifericos_faltando_por_pa|get_item:pa.id|get_item:'tipos'|length > 0 %}
+                                            <div class="perifericos-faltantes mt-2">
+                                              <h6 class="text-warning"><i class='bx bx-error-circle me-1'></i> Periféricos Faltantes:</h6>
+                                              <div class="perifericos-faltantes-list">
+                                                {% for tipo in perifericos_faltando_por_pa|get_item:pa.id|get_item:'tipos' %}
+                                                  <div class="periferico-faltante-item">
+                                                    <span class="periferico-faltante-nome">{{ tipo.nome }}</span>
+                                                    <button type="button" class="btn btn-sm btn-outline-warning add-periferico-btn" 
+                                                            data-pa-id="{{ pa.id }}" data-tipo-id="{{ tipo.id }}" data-tipo-nome="{{ tipo.nome }}">
+                                                      <i class='bx bx-plus-circle me-1'></i> Adicionar {{ tipo.nome }}
+                                                    </button>
+                                                  </div>
+                                                {% endfor %}
+                                              </div>
+                                            </div>
+                                          {% endif %}
+                                        </div>
+
+                                        <!-- Computador atribuído a esta PA -->
+                                        <div class="pa-computadores mt-2">
+                                          <h6><i class='bx bx-laptop me-1'></i> Computador</h6>
+                                          <div class="computadores-list-container" data-pa-id="{{ pa.id }}">
+                                            {# Esta div será populada por JavaScript com base nos computadores atribuídos à PA #}
+                                            {# Renderização inicial pelo Django para evitar piscar e para que o JS possa ler o estado inicial se necessário: #}
+                                            {% with computadores_da_pa=computadores_por_pa|get_item:pa.id %}
+                                              {% if computadores_da_pa %}
+                                                {% with comp=computadores_da_pa.0 %}
+                                                  <span class="computador-tag" data-computador-id="{{ comp.id }}" data-pa-id="{{ pa.id }}">
+                                                    {{ comp.marca }} {% if comp.modelo %}({{ comp.modelo }}){% endif %}
+                                                    <i class='bx bx-x-circle remove-computador-btn ms-1' title='Remover este computador' style="cursor:pointer; vertical-align: middle;"></i>
+                                                  </span>
+                                                {% endwith %}
+                                                <!-- Removido botão "Adicionar" - agora é permitido apenas um computador por PA -->
+                                              {% else %}
+                                                <button type="button" class="btn btn-sm btn-info assign-computador-btn-main" data-pa-id="{{ pa.id }}" data-action="open_computador_add_dropdown">
+                                                  <i class='bx bx-plus-circle me-1'></i> Atribuir Computador
+                                                </button>
+                                              {% endif %}
+                                            {% endwith %}
+                                          </div>
+                                        </div>
+                                      </div>
+                                    </div>
+                                  {% endif %}
+                                {% endfor %}
+                              {% endwith %}
+                            </div>
+                            
+                            <!-- Coluna da direita - PAs pares de cima para baixo -->
+                            <div class="pa-column pa-column-right">
+                              {% with pas_list=ilha.posicoes_atendimento.all|dictsort:"numero" %}
+                                {% for pa in pas_list %}
+                                  {% if forloop.counter|divisibleby:2 == 0 %}
+                                    <div class="pa-card" data-pa-id="{{ pa.id }}">
+                                      <div class="pa-header">
+                                        <div class="pa-title">
+                                          <span>PA {{ pa.numero }}</span>
+                                        </div>
+                                        <div class="pa-status-group"> 
+                                          <div class="pa-status-indicator status-{{ pa.status }}" 
+                                             title="{% if pa.status == 'livre' %}Livre{% elif pa.status == 'ocupada' %}Ocupada{% elif pa.status == 'manutencao' %}Em Manutenção{% elif pa.status == 'inativa' %}Vazia{% endif %}">
+                                          </div>
+                                          <div class="pa-status">
+                                            {% if pa.status == 'livre' %}
+                                              <span class="badge bg-success">Livre</span>
+                                            {% elif pa.status == 'ocupada' %}
+                                              <span class="badge bg-primary">Ocupada</span>
+                                            {% elif pa.status == 'manutencao' %}
+                                              <span class="badge bg-warning text-dark">Em Manutenção</span>
+                                            {% elif pa.status == 'inativa' %}
+                                              <span class="badge bg-danger">Vazia</span>
+                                            {% endif %}
+                                          </div>
+                                        </div>
+                                      </div>
+                                      
+                                      <div class="pa-content">
+                                        <div class="pa-funcionario d-flex justify-content-between align-items-center">
+                                          <div class="d-flex justify-content-between align-items-center flex-grow-1"> {# Flex container para nome e botão #}
+                                            <span> {# Grupo Nome #}
+                                              <strong>Funcionário:</strong> 
+                                              {% with funcionario=funcionarios_por_pa|get_item:pa.id %}
+                                                {% if funcionario %}
+                                                  <span class="funcionario-nome ms-1">{{ funcionario.nome_completo }}</span>
+                                                {% else %}
+                                                  <span class="text-muted ms-1">Não atribuído</span>
+                                                {% endif %}
+                                              {% endwith %}
+                                            </span>
+                                            <span> {# Grupo Botão #}
+                                              {% with funcionario=funcionarios_por_pa|get_item:pa.id %}
+                                                {% if funcionario %}
+                                                  {% if funcionario.ramal %}
+                                                    <button type="button" class="btn btn-sm ramal-badge" data-pa-id="{{ pa.id }}" data-action="change"> {# Removido ms-2 #}
+                                                      Ramal: {{ funcionario.ramal }} <i class='bx bxs-down-arrow bx-xs ms-1'></i>
+                                                    </button>
+                                                  {% else %}
+                                                    {# Caso funcionário não tenha ramal, ainda permitir troca #}
+                                                    <button type="button" class="btn btn-sm ramal-badge" data-pa-id="{{ pa.id }}" data-action="change"> {# Removido ms-2 #}
+                                                      Sem Ramal <i class='bx bxs-down-arrow bx-xs ms-1'></i>
+                                                    </button>
+                                                  {% endif %}
+                                                {% else %}
+                                                  <button type="button" class="btn btn-sm btn-outline-primary assign-funcionario-btn" data-pa-id="{{ pa.id }}" data-action="assign"> {# Removido ms-2 #}
+                                                    <i class='bx bx-user-plus me-1'></i> Atribuir
+                                                  </button>
+                                                {% endif %}
+                                              {% endwith %}
+                                            </span>
+                                          </div>
+                                          {# Adicionado: Bloco para Cargo e Setor - CORRIGIDO #}
+                                          {% with funcionario=funcionarios_por_pa|get_item:pa.id %}
+                                            {% if funcionario %} {# Primeiro checa se existe funcionário #}
+                                              {% if funcionario.cargo or funcionario.departamento %} {# Depois checa cargo OU depto #}
+                                                <div class="funcionario-info small text-muted mt-1">
+                                                  {% if funcionario.cargo %}
+                                                    <span class="funcionario-cargo me-2"><i class='bx bx-id-card me-1'></i>{{ funcionario.cargo.nome }}</span>
+                                                  {% endif %}
+                                                  {% if funcionario.departamento %}
+                                                    <span class="funcionario-departamento"><i class='bx bx-buildings me-1'></i>{{ funcionario.departamento.nome }}</span>
+                                                  {% endif %}
+                                                </div>
+                                              {% endif %}
+                                            {% endif %}
+                                          {% endwith %}
+                                          {# Placeholder para o dropdown - será posicionado via JS #}
+                                          <div class="funcionario-dropdown-container position-relative"></div> 
+                                        </div>
+                                        
+                                        <!-- Periféricos atribuídos a esta PA -->
+                                        <div class="pa-perifericos">
+                                          <h6><i class='bx bx-devices me-1'></i> Periféricos</h6>
+                                          <div class="perifericos-list">
+                                            {% if perifericos_por_pa|get_item:pa.id %}
+                                              {% for periferico in perifericos_por_pa|get_item:pa.id %}
+                                                <span class="periferico-tag" data-periferico-id="{{ periferico.id }}">{{ periferico.tipo }} {{ periferico.marca }}</span>
+                                              {% endfor %}
+                                            {% else %}
+                                              <span class="text-muted">Nenhum periférico atribuído</span>
+                                            {% endif %}
+                                          </div>
+                                          
+                                          <!-- Periféricos faltantes -->
+                                          {% if perifericos_faltando_por_pa|get_item:pa.id and perifericos_faltando_por_pa|get_item:pa.id|get_item:'tipos'|length > 0 %}
+                                            <div class="perifericos-faltantes mt-2">
+                                              <h6 class="text-warning"><i class='bx bx-error-circle me-1'></i> Periféricos Faltantes:</h6>
+                                              <div class="perifericos-faltantes-list">
+                                                {% for tipo in perifericos_faltando_por_pa|get_item:pa.id|get_item:'tipos' %}
+                                                  <div class="periferico-faltante-item">
+                                                    <span class="periferico-faltante-nome">{{ tipo.nome }}</span>
+                                                    <button type="button" class="btn btn-sm btn-outline-warning add-periferico-btn" 
+                                                            data-pa-id="{{ pa.id }}" data-tipo-id="{{ tipo.id }}" data-tipo-nome="{{ tipo.nome }}">
+                                                      <i class='bx bx-plus-circle me-1'></i> Adicionar {{ tipo.nome }}
+                                                    </button>
+                                                  </div>
+                                                {% endfor %}
+                                              </div>
+                                            </div>
+                                          {% endif %}
+                                        </div>
+
+                                        <!-- Computador atribuído a esta PA -->
+                                        <div class="pa-computadores mt-2">
+                                          <h6><i class='bx bx-laptop me-1'></i> Computador</h6>
+                                          <div class="computadores-list-container" data-pa-id="{{ pa.id }}">
+                                            {# Esta div será populada por JavaScript com base nos computadores atribuídos à PA #}
+                                            {# Renderização inicial pelo Django para evitar piscar e para que o JS possa ler o estado inicial se necessário: #}
+                                            {% with computadores_da_pa=computadores_por_pa|get_item:pa.id %}
+                                              {% if computadores_da_pa %}
+                                                {% with comp=computadores_da_pa.0 %}
+                                                  <span class="computador-tag" data-computador-id="{{ comp.id }}" data-pa-id="{{ pa.id }}">
+                                                    {{ comp.marca }} {% if comp.modelo %}({{ comp.modelo }}){% endif %}
+                                                    <i class='bx bx-x-circle remove-computador-btn ms-1' title='Remover este computador' style="cursor:pointer; vertical-align: middle;"></i>
+                                                  </span>
+                                                {% endwith %}
+                                                <!-- Removido botão "Adicionar" - agora é permitido apenas um computador por PA -->
+                                              {% else %}
+                                                <button type="button" class="btn btn-sm btn-info assign-computador-btn-main" data-pa-id="{{ pa.id }}" data-action="open_computador_add_dropdown">
+                                                  <i class='bx bx-plus-circle me-1'></i> Atribuir Computador
+                                                </button>
+                                              {% endif %}
+                                            {% endwith %}
+                                          </div>
+                                        </div>
+                                      </div>
+                                    </div>
+                                  {% endif %}
+                                {% endfor %}
+                              {% endwith %}
+                            </div>
+                          </div>
+                        </div>
+                      {% else %}
+                        <!-- Estado vazio para PAs -->
+                        <div class="empty-state mt-4">
+                          <i class='bx bx-desktop'></i>
+                          <h5>Nenhuma PA cadastrada nesta ilha</h5>
+                          <p>Adicione posições de atendimento para visualizá-las aqui.</p>
+                          <a href="{% url 'ti:posicao_atendimento_create' %}" class="btn btn-outline-secondary">
+                            <i class='bx bx-plus-circle'></i> Adicionar PA
+                          </a>
+                        </div>
+                      {% endif %}
+                    </div>
+                  {% endfor %}
+                </div>
+              </div>
+            {% else %}
+              <!-- Estado vazio para ilhas -->
+              <div class="empty-state mt-4">
+                <i class='bx bx-grid-alt'></i>
+                <h5>Nenhuma ilha cadastrada nesta sala</h5>
+                <p>Adicione ilhas para organizar as posições de atendimento.</p>
+                <a href="{% url 'ti:ilha_create' %}" class="btn btn-outline-secondary">
+                  <i class='bx bx-plus-circle'></i> Adicionar Ilha
+                </a>
+              </div>
+            {% endif %}
+          </div>
+        {% endfor %}
+      </div>
+    </div>
+  {% else %}
+    <!-- Estado vazio para salas -->
+    <div class="empty-state">
+      <i class='bx bx-door-open'></i>
+      <h5>Nenhuma sala cadastrada</h5>
+      <p>Adicione salas para começar a organizar seu ambiente.</p>
+      <a href="{% url 'ti:sala_create' %}" class="btn btn-outline-secondary">
+        <i class='bx bx-plus-circle'></i> Adicionar Sala
+      </a>
+    </div>
+  {% endif %}
+  
+  <!-- Botão flutuante Salvar Alterações - oculto por padrão -->
+  <div id="save-changes-button" class="save-changes-container d-none">
+    <div class="pending-count">0</div>
+    <div class="btn-group">
+      <button type="button" class="btn btn-primary save-all-changes-btn">
+        <i class='bx bx-save me-2'></i> Salvar Alterações
+      </button>
+      <button type="button" class="btn btn-outline-secondary cancel-all-changes-btn" title="Cancelar todas as alterações">
+        <i class='bx bx-x'></i>
+      </button>
+    </div>
+  </div>
+</div>
+
+{# --- Modal de Confirmação de Remoção de Periférico --- #}
+<div class="modal-backdrop d-none" id="confirm-remove-periferico-backdrop"></div>
+<div class="modal d-none" id="confirm-remove-periferico-modal" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header modal-header-darkmode modal-header-lightmode">
+        <h5 class="modal-title"><i class='bx bx-trash text-danger me-2'></i> Confirmar Remoção</h5>
+        <button type="button" class="btn-close" aria-label="Close" id="modal-close-btn"></button>
+      </div>
+      <div class="modal-body">
+        <p>Tem certeza que deseja remover o periférico <strong id="modal-periferico-nome"></strong> desta PA?</p>
+        <p class="text-muted small">Esta ação não pode ser desfeita diretamente por aqui.</p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" id="modal-cancel-btn">Cancelar</button>
+        {# Adicionaremos o ID do periférico e PA aqui via JS se necessário #}
+        <button type="button" class="btn btn-danger" id="modal-confirm-remove-btn">Confirmar Remoção</button>
+      </div>
+    </div>
+  </div>
+</div>
+{# --- Fim do Modal --- #}
+
+{# --- Modal para Observações de Manutenção --- #}
+<div class="modal-backdrop d-none" id="manutencao-obs-backdrop"></div>
+<div class="modal d-none" id="manutencao-obs-modal" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header modal-header-darkmode modal-header-lightmode">
+        <h5 class="modal-title"><i class='bx bx-comment-edit text-warning me-2'></i> Observações da Manutenção</h5>
+        <button type="button" class="btn-close" aria-label="Close" id="manutencao-obs-modal-close-btn"></button>
+      </div>
+      <div class="modal-body">
+        <p>Por favor, adicione observações para o item <strong id="manutencao-item-nome"></strong> que está sendo colocado em manutenção (opcional).</p>
+        <textarea id="manutencao-observacoes-input" class="form-control" rows="3" placeholder="Digite o motivo da manutenção aqui..."></textarea>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" id="manutencao-obs-modal-cancel-btn">Cancelar</button>
+        <button type="button" class="btn btn-warning" id="manutencao-obs-modal-save-btn">Salvar Observações</button> {# Mudado para btn-warning #}
+      </div>
+    </div>
+  </div>
+</div>
+{# --- Fim do Modal de Observações --- #}
+
+{# --- Modal para Periféricos Disponíveis --- #}
+<div class="perifericos-disponiveis-modal-backdrop d-none" id="perifericos-disponiveis-backdrop"></div>
+<div class="perifericos-disponiveis-modal d-none" id="perifericos-disponiveis-modal">
+  <div class="perifericos-disponiveis-modal-header modal-header-lightmode">
+    <h5><i class='bx bx-devices me-2'></i> <span id="modal-tipo-nome">Periféricos</span> Disponíveis</h5>
+    <button type="button" class="perifericos-disponiveis-modal-close" aria-label="Close" id="perifericos-disponiveis-close">×</button>
+  </div>
+  <div class="perifericos-disponiveis-modal-body">
+    <div id="perifericos-disponiveis-loading" class="text-center py-4">
+      <div class="spinner-border text-primary" role="status">
+        <span class="visually-hidden">Carregando...</span>
+      </div>
+      <p class="mt-2">Carregando periféricos disponíveis...</p>
+    </div>
+    <div id="perifericos-disponiveis-empty" class="perifericos-disponiveis-empty text-center py-4 d-none">
+      <i class='bx bx-package perifericos-icon-empty'></i>
+      <p class="mt-2">Nenhum periférico disponível deste tipo.</p>
+    </div>
+    <div id="perifericos-disponiveis-error" class="perifericos-disponiveis-error text-center py-4 text-danger d-none">
+      <i class='bx bx-error-circle perifericos-icon-error'></i>
+      <p class="mt-2">Erro ao carregar periféricos disponíveis.</p>
+      <p id="perifericos-disponiveis-error-message" class="small"></p>
+    </div>
+    <div id="perifericos-disponiveis-content" class="perifericos-disponiveis-list">
+      <!-- Lista de periféricos disponíveis será carregada aqui via JavaScript -->
+    </div>
+  </div>
+  <div class="perifericos-disponiveis-modal-footer">
+    <button type="button" class="btn btn-secondary" id="perifericos-disponiveis-cancel">Cancelar</button>
+  </div>
+</div>
+{# --- Fim do Modal de Periféricos Disponíveis --- #}
+
+{% endblock %}
+
+{% block addjs_extra %}
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="{% static 'ti/js/controle_salas.js' %}"></script>
+  <script src="{% static 'ti/js/controle_salas_funcionarios.js' %}"></script>
+  <script src="{% static 'ti/js/controle_salas_perifericos.js' %}"></script>
+  <script src="{% static 'ti/js/controle_salas_computadores.js' %}"></script>
+  <script src="{% static 'ti/js/controle_salas_manutencao.js' %}"></script>
+  <script src="{% static 'ti/js/controle_salas_carregamento.js' %}"></script>
+  {# Modo escuro #}
+  <script src="{% static 'js/darkmode.js' %}"></script>
+  
+  <script>
+    // Script adicional para garantir que apenas o conteúdo ativo seja exibido
+    $(document).ready(function() {
+      // Esconder todos os painéis não ativos
+      $('.tab-pane').not('.active').hide();
+      
+      // Remover pontos pretos das listas
+      $('.nav-tabs').css('list-style', 'none');
+      $('.nav-item').css('list-style', 'none');
+      
+      // Interromper comportamento padrão do Bootstrap Tabs
+      $('button[data-bs-toggle="tab"]').on('click', function(e) {
+        e.preventDefault();
+        return false;
+      });
+      
+      // Adicionar classe para identificar que a página foi carregada e inicializada
+      $('body').addClass('tabs-initialized');
+    });
+  </script>
+{% endblock %}

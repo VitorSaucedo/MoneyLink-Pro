@@ -1,0 +1,46 @@
+/* Estilos para o seletor de loja */
+#loja-form {
+    display: flex;
+    align-items: center;
+}
+
+#loja-selector {
+    width: 160px;
+    border-radius: 4px;
+    transition: all 0.3s ease;
+    border: 2px solid var(--color-gray);
+    padding: 0.5rem;
+    font-size: 0.95rem;
+}
+
+#loja-selector:focus {
+    border-color: var(--color-secondary);
+    box-shadow: 0 0 0 0.25rem rgba(112, 246, 17, 0.25);
+    outline: none;
+}
+
+/* Estilos para o modo escuro */
+[data-theme="dark"] #loja-selector {
+    background-color: var(--color-primary-dark) !important;
+    color: var(--color-text-dark) !important;
+    border-color: var(--color-gray) !important;
+}
+
+[data-theme="dark"] #loja-selector:focus {
+    border-color: var(--color-secondary) !important;
+    box-shadow: 0 0 0 0.25rem rgba(110, 66, 193, 0.25) !important;
+}
+
+[data-theme="dark"] #loja-selector option {
+    background-color: var(--color-primary-dark);
+    color: var(--color-text-dark);
+}
+
+/* Adicionando especificidade para superar regras conflitantes */
+.ti-module[data-theme="dark"] #loja-form label {
+    color: var(--color-text-dark) !important;
+}
+
+.ti-module[data-theme="dark"] #loja-form i {
+    color: var(--ti-accent-tertiary) !important;
+}
