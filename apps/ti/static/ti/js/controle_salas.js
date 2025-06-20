@@ -6,6 +6,22 @@
  */
 
 // =============================================================================
+// VARIÁVEIS GLOBAIS
+// =============================================================================
+
+// Função para obter configurações do Django template
+function obterConfiguracoesDjango() {
+  const container = document.querySelector('.container[data-usuario-restrito]');
+  return {
+    usuarioRestrito: container ? container.getAttribute('data-usuario-restrito') === 'true' : false
+  };
+}
+
+// Inicializar variáveis globais
+const DJANGO_CONFIG = obterConfiguracoesDjango();
+window.usuarioRestrito = DJANGO_CONFIG.usuarioRestrito;
+
+// =============================================================================
 // CONFIGURAÇÕES E CONSTANTES
 // =============================================================================
 

@@ -33,7 +33,7 @@ TI - Controle de Salas, Ilhas e PAs
 {% endblock %}
 
 {% block content %}
-<div class="container my-4">
+<div class="container my-4" data-usuario-restrito="{% if usuario_restrito %}true{% else %}false{% endif %}">
   <h1 class="titulo-pagina mb-4"><i class='bx bx-building me-2'></i>Controle de Salas, Ilhas e PAs</h1>
   
   {# Seletor de Loja #}
@@ -239,7 +239,8 @@ TI - Controle de Salas, Ilhas e PAs
                                                   <div class="periferico-faltante-item">
                                                     <span class="periferico-faltante-nome">{{ tipo.nome }}</span>
                                                     <button type="button" class="btn btn-sm btn-outline-warning add-periferico-btn" 
-                                                            data-pa-id="{{ pa.id }}" data-tipo-id="{{ tipo.id }}" data-tipo-nome="{{ tipo.nome }}">
+                                                            data-pa-id="{{ pa.id }}" data-tipo-id="{{ tipo.id }}" data-tipo-nome="{{ tipo.nome }}"
+                                                            {% if usuario_restrito %}disabled{% endif %}>
                                                       <i class='bx bx-plus-circle me-1'></i> Adicionar {{ tipo.nome }}
                                                     </button>
                                                   </div>
@@ -260,12 +261,15 @@ TI - Controle de Salas, Ilhas e PAs
                                                 {% with comp=computadores_da_pa.0 %}
                                                   <span class="computador-tag" data-computador-id="{{ comp.id }}" data-pa-id="{{ pa.id }}">
                                                     {{ comp.marca }} {% if comp.modelo %}({{ comp.modelo }}){% endif %}
-                                                    <i class='bx bx-x-circle remove-computador-btn ms-1' title='Remover este computador' style="cursor:pointer; vertical-align: middle;"></i>
+                                                    {% if not usuario_restrito %}
+                                                      <i class='bx bx-x-circle remove-computador-btn ms-1' title='Remover este computador' style="cursor:pointer; vertical-align: middle;"></i>
+                                                    {% endif %}
                                                   </span>
                                                 {% endwith %}
                                                 <!-- Removido botão "Adicionar" - agora é permitido apenas um computador por PA -->
                                               {% else %}
-                                                <button type="button" class="btn btn-sm btn-info assign-computador-btn-main" data-pa-id="{{ pa.id }}" data-action="open_computador_add_dropdown">
+                                                <button type="button" class="btn btn-sm btn-info assign-computador-btn-main" data-pa-id="{{ pa.id }}" data-action="open_computador_add_dropdown"
+                                                        {% if usuario_restrito %}disabled{% endif %}>
                                                   <i class='bx bx-plus-circle me-1'></i> Atribuir Computador
                                                 </button>
                                               {% endif %}
@@ -382,7 +386,8 @@ TI - Controle de Salas, Ilhas e PAs
                                                   <div class="periferico-faltante-item">
                                                     <span class="periferico-faltante-nome">{{ tipo.nome }}</span>
                                                     <button type="button" class="btn btn-sm btn-outline-warning add-periferico-btn" 
-                                                            data-pa-id="{{ pa.id }}" data-tipo-id="{{ tipo.id }}" data-tipo-nome="{{ tipo.nome }}">
+                                                            data-pa-id="{{ pa.id }}" data-tipo-id="{{ tipo.id }}" data-tipo-nome="{{ tipo.nome }}"
+                                                            {% if usuario_restrito %}disabled{% endif %}>
                                                       <i class='bx bx-plus-circle me-1'></i> Adicionar {{ tipo.nome }}
                                                     </button>
                                                   </div>
@@ -403,12 +408,15 @@ TI - Controle de Salas, Ilhas e PAs
                                                 {% with comp=computadores_da_pa.0 %}
                                                   <span class="computador-tag" data-computador-id="{{ comp.id }}" data-pa-id="{{ pa.id }}">
                                                     {{ comp.marca }} {% if comp.modelo %}({{ comp.modelo }}){% endif %}
-                                                    <i class='bx bx-x-circle remove-computador-btn ms-1' title='Remover este computador' style="cursor:pointer; vertical-align: middle;"></i>
+                                                    {% if not usuario_restrito %}
+                                                      <i class='bx bx-x-circle remove-computador-btn ms-1' title='Remover este computador' style="cursor:pointer; vertical-align: middle;"></i>
+                                                    {% endif %}
                                                   </span>
                                                 {% endwith %}
                                                 <!-- Removido botão "Adicionar" - agora é permitido apenas um computador por PA -->
                                               {% else %}
-                                                <button type="button" class="btn btn-sm btn-info assign-computador-btn-main" data-pa-id="{{ pa.id }}" data-action="open_computador_add_dropdown">
+                                                <button type="button" class="btn btn-sm btn-info assign-computador-btn-main" data-pa-id="{{ pa.id }}" data-action="open_computador_add_dropdown"
+                                                        {% if usuario_restrito %}disabled{% endif %}>
                                                   <i class='bx bx-plus-circle me-1'></i> Atribuir Computador
                                                 </button>
                                               {% endif %}

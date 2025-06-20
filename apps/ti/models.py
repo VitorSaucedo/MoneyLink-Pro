@@ -58,8 +58,6 @@ class Periferico(models.Model):
 
 class Computador(models.Model):
     marca = models.CharField(max_length=100, verbose_name="Marca")
-    modelo = models.CharField(max_length=100, default='Não Informado', verbose_name="Modelo")
-    numero_serie = models.CharField(max_length=100, blank=True, null=True, verbose_name="Número de Série")
     quantidade = models.PositiveIntegerField(default=1)
     
     # Campos do fluxograma
@@ -68,13 +66,6 @@ class Computador(models.Model):
         ('antigo', 'Antigo')
     ]
     condicao = models.CharField(max_length=20, choices=condicao_choices, default='novo', verbose_name="Condição")
-    
-    estado_choices = [
-        ('funcionando', 'Funcionando'),
-        ('com_defeito', 'Com Defeito'),
-        ('em_reparo', 'Em Reparo')
-    ]
-    estado = models.CharField(max_length=20, choices=estado_choices, default='funcionando', verbose_name="Estado")
     
     status_choices = [
         ('disponivel', 'Disponível'),
@@ -88,18 +79,15 @@ class Computador(models.Model):
     observacoes = models.TextField(blank=True, null=True, verbose_name="Observações")
     
     def __str__(self):
-        return f"{self.marca} {self.modelo}" if self.modelo else self.marca
+        return f"{self.marca}"
     
     class Meta:
         verbose_name = 'Computador'
         verbose_name_plural = 'Computadores'
 
 class Monitor(models.Model):
-    modelo = models.CharField(max_length=100, verbose_name="Modelo")
     marca = models.CharField(max_length=100, blank=True, null=True, verbose_name="Marca")
-    numero_serie = models.CharField(max_length=100, blank=True, null=True, verbose_name="Número de Série")
     tamanho = models.CharField(max_length=20, blank=True, null=True, verbose_name="Tamanho")  # Ex: "24", "27"
-    resolucao = models.CharField(max_length=50, blank=True, null=True, verbose_name="Resolução")  # Ex: "1920x1080"
     
     # Campos do fluxograma
     condicao_choices = [
@@ -108,12 +96,7 @@ class Monitor(models.Model):
     ]
     condicao = models.CharField(max_length=20, choices=condicao_choices, default='novo', verbose_name="Condição")
     
-    estado_choices = [
-        ('funcionando', 'Funcionando'),
-        ('com_defeito', 'Com Defeito'),
-        ('em_reparo', 'Em Reparo')
-    ]
-    estado = models.CharField(max_length=20, choices=estado_choices, default='funcionando', verbose_name="Estado")
+    
     
     status_choices = [
         ('disponivel', 'Disponível'),
@@ -125,10 +108,10 @@ class Monitor(models.Model):
     
     loja = models.ForeignKey(Loja, on_delete=models.CASCADE, related_name='monitores')
     observacoes = models.TextField(blank=True, null=True, verbose_name="Observações")
-    data_aquisicao = models.DateField(blank=True, null=True, verbose_name="Data de Aquisição")
+
     
     def __str__(self):
-        return f"{self.marca} {self.modelo}" if self.marca else self.modelo
+        return f"{self.marca} " if self.marca else "Sem Marca"
     
     class Meta:
         verbose_name = 'Monitor'
@@ -481,3 +464,37 @@ class Sistema(models.Model):
         verbose_name_plural = 'Sistema - Acessos'
         ordering = ['funcionario__nome_completo']
         unique_together = ('funcionario', 'acesso')  # Garante que um funcionário não tenha acessos duplicados
+
+class CoordenadorSala(models.Model):
+    funcionario = models.ForeignKey(Funcionario, on_delete=models.CASCADE, related_name='coordenacao_salas', verbose_name="Funcionário")
+    sala = models.ForeignKey(Sala, on_delete=models.CASCADE, related_name='coordenadores', verbose_name="Sala")
+    
+    tipo_choices = [
+        ('coordenador', 'Coordenador'),
+        ('supervisor', 'Supervisor Geral')
+    ]
+    tipo = models.CharField(max_length=20, choices=tipo_choices, default='coordenador', verbose_name="Tipo")
+    
+    data_fim = models.DateField(blank=True, null=True, verbose_name="Data de Fim")
+    ativo = models.BooleanField(default=True, verbose_name="Ativo")
+    
+    def save(self, *args, **kwargs):
+        # Se a coordenação está sendo inativada e não tem data de fim, define agora.
+        if not self.ativo and self.data_fim is None:
+            self.data_fim = timezone.now().date()
+        
+        # Se está reativando uma coordenação que tinha data_fim, limpar data_fim.
+        if self.ativo and self.data_fim is not None:
+            self.data_fim = None
+            
+        super().save(*args, **kwargs)
+    
+    def __str__(self):
+        status = "Ativa" if self.ativo else f"Finalizada em {self.data_fim.strftime('%d/%m/%Y') if self.data_fim else '-'}"
+        return f"{self.funcionario.nome_completo} - {self.get_tipo_display()} de {self.sala.nome} ({status})"
+    
+    class Meta:
+        verbose_name = 'Coordenador/Supervisor de Sala'
+        verbose_name_plural = 'Coordenadores/Supervisores de Salas'
+        ordering = ['sala__nome', 'funcionario__nome_completo']
+        unique_together = ('funcionario', 'sala', 'tipo')  # Um funcionário não pode ter o mesmo tipo de coordenação na mesma sala

@@ -46,7 +46,7 @@ const PERIFERICOS_TEMPLATES = {
       <div class="periferico-action-item" data-action="update-status">
         <i class='bx bx-edit-alt me-2'></i>Atualizar Status
       </div>
-      <div class="periferico-action-item remove-action" data-action="remove">
+      <div class="periferico-action-item remove-action ${window.usuarioRestrito ? 'disabled' : ''}" data-action="remove">
         <i class='bx bx-trash me-2'></i>Remover da PA
       </div>
     </div>`,
@@ -270,10 +270,25 @@ function gerenciarPerifericosFaltantes(paCardElement, tiposFaltantes) {
 
 function reativarEventosPerifericos(paCardElement) {
   paCardElement.querySelectorAll(PERIFERICOS_CONFIG.classes.perifericoTag).forEach(tag => {
-    tag.addEventListener('click', function(e) {
-      e.stopPropagation();
-      abrirMenuAcoesPeriferico($(this));
-    });
+    // Verificar se o usuário é restrito antes de adicionar event listener
+    if (window.usuarioRestrito) {
+      // Para usuários restritos, adicionar classe visual e cursor não permitido
+      tag.classList.add('disabled');
+      tag.style.cursor = 'not-allowed';
+      tag.style.opacity = '0.7';
+      
+      // Adicionar event listener que apenas mostra mensagem de aviso
+      tag.addEventListener('click', function(e) {
+        e.stopPropagation();
+        mostrarMensagem('Você não tem permissão para gerenciar periféricos.', 'warning');
+      });
+    } else {
+      // Para usuários normais, comportamento padrão
+      tag.addEventListener('click', function(e) {
+        e.stopPropagation();
+        abrirMenuAcoesPeriferico($(this));
+      });
+    }
   });
 }
 
@@ -292,17 +307,33 @@ function abrirMenuAcoesPeriferico(perifericoTag) {
   posicionarMenu(PERIFERICOS_STATE.activePerifericoActionMenu, perifericoTag);
 
   PERIFERICOS_STATE.activePerifericoActionMenu.find('.periferico-action-item').hover(
-    function() { $(this).addClass('hover'); },
+    function() { 
+      if (!$(this).hasClass('disabled')) {
+        $(this).addClass('hover'); 
+      }
+    },
     function() { $(this).removeClass('hover'); }
   );
 
   const acoes = {
     'update-status': () => abrirMenuAtualizarStatusPeriferico(perifericoId, perifericoNomeCompleto, perifericoTipo, paId, perifericoTag),
-    'remove': () => abrirModalConfirmacao(perifericoId, paId, perifericoNomeCompleto, perifericoTag)
+    'remove': () => {
+      if (window.usuarioRestrito) {
+        mostrarMensagem('Você não tem permissão para remover periféricos.', 'warning');
+        return;
+      }
+      abrirModalConfirmacao(perifericoId, paId, perifericoNomeCompleto, perifericoTag);
+    }
   };
 
   PERIFERICOS_STATE.activePerifericoActionMenu.find('.periferico-action-item').on('click', function(event) {
     event.stopPropagation();
+    
+    // Verificar se o item está desabilitado
+    if ($(this).hasClass('disabled')) {
+      return;
+    }
+    
     fecharMenusAtivos();
     const acao = $(this).data('action');
     if (acoes[acao]) acoes[acao]();
@@ -632,6 +663,13 @@ const PerifericosEventHandlers = {
     $(document).on('click', PERIFERICOS_CONFIG.classes.perifericoTag, function(event) {
       event.preventDefault();
       event.stopPropagation();
+      
+      // Verificar se o usuário é restrito
+      if (window.usuarioRestrito) {
+        mostrarMensagem('Você não tem permissão para gerenciar periféricos.', 'warning');
+        return;
+      }
+      
       abrirMenuAcoesPeriferico($(this));
     });
   },
@@ -679,6 +717,11 @@ const PerifericosEventHandlers = {
     $(document).on('click', '.add-periferico-btn', function(e) {
       e.preventDefault();
       e.stopPropagation();
+      
+      // Verificar se o botão está desabilitado
+      if ($(this).prop('disabled')) {
+        return;
+      }
       
       const { paId, tipoId, tipoNome } = $(this).data();
       

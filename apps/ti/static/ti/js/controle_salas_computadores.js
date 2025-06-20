@@ -66,7 +66,7 @@
         
         computadorTag: (computador, paId) => 
             `<span class="${CONFIG.classes.tag}" data-computador-id="${computador.id}" data-pa-id="${paId}">
-                ${computador.marca} ${computador.modelo ? `(${computador.modelo})` : ''}
+                ${computador.marca} ${computador.condicao ? `(${computador.condicao === 'novo' ? 'Novo' : 'Antigo'})` : ''}
                 <i class='bx bx-x-circle ${CONFIG.classes.removeBtn} ms-1' title='Remover este computador' style="cursor:pointer; vertical-align: middle;"></i>
             </span>`,
         
@@ -510,6 +510,12 @@
             $(document).on('click', `.${CONFIG.classes.assignBtn}, .${CONFIG.classes.addBtn}`, (e) => {
                 e.preventDefault();
                 e.stopPropagation();
+                
+                // Verificar se o botão está desabilitado
+                if ($(e.currentTarget).prop('disabled')) {
+                    return;
+                }
+                
                 Utils.closeAllMenus();
                 Dropdown.toggle(e.currentTarget);
             });
@@ -520,6 +526,11 @@
                 
                 const tag = $(e.currentTarget);
                 if ($(e.target).hasClass(CONFIG.classes.removeBtn)) {
+                    // Verificar se o ícone de remover está presente (não foi removido para usuários restritos)
+                    if ($(e.target).length === 0) {
+                        return;
+                    }
+                    
                     const computadorId = tag.data('computador-id');
                     const paId = tag.data('pa-id');
                     const paCard = tag.closest('.pa-card');

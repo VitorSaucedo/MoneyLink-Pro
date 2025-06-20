@@ -1237,6 +1237,28 @@ ul.nav-tabs li.nav-item {
     color: #dc3545;
 }
 
+.periferico-action-item.remove-action.disabled {
+    color: #6c757d;
+    cursor: not-allowed;
+    opacity: 0.5;
+}
+
+.periferico-action-item.remove-action.disabled:hover {
+    background-color: transparent !important;
+}
+
+/* Estilos para periféricos desabilitados */
+.periferico-tag.disabled {
+    cursor: not-allowed !important;
+    opacity: 0.7 !important;
+    pointer-events: none;
+}
+
+.periferico-tag.disabled:hover {
+    background-color: transparent !important;
+    transform: none !important;
+}
+
 .periferico-status-menu {
     position: absolute;
     z-index: 1050;
@@ -2188,3 +2210,66 @@ ul.nav-tabs li.nav-item {
 }
 
 /* ===== Fim dos Estilos para o Seletor de Loja ===== */
+
+/* ==========================================
+   Estilos para Botões Desabilitados de Usuários Restritos
+   ========================================== */
+
+/* Botões desabilitados - remover cursor pointer e aplicar estilos visuais */
+.btn:disabled,
+.btn.disabled,
+button:disabled,
+button.disabled {
+    cursor: not-allowed !important;
+    opacity: 0.6 !important;
+    pointer-events: none !important;
+}
+
+/* Específico para botões de periféricos e computadores desabilitados */
+.assign-periferico-btn:disabled,
+.assign-periferico-btn.disabled,
+.assign-computador-btn-main:disabled,
+.assign-computador-btn-main.disabled {
+    cursor: not-allowed !important;
+    opacity: 0.5 !important;
+    pointer-events: none !important;
+    background-color: #e9ecef !important;
+    border-color: #ced4da !important;
+    color: #6c757d !important;
+}
+
+/* Remover hover effects de botões desabilitados */
+.btn:disabled:hover,
+.btn.disabled:hover,
+.assign-periferico-btn:disabled:hover,
+.assign-periferico-btn.disabled:hover,
+.assign-computador-btn-main:disabled:hover,
+.assign-computador-btn-main.disabled:hover {
+    transform: none !important;
+    box-shadow: none !important;
+    background-color: #e9ecef !important;
+    border-color: #ced4da !important;
+    color: #6c757d !important;
+}
+
+/* Ícones de remoção - desabilitar para usuários restritos */
+.remove-periferico-btn.disabled,
+.remove-computador-btn.disabled {
+    cursor: not-allowed !important;
+    opacity: 0.3 !important;
+    pointer-events: none !important;
+}
+
+/* Tema escuro para botões desabilitados */
+[data-theme="dark"] .btn:disabled,
+[data-theme="dark"] .btn.disabled,
+[data-theme="dark"] .assign-periferico-btn:disabled,
+[data-theme="dark"] .assign-periferico-btn.disabled,
+[data-theme="dark"] .assign-computador-btn-main:disabled,
+[data-theme="dark"] .assign-computador-btn-main.disabled {
+    background-color: #3a3f4d !important;
+    border-color: #4d5465 !important;
+    color: #6c757d !important;
+}
+
+/* ===== Fim dos Estilos para Botões Desabilitados ===== */

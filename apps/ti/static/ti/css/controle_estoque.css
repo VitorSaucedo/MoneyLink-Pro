@@ -984,11 +984,13 @@ body,
 #card-estoque .table thead th {
     background-color: var(--color-light-gray);
     border-bottom: 2px solid var(--color-secondary);
+    color: var(--color-text-dark) !important; /* Garante texto escuro no tema claro */
 }
 
 [data-theme="dark"] #card-estoque .table thead th {
     background-color: #2d2438;
     border-bottom-color: #6e42c1;
+    color: var(--color-text-dark) !important; /* Garante texto branco no tema escuro */
 }
 
 /* Override específico para a página de controle de estoque */

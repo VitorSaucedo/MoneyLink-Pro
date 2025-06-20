@@ -16,7 +16,8 @@ from .models import (
     Chip,
     Email,
     Storm,
-    Sistema
+    Sistema,
+    CoordenadorSala
 )
 
 # Classes base e inlines
@@ -161,16 +162,16 @@ class PosicaoAtendimentoAdmin(TIModelAdmin):
 # Admin para Computadores com atribuições embutidas
 @admin.register(Computador)
 class ComputadorAdmin(TIModelAdmin):
-    list_display = ('id', 'marca', 'modelo', 'condicao', 'estado', 'quantidade', 'loja', 'status', 'pa_atual')
-    list_filter = ('status', 'condicao', 'estado', 'loja', 'marca')
-    search_fields = ('marca', 'modelo', 'numero_serie', 'observacoes')
+    list_display = ('id', 'marca', 'quantidade', 'loja', 'status', 'condicao', 'pa_atual')
+    list_filter = ('status', 'condicao', 'loja', 'marca')
+    search_fields = ('marca', 'observacoes')
     
     fieldsets = (
         ('Informações Básicas', {
-            'fields': ('marca', 'modelo', 'numero_serie')
+            'fields': ('marca',)
         }),
-        ('Condição e Estado', {
-            'fields': ('condicao', 'estado', 'status')
+        ('Status', {
+            'fields': ('status', 'condicao')
         }),
         ('Localização', {
             'fields': ('loja', 'quantidade')
@@ -192,25 +193,22 @@ class ComputadorAdmin(TIModelAdmin):
 # Admin para Monitores com atribuições embutidas
 @admin.register(Monitor)
 class MonitorAdmin(TIModelAdmin):
-    list_display = ('id', 'marca', 'modelo', 'tamanho', 'condicao', 'estado', 'loja', 'status', 'pa_atual')
-    list_filter = ('status', 'condicao', 'estado', 'loja', 'marca')
-    search_fields = ('marca', 'modelo', 'numero_serie', 'tamanho', 'resolucao', 'observacoes')
+    list_display = ('id', 'marca', 'tamanho', 'condicao', 'loja', 'status', 'pa_atual')
+    list_filter = ('status', 'condicao', 'loja', 'marca')
+    search_fields = ('marca', 'tamanho', 'observacoes')
     
     fieldsets = (
         ('Informações Básicas', {
-            'fields': ('marca', 'modelo', 'numero_serie')
+            'fields': ('marca', 'tamanho')
         }),
-        ('Especificações', {
-            'fields': ('tamanho', 'resolucao')
-        }),
-        ('Condição e Estado', {
-            'fields': ('condicao', 'estado', 'status')
+        ('Condição e Status', {
+            'fields': ('condicao', 'status')
         }),
         ('Localização', {
             'fields': ('loja',)
         }),
         ('Detalhes', {
-            'fields': ('data_aquisicao', 'observacoes'),
+            'fields': ('observacoes',),
             'classes': ('collapse',)
         }),
     )
@@ -448,6 +446,23 @@ class SistemaAdmin(TIModelAdmin):
     get_cargo.short_description = 'Cargo'
     
 
+
+# Admin para CoordenadorSala
+@admin.register(CoordenadorSala)
+class CoordenadorSalaAdmin(TIModelAdmin):
+    list_display = ('funcionario', 'sala', 'tipo', 'ativo', 'data_fim')
+    list_filter = ('tipo', 'ativo', 'sala__loja')
+    search_fields = ('funcionario__nome_completo', 'sala__nome')
+    autocomplete_fields = ['funcionario', 'sala']
+    
+    fieldsets = (
+        ('Informações Básicas', {
+            'fields': ('funcionario', 'sala', 'tipo')
+        }),
+        ('Status', {
+            'fields': ('ativo', 'data_fim')
+        }),
+    )
 
 # Removendo os registros individuais das atribuições que agora são inlines
 # Não registrar estes modelos diretamente no admin

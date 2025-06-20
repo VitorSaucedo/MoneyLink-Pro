@@ -140,13 +140,22 @@ Administração TI<span class="produto-text"></span>
           <i class='bx bx-laptop'></i> Cadastro de Computadores
         </div>
         <div class="card-body">
-          <form method="post" action="{% url 'ti:computador_create' %}">
+          <form method="post" action="{% url 'ti:computador_create' %}" id="form-computador">
             {% csrf_token %}
             <div class="mb-3">
               <label for="marca_computador" class="form-label">
                 <i class='bx bx-label'></i>Marca do Computador *
               </label>
               <input type="text" id="marca_computador" name="marca" class="form-control" required>
+            </div>
+            <div class="mb-3">
+              <label for="condicao_computador" class="form-label">
+                <i class='bx bx-check-circle'></i>Condição *
+              </label>
+              <select id="condicao_computador" name="condicao" class="form-select" required>
+                <option value="novo">Novo</option>
+                <option value="antigo">Antigo</option>
+              </select>
             </div>
             <div class="mb-3">
               <label for="quantidade_computador" class="form-label">
@@ -419,6 +428,65 @@ Administração TI<span class="produto-text"></span>
             </div>
             <button type="submit" class="btn btn-primary w-100">
               <i class='bx bx-save'></i> Salvar Chip
+            </button>
+          </form>
+        </div>
+      </div>
+      
+      <!-- Card Coordenador de Sala -->
+      <div class="card mb-4" id="card-coordenador-sala">
+        <div class="card-header">
+          <i class='bx bx-user-check'></i> Associar Coordenador/Supervisor à Sala
+        </div>
+        <div class="card-body">
+          <form method="post" action="{% url 'ti:coordenador_sala_create' %}">
+            {% csrf_token %}
+            <div class="mb-3">
+              <label for="funcionario_coordenador" class="form-label">
+                <i class='bx bx-user'></i>Funcionário *
+              </label>
+              <select id="funcionario_coordenador" name="funcionario" class="form-select" required>
+                <option value="">-- Selecione um Funcionário --</option>
+                {% for funcionario in funcionarios %}
+                  <option value="{{ funcionario.id }}">{{ funcionario.nome_completo }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="mb-3">
+              <label for="loja_coordenador" class="form-label">
+                <i class='bx bx-store'></i>Loja *
+              </label>
+              <select id="loja_coordenador" name="loja" class="form-select" required>
+                <option value="">-- Selecione uma Loja --</option>
+                {% for loja in lojas_list %}
+                  <option value="{{ loja.id }}">{{ loja.nome }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="mb-3">
+              <label for="sala_coordenador" class="form-label">
+                <i class='bx bx-door-open'></i>Sala *
+              </label>
+              <select id="sala_coordenador" name="sala" class="form-select" required>
+                <option value="">-- Selecione uma Sala --</option>
+                {% for sala in salas_list %}
+                  <option value="{{ sala.id }}" data-loja="{{ sala.loja_id|default:'' }}">{{ sala.nome }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="mb-3">
+              <label for="tipo_coordenador" class="form-label">
+                <i class='bx bx-category'></i>Tipo *
+              </label>
+              <select id="tipo_coordenador" name="tipo" class="form-select" required>
+                <option value="">-- Selecione o Tipo --</option>
+                <option value="coordenador">Coordenador</option>
+                <option value="supervisor">Supervisor</option>
+              </select>
+            </div>
+
+            <button type="submit" class="btn btn-primary w-100">
+              <i class='bx bx-save'></i> Associar Coordenador
             </button>
           </form>
         </div>

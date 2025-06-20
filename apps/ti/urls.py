@@ -45,6 +45,9 @@ urlpatterns = [
     path('ramais/editar/<int:pk>/', views.ramal_edit, name='ramal_edit'),
     path('ramais/excluir/<int:pk>/', views.ramal_delete, name='ramal_delete'),
     
+    # URLs para Coordenadores de Sala
+    path('coordenadores-sala/cadastrar/', views.coordenador_sala_create, name='coordenador_sala_create'),
+    
     # URLs para Computadores
     path('computadores/cadastrar/', views.computador_create, name='computador_create'),
     path('computadores/atribuir/', views.atribuicao_computador_pa_create, name='atribuicao_computador_pa_create'),

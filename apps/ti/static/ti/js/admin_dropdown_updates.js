@@ -158,7 +158,7 @@ function updateAdminMonitoresDropdown(lojaId) {
           $select.find('option:not(:first)').remove();
           
           $.each(response.monitores, function(index, monitor) {
-            $select.append(`<option value="${monitor.id}">${monitor.marca} ${monitor.modelo} (${monitor.tamanho})</option>`);
+            $select.append(`<option value="${monitor.id}">${monitor.marca} (${monitor.tamanho})</option>`);
           });
           
           if (currentVal) {
@@ -274,4 +274,4 @@ window.TIAdminDropdowns = {
   carregarPAsPorIlha: carregarPAsPorIlha,
   obterInfoIlha: obterInfoIlha,
   atualizarQuantidadePAs: atualizarQuantidadePAs
-}; 
+};

@@ -1,5 +1,171 @@
 // JavaScript customizado para a página admin.html
 document.addEventListener('DOMContentLoaded', function() {
+    // Cadastro de Computador via AJAX
+    const formComputador = document.getElementById('form-computador');
+    const statusComputador = document.getElementById('status_computador');
+    const camposEmUso = document.getElementById('campos_em_uso');
+    const camposManutencao = document.getElementById('campos_manutencao');
+    const salaEmUso = document.getElementById('sala_em_uso');
+    const ilhaEmUso = document.getElementById('ilha_em_uso');
+    const paEmUso = document.getElementById('pa_em_uso');
+    
+    // Função para mostrar/esconder campos condicionais baseado no status
+    if (statusComputador && camposEmUso && camposManutencao) {
+        statusComputador.addEventListener('change', function() {
+            const status = this.value;
+            
+            // Esconder todos os campos condicionais primeiro
+            camposEmUso.style.display = 'none';
+            camposManutencao.style.display = 'none';
+            
+            // Mostrar campos específicos baseado no status selecionado
+            if (status === 'em_uso') {
+                camposEmUso.style.display = 'block';
+            } else if (status === 'manutencao') {
+                camposManutencao.style.display = 'block';
+            }
+        });
+        
+        // Disparar o evento change no carregamento da página
+        statusComputador.dispatchEvent(new Event('change'));
+    }
+    
+    // Carregar ilhas quando uma sala for selecionada no formulário de computador
+    if (salaEmUso && ilhaEmUso) {
+        salaEmUso.addEventListener('change', function() {
+            const salaId = this.value;
+            
+            // Limpar opções atuais de ilha
+            ilhaEmUso.innerHTML = '<option value="">-- Selecione uma ilha --</option>';
+            
+            // Limpar opções de PA
+            if (paEmUso) {
+                paEmUso.innerHTML = '<option value="">-- Primeiro selecione uma ilha --</option>';
+            }
+            
+            if (salaId) {
+                // Carregar ilhas da sala selecionada via API
+                fetch(`/ti/api/ilhas-por-sala/${salaId}/`)
+                    .then(response => response.json())
+                    .then(data => {
+                        data.ilhas.forEach(ilha => {
+                            const option = document.createElement('option');
+                            option.value = ilha.id;
+                            option.textContent = ilha.nome;
+                            ilhaEmUso.appendChild(option);
+                        });
+                    })
+                    .catch(error => console.error('Erro ao carregar ilhas:', error));
+            }
+        });
+    }
+    
+    // Carregar PAs quando uma ilha for selecionada no formulário de computador
+    if (ilhaEmUso && paEmUso) {
+        ilhaEmUso.addEventListener('change', function() {
+            const ilhaId = this.value;
+            
+            // Limpar opções atuais de PA
+            paEmUso.innerHTML = '<option value="">-- Selecione uma PA --</option>';
+            
+            if (ilhaId) {
+                // Carregar PAs da ilha selecionada via API
+                fetch(`/ti/api/listar-posicoes-atendimento/?ilha=${ilhaId}&status=livre&page_size=100`)
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.results && data.results.length > 0) {
+                            data.results.forEach(pa => {
+                                const option = document.createElement('option');
+                                option.value = pa.id;
+                                option.textContent = `PA ${pa.numero}`;
+                                paEmUso.appendChild(option);
+                            });
+                        } else {
+                            const option = document.createElement('option');
+                            option.value = '';
+                            option.textContent = '-- Nenhuma PA disponível nesta ilha --';
+                            paEmUso.appendChild(option);
+                        }
+                    })
+                    .catch(error => console.error('Erro ao carregar PAs:', error));
+            }
+        });
+    }
+    
+    // Submissão do formulário via AJAX
+    if (formComputador) {
+        formComputador.addEventListener('submit', function(event) {
+            event.preventDefault();
+            
+            // Obter os dados do formulário
+            const formData = new FormData(this);
+            
+            // Enviar via AJAX
+            fetch('/ti/ajax/computador/cadastrar/', {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Exibir mensagem de sucesso
+                    const alertDiv = document.createElement('div');
+                    alertDiv.className = 'alert alert-success alert-dismissible fade show';
+                    alertDiv.innerHTML = `
+                        <strong>Sucesso!</strong> ${data.message}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    `;
+                    
+                    // Inserir a mensagem no topo do card
+                    const cardBody = formComputador.closest('.card-body');
+                    cardBody.insertBefore(alertDiv, cardBody.firstChild);
+                    
+                    // Limpar o formulário
+                    formComputador.reset();
+                    
+                    // Esconder campos condicionais
+                    if (camposEmUso) camposEmUso.style.display = 'none';
+                    if (camposManutencao) camposManutencao.style.display = 'none';
+                    
+                    // Remover a mensagem após 5 segundos
+                    setTimeout(() => {
+                        alertDiv.remove();
+                    }, 5000);
+                } else {
+                    // Exibir mensagem de erro
+                    const alertDiv = document.createElement('div');
+                    alertDiv.className = 'alert alert-danger alert-dismissible fade show';
+                    alertDiv.innerHTML = `
+                        <strong>Erro!</strong> ${data.message}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    `;
+                    
+                    // Inserir a mensagem no topo do card
+                    const cardBody = formComputador.closest('.card-body');
+                    cardBody.insertBefore(alertDiv, cardBody.firstChild);
+                }
+            })
+            .catch(error => {
+                console.error('Erro ao cadastrar computador:', error);
+                
+                // Exibir mensagem de erro genérica
+                const alertDiv = document.createElement('div');
+                alertDiv.className = 'alert alert-danger alert-dismissible fade show';
+                alertDiv.innerHTML = `
+                    <strong>Erro!</strong> Ocorreu um erro ao processar a requisição.
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                `;
+                
+                // Inserir a mensagem no topo do card
+                const cardBody = formComputador.closest('.card-body');
+                cardBody.insertBefore(alertDiv, cardBody.firstChild);
+            });
+        });
+    }
+    
     // Atribuição de periféricos a PAs
     const perifericoSelect = document.querySelector('form[name="formAtribuicaoPa"] [name="periferico"]');
     const paSelect = document.querySelector('form[name="formAtribuicaoPa"] [name="posicao_atendimento"]');
@@ -347,6 +513,37 @@ document.addEventListener('DOMContentLoaded', function() {
             // Limpar também a seleção da ilha
             if (ilhaPASelect) {
                 ilhaPASelect.innerHTML = '<option value="">-- Selecione uma Ilha --</option>';
+            }
+        });
+    }
+    
+    // Filtrar salas por loja selecionada no formulário de Coordenador
+    const lojaCoordenadorSelect = document.getElementById('loja_coordenador');
+    const salaCoordenadorSelect = document.getElementById('sala_coordenador');
+    
+    if (lojaCoordenadorSelect && salaCoordenadorSelect) {
+        lojaCoordenadorSelect.addEventListener('change', function() {
+            const lojaId = this.value;
+            
+            if (lojaId) {
+                // Carregar salas da loja selecionada via API
+                fetch(`/ti/api/salas-por-loja/${lojaId}/`)
+                    .then(response => response.json())
+                    .then(data => {
+                        salaCoordenadorSelect.innerHTML = '<option value="">-- Selecione uma Sala --</option>';
+                        
+                        data.salas.forEach(sala => {
+                            const option = document.createElement('option');
+                            option.value = sala.id;
+                            option.textContent = sala.nome;
+                            option.setAttribute('data-loja', lojaId);
+                            salaCoordenadorSelect.appendChild(option);
+                        });
+                    })
+                    .catch(error => console.error('Erro ao carregar salas:', error));
+            } else {
+                // Resetar o select de salas
+                salaCoordenadorSelect.innerHTML = '<option value="">-- Selecione uma Sala --</option>';
             }
         });
     }

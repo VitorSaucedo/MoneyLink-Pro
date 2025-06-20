@@ -1,8 +1,8 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
-from django.http import JsonResponse, HttpResponse
-from django.db.models import Count, Q, Prefetch, Subquery, OuterRef, Sum
+from django.http import JsonResponse
+from django.db.models import Count, Q, Prefetch, Sum
 from custom_tags_app.templatetags.custom_tags import format_chip_number
 from .utils import (atribuir_item_pa, desatribuir_item_pa, verificar_disponibilidade_periferico, 
                     verificar_disponibilidade_computador, gerar_resposta_api, listar_itens_atribuidos_pa)
@@ -23,7 +23,8 @@ from .models import (
     Chip,
     Email,
     Storm,
-    Sistema
+    Sistema,
+    CoordenadorSala
 )
 from .forms import (
     TipoPerifericoForm,
@@ -40,15 +41,14 @@ from .forms import (
     ChipForm,
     EmailForm,
     StormForm,
-    SistemaForm
+    SistemaForm,
+    CoordenadorSalaForm
 )
 from apps.funcionarios.models import Funcionario, Empresa
 import json
 from django.utils import timezone
 from django.views.decorators.http import require_POST, require_GET
 from django.core.paginator import Paginator
-from django.http import HttpResponseBadRequest
-from datetime import datetime
 
 # Create your views here.
 
@@ -142,6 +142,7 @@ def admin(request):
     forms = {
         'form_periferico': form_periferico,
         'form_atribuicao_pa': form_atribuicao_pa,
+        'coordenador_sala_form': CoordenadorSalaForm(loja_id=loja_id),
     }
     
     # Montando o contexto completo
@@ -156,7 +157,38 @@ def admin(request):
         **forms,
     }
     
-    return render(request, 'apps/ti/admin.html', context)
+    return render(request, 'ti/admin.html', context)
+
+@login_required
+def coordenador_sala_create(request):
+    """
+    View para criar associação de coordenador/supervisor a uma sala.
+    """
+    if request.method == 'POST':
+        # Obter loja_id do POST para filtrar salas
+        loja_id = request.POST.get('loja_id')
+        form = CoordenadorSalaForm(request.POST, loja_id=loja_id)
+        
+        if form.is_valid():
+            coordenador = form.save()
+            messages.success(request, f'{coordenador.get_tipo_display()} associado à sala {coordenador.sala.nome} com sucesso!')
+            return redirect('ti:admin')
+        else:
+            messages.error(request, 'Erro ao associar coordenador. Verifique os dados informados.')
+    else:
+        # Para GET, obter loja_id da query string
+        loja_id = request.GET.get('loja')
+        form = CoordenadorSalaForm(loja_id=loja_id)
+    
+    # Obter dados para o contexto
+    lojas = Loja.objects.filter(status=True).order_by('nome')
+    
+    context = {
+        'form': form,
+        'lojas_list': lojas,
+        'title': 'Associar Coordenador/Supervisor à Sala',
+    }
+    return render(request, 'ti/admin.html', context)
 
 @login_required
 def loja_list(request):
@@ -165,7 +197,7 @@ def loja_list(request):
         'title': 'Lojas',
         'lojas': lojas,
     }
-    return render(request, 'apps/ti/loja_list.html', context)
+    return render(request, 'ti/loja_list.html', context)
 
 @login_required
 def controle_salas(request):
@@ -194,8 +226,37 @@ def controle_salas(request):
     # Aplicar filtro de loja nas consultas
     filtro_loja = {'loja_id': loja_selecionada} if loja_selecionada else {}
     
-    # Carregar salas com filtro de loja usando prefetch_related para otimizar
-    salas = Sala.objects.filter(**filtro_loja).prefetch_related('ilhas')
+    # Verificar se o usuário é coordenador/supervisor e filtrar salas
+    usuario_restrito = False
+    salas_permitidas = None
+    
+    try:
+        if hasattr(request.user, 'funcionario_profile') and request.user.funcionario_profile:
+            funcionario = request.user.funcionario_profile
+            if funcionario.cargo and funcionario.cargo.hierarquia in [3, 6]:  # COORDENADOR = 3, SUPERVISOR_GERAL = 6
+                usuario_restrito = True
+                # Buscar salas associadas ao coordenador/supervisor
+                coordenacoes_ativas = CoordenadorSala.objects.filter(
+                    funcionario=funcionario,
+                    ativo=True
+                ).values_list('sala_id', flat=True)
+                
+                if coordenacoes_ativas:
+                    salas_permitidas = list(coordenacoes_ativas)
+    except Exception:
+        pass  # Se houver erro, manter como False (sem restrição)
+    
+    # Carregar salas com filtro de loja e coordenação (se aplicável)
+    if usuario_restrito and salas_permitidas:
+        # Filtrar por loja E por salas permitidas para o coordenador
+        filtro_salas = {**filtro_loja, 'id__in': salas_permitidas}
+        salas = Sala.objects.filter(**filtro_salas).prefetch_related('ilhas')
+    elif usuario_restrito and not salas_permitidas:
+        # Coordenador sem salas associadas - não mostrar nenhuma sala
+        salas = Sala.objects.none()
+    else:
+        # Usuário sem restrição - mostrar todas as salas da loja
+        salas = Sala.objects.filter(**filtro_loja).prefetch_related('ilhas')
     ilhas = Ilha.objects.filter(sala__in=salas).select_related('sala')
     
     # Carrega todas as posições de atendimento com seus relacionamentos (filtradas por salas da loja)
@@ -285,6 +346,8 @@ def controle_salas(request):
             'id': atribuicao.computador.id
         })
     
+    # A verificação de usuario_restrito já foi feita acima
+    
     context = {
         'title': 'Controle de Salas - TI',
         'salas': salas,
@@ -299,8 +362,9 @@ def controle_salas(request):
         'lojas': lojas,
         'loja_selecionada': loja_selecionada,
         'loja_atual': loja_atual,
+        'usuario_restrito': usuario_restrito,
     }
-    return render(request, 'apps/ti/controle_salas.html', context)
+    return render(request, 'ti/controle_salas.html', context)
 
 @login_required
 def controle_estoque(request):
@@ -639,7 +703,7 @@ def controle_estoque(request):
         'loja_atual': loja_atual,
     }
     
-    return render(request, 'apps/ti/controle_estoque.html', context)
+    return render(request, 'ti/controle_estoque.html', context)
 
 @require_POST
 @login_required
@@ -1066,7 +1130,7 @@ def auto_atribuicao_pa(request):
             messages.success(request, f'Você agora está atribuído à PA {pa.numero}.')
             return redirect('ti:auto_atribuicao_pa')
     
-    return render(request, 'apps/ti/auto_atribuicao_pa.html', context)
+    return render(request, 'ti/auto_atribuicao_pa.html', context)
 
 
 @login_required
@@ -1266,7 +1330,7 @@ def controle_manutencao(request):
         # Formatar item para o template
         item = {
             'nome_item': "Computador",
-            'marca_modelo': computador.marca,
+            'marca_modelo': f"{computador.marca} ({computador.get_condicao_display()})",
             'ultima_pa': ultima_atribuicao.posicao_atendimento if ultima_atribuicao else None,
             'observacoes': computador.observacoes,
             'id_item': computador.id,
@@ -1289,7 +1353,7 @@ def controle_manutencao(request):
         'total_itens_manutencao': total_itens_manutencao,
     }
     
-    return render(request, 'apps/ti/controle_manutencao.html', context)
+    return render(request, 'ti/controle_manutencao.html', context)
 
 @login_required
 def marcar_consertado(request, item_id, tipo_item_slug):
@@ -1419,7 +1483,7 @@ def storm_create(request):
         'funcionarios_list': Funcionario.objects.filter(status=True).order_by('nome_completo'),
     }
     
-    return render(request, 'apps/ti/admin.html', context)
+    return render(request, 'ti/admin.html', context)
 
 
 @login_required
@@ -1442,7 +1506,7 @@ def sistema_create(request):
         'funcionarios_list': Funcionario.objects.filter(status=True).order_by('nome_completo'),
     }
     
-    return render(request, 'apps/ti/admin.html', context)
+    return render(request, 'ti/admin.html', context)
 
 @login_required
 def storm_update(request, pk):
@@ -1466,7 +1530,7 @@ def storm_update(request, pk):
         'storm': storm,
     }
     
-    return render(request, 'apps/ti/admin.html', context)
+    return render(request, 'ti/admin.html', context)
 
 @login_required
 def storm_delete(request, pk):
@@ -1482,7 +1546,7 @@ def storm_delete(request, pk):
         'storm': storm,
     }
     
-    return render(request, 'apps/ti/confirm_delete.html', context)
+    return render(request, 'ti/confirm_delete.html', context)
 
 @login_required
 def sistema_update(request, pk):
@@ -1506,7 +1570,7 @@ def sistema_update(request, pk):
         'sistema': sistema,
     }
     
-    return render(request, 'apps/ti/admin.html', context)
+    return render(request, 'ti/admin.html', context)
 
 @login_required
 def sistema_delete(request, pk):
@@ -1522,7 +1586,7 @@ def sistema_delete(request, pk):
         'sistema': sistema,
     }
     
-    return render(request, 'apps/ti/confirm_delete.html', context)
+    return render(request, 'ti/confirm_delete.html', context)
 
 @login_required
 def remover_periferico_pa(request):
@@ -1576,7 +1640,7 @@ def sala_list(request):
     context = {
         'salas': salas
     }
-    return render(request, 'apps/ti/controle_salas.html', context)
+    return render(request, 'ti/controle_salas.html', context)
 
 @login_required
 def sala_create(request):
@@ -1593,7 +1657,7 @@ def sala_create(request):
         'form': form,
         'lojas_list': Loja.objects.filter(status=True).order_by('nome'),
     }
-    return render(request, 'apps/ti/admin.html', context)
+    return render(request, 'ti/admin.html', context)
 
 @login_required
 def sala_update(request, pk):
@@ -1612,7 +1676,7 @@ def sala_update(request, pk):
         'sala': sala,
         'lojas_list': Loja.objects.filter(status=True).order_by('nome'),
     }
-    return render(request, 'apps/ti/sala_form.html', context)
+    return render(request, 'ti/sala_form.html', context)
 
 @login_required
 def sala_delete(request, pk):
@@ -1626,7 +1690,7 @@ def sala_delete(request, pk):
         'title': 'Excluir Sala',
         'objeto': sala
     }
-    return render(request, 'apps/ti/confirm_delete.html', context)
+    return render(request, 'ti/confirm_delete.html', context)
 
 
 # Views para Ilhas
@@ -1636,7 +1700,7 @@ def ilha_list(request):
     context = {
         'ilhas': ilhas
     }
-    return render(request, 'apps/ti/controle_salas.html', context)
+    return render(request, 'ti/controle_salas.html', context)
 
 @login_required
 def ilha_create(request):
@@ -1674,7 +1738,7 @@ def ilha_update(request, pk):
         'salas_list': Sala.objects.all().select_related('loja'),
         'lojas_list': Loja.objects.filter(status=True).order_by('nome'),
     }
-    return render(request, 'apps/ti/ilha_form.html', context)
+    return render(request, 'ti/ilha_form.html', context)
 
 @login_required
 def ilha_delete(request, pk):
@@ -1688,7 +1752,7 @@ def ilha_delete(request, pk):
         'title': 'Excluir Ilha',
         'objeto': ilha
     }
-    return render(request, 'apps/ti/confirm_delete.html', context)
+    return render(request, 'ti/confirm_delete.html', context)
 
 
 # Views para Posições de Atendimento
@@ -1698,7 +1762,7 @@ def posicao_atendimento_list(request):
     context = {
         'posicoes': posicoes
     }
-    return render(request, 'apps/ti/controle_salas.html', context)
+    return render(request, 'ti/controle_salas.html', context)
 
 @login_required
 def posicao_atendimento_create(request):
@@ -1766,7 +1830,7 @@ def posicao_atendimento_update(request, pk):
         'salas_list': Sala.objects.all().select_related('loja'),
         'lojas_list': Loja.objects.filter(status=True).order_by('nome'),
     }
-    return render(request, 'apps/ti/posicao_atendimento_form.html', context)
+    return render(request, 'ti/posicao_atendimento_form.html', context)
 
 @login_required
 def posicao_atendimento_delete(request, pk):
@@ -1780,7 +1844,7 @@ def posicao_atendimento_delete(request, pk):
         'title': 'Excluir Posição de Atendimento',
         'objeto': posicao
     }
-    return render(request, 'apps/ti/confirm_delete.html', context)
+    return render(request, 'ti/confirm_delete.html', context)
 
 
 # Views para Atribuição de Funcionários a PAs
@@ -1790,7 +1854,7 @@ def atribuicao_funcionario_pa_list(request):
     context = {
         'atribuicoes': atribuicoes
     }
-    return render(request, 'apps/ti/controle_salas.html', context)
+    return render(request, 'ti/controle_salas.html', context)
 
 @login_required
 def atribuicao_funcionario_pa_create(request):
@@ -1806,7 +1870,7 @@ def atribuicao_funcionario_pa_create(request):
     context = {
         'form': form
     }
-    return render(request, 'apps/ti/admin.html', context)
+    return render(request, 'ti/admin.html', context)
 
 @login_required
 def atribuicao_funcionario_pa_update(request, pk):
@@ -2000,7 +2064,7 @@ def periferico_delete(request, pk):
         'title': 'Excluir Periférico',
         'objeto': periferico
     }
-    return render(request, 'apps/ti/confirm_delete.html', context)
+    return render(request, 'ti/confirm_delete.html', context)
 
 # Funções que faltavam para gerenciar atribuições
 @login_required
@@ -2015,7 +2079,7 @@ def atribuicao_funcionario_pa_delete(request, pk):
         'title': 'Excluir Atribuição de Funcionário',
         'objeto': atribuicao
     }
-    return render(request, 'apps/ti/confirm_delete.html', context)
+    return render(request, 'ti/confirm_delete.html', context)
 
 # Views para Atribuição de Periféricos a PAs
 @login_required
@@ -2508,6 +2572,87 @@ def computador_create(request):
     return render(request, 'apps/ti/admin.html', context)
 
 @login_required
+def ajax_computador_create(request):
+    """View AJAX para cadastrar computador"""
+    if request.method == 'POST':
+        try:
+            form = ComputadorForm(request.POST)
+            if form.is_valid():
+                computador = form.save(commit=False)
+                status = form.cleaned_data['status']
+                
+                # Processar campos específicos para cada status
+                if status == 'em_uso':
+                    pa_id = request.POST.get('pa_em_uso')
+                    if pa_id:
+                        # Salvar o computador primeiro
+                        computador.save()
+                        
+                        # Obter a PA selecionada
+                        try:
+                            pa = PosicaoAtendimento.objects.get(id=pa_id)
+                            
+                            # Criar uma atribuição de computador à PA
+                            AtribuicaoComputadorPA.objects.create(
+                                computador=computador,
+                                posicao_atendimento=pa,
+                                data_atribuicao=timezone.now(),
+                                ativo=True
+                            )
+                            
+                            return JsonResponse({
+                                'success': True,
+                                'message': f'Computador cadastrado e atribuído à PA {pa.numero} com sucesso!'
+                            })
+                        except PosicaoAtendimento.DoesNotExist:
+                            # Ainda salvamos o computador mesmo se a PA não for encontrada
+                            computador.save()
+                            return JsonResponse({
+                                'success': True,
+                                'message': 'Computador cadastrado com sucesso, mas a PA selecionada não foi encontrada.'
+                            })
+                    else:
+                        # Se nenhuma PA for selecionada, apenas salvar o computador
+                        computador.save()
+                        return JsonResponse({
+                            'success': True,
+                            'message': 'Computador cadastrado com sucesso, mas nenhuma PA foi selecionada.'
+                        })
+                
+                elif status == 'manutencao':
+                    # Adicionar observações de manutenção ao computador
+                    observacoes_manutencao = request.POST.get('observacoes_manutencao')
+                    if observacoes_manutencao:
+                        computador.observacoes = f"MANUTENÇÃO: {observacoes_manutencao}"
+                    
+                    computador.save()
+                    return JsonResponse({
+                        'success': True,
+                        'message': 'Computador cadastrado e enviado para manutenção com sucesso!'
+                    })
+                
+                else:
+                    # Para os outros status, apenas salvar o computador
+                    computador.save()
+                    return JsonResponse({
+                        'success': True,
+                        'message': 'Computador cadastrado com sucesso!'
+                    })
+            else:
+                errors = []
+                for field, error_list in form.errors.items():
+                    for error in error_list:
+                        errors.append(f"{field}: {error}")
+                return JsonResponse({
+                    'success': False,
+                    'message': 'Erro de validação: ' + '; '.join(errors)
+                })
+        except Exception as e:
+            return JsonResponse({'success': False, 'message': str(e)})
+    
+    return JsonResponse({'success': False, 'message': 'Método não permitido'})
+
+@login_required
 def atribuicao_computador_pa_create(request):
     if request.method == 'POST':
         form = AtribuicaoComputadorPAForm(request.POST)
@@ -2530,7 +2675,7 @@ def monitor_list(request):
     context = {
         'monitores': monitores
     }
-    return render(request, 'apps/ti/monitor_list.html', context)
+    return render(request, 'ti/monitor_list.html', context)
 
 @login_required
 def monitor_create(request):
@@ -2565,7 +2710,7 @@ def monitor_update(request, pk):
         'form': form,
         'monitor': monitor
     }
-    return render(request, 'apps/ti/monitor_form.html', context)
+    return render(request, 'ti/monitor_form.html', context)
 
 @login_required
 def monitor_delete(request, pk):
@@ -2703,7 +2848,6 @@ def api_adicionar_monitor_pa(request, pa_id):
             lista_monitores_pa.append({
                 'id': atr.monitor.id,
                 'marca': atr.monitor.marca,
-                'modelo': atr.monitor.modelo,
                 'tamanho': atr.monitor.tamanho
             })
 
@@ -2764,7 +2908,6 @@ def api_remover_monitor_pa(request, pa_id):
             lista_monitores_pa.append({
                 'id': atr.monitor.id,
                 'marca': atr.monitor.marca,
-                'modelo': atr.monitor.modelo,
                 'tamanho': atr.monitor.tamanho
             })
 
@@ -2812,7 +2955,7 @@ def api_atualizar_status_monitor(request, monitor_id):
         monitor.save()
         
         partes_mensagem = [
-            f'Status do monitor {monitor.marca} {monitor.modelo} atualizado para {monitor.get_status_display()}.'
+            f'Status do monitor {monitor.marca} atualizado para {monitor.get_status_display()}.'
         ]
         monitor_removido_da_pa_especifica = False
         lista_monitores_pa_atualizada = []
@@ -2841,7 +2984,6 @@ def api_atualizar_status_monitor(request, monitor_id):
                     lista_monitores_pa_atualizada.append({
                         'id': atr.monitor.id,
                         'marca': atr.monitor.marca,
-                        'modelo': atr.monitor.modelo,
                         'tamanho': atr.monitor.tamanho
                     })
         
@@ -3017,9 +3159,11 @@ def api_computadores_disponiveis(request):
         # Converter para lista para serialização JSON
         computadores_lista = list(computadores_disponiveis)
         
-        # Adicionar um campo 'modelo' vazio para compatibilidade com o JavaScript
+        # Adicionar o campo 'condicao' para compatibilidade com o JavaScript
         for computador in computadores_lista:
-            computador['modelo'] = ''  # Adiciona campo vazio para compatibilidade
+            # Buscar o valor real da condição do computador
+            comp_obj = Computador.objects.get(id=computador['id'])
+            computador['condicao'] = comp_obj.condicao
         
         return JsonResponse({
             'success': True,
@@ -3139,7 +3283,7 @@ def api_admin_dashboard_data(request):
                 'salas': list(Sala.objects.filter(**filtro_loja).values('id', 'nome')),
                 'perifericos_disponiveis': list(Periferico.objects.filter(status='disponivel', **filtro_loja).values('id', 'marca', 'modelo', 'tipo__nome')),
                 'computadores_disponiveis': list(Computador.objects.filter(status='disponivel', **filtro_loja).values('id', 'marca')),
-                'monitores_disponiveis': list(Monitor.objects.filter(status='disponivel', **filtro_loja).values('id', 'marca', 'modelo')),
+                'monitores_disponiveis': list(Monitor.objects.filter(status='disponivel', **filtro_loja).values('id', 'marca', 'tamanho')),
                 'funcionarios': list(Funcionario.objects.filter(
                     Q(empresa__lojas__id=loja_selecionada) if loja_selecionada else Q(),
                     status=True
@@ -4041,7 +4185,7 @@ def controle_emails(request):
         'form': EmailForm(),
     }
     
-    return render(request, 'apps/ti/controle_emails.html', context)
+    return render(request, 'ti/controle_emails.html', context)
 
 @login_required
 def email_create(request):
@@ -4063,7 +4207,7 @@ def email_create(request):
         'funcionarios': Funcionario.objects.filter(status=True).order_by('nome_completo'),
     }
     
-    return render(request, 'apps/ti/email_form.html', context)
+    return render(request, 'ti/email_form.html', context)
 
 @login_required
 def email_update(request, pk):
@@ -4088,7 +4232,7 @@ def email_update(request, pk):
         'funcionarios': Funcionario.objects.filter(status=True).order_by('nome_completo'),
     }
     
-    return render(request, 'apps/ti/email_form.html', context)
+    return render(request, 'ti/email_form.html', context)
 
 @login_required
 def email_delete(request, pk):
@@ -4439,7 +4583,7 @@ def controle_chips(request):
         'form': ChipForm(),
     }
     
-    return render(request, 'apps/ti/controle_chips.html', context)
+    return render(request, 'ti/controle_chips.html', context)
 
 @login_required
 def controle_acessos(request):
@@ -4488,7 +4632,7 @@ def controle_acessos(request):
         'sistema_data': sistema_data,
     }
     
-    return render(request, 'apps/ti/controle_acessos.html', context)
+    return render(request, 'ti/controle_acessos.html', context)
 
 @login_required
 def chip_create(request):
@@ -4510,7 +4654,7 @@ def chip_create(request):
         'funcionarios': Funcionario.objects.filter(status=True).order_by('nome_completo'),
     }
     
-    return render(request, 'apps/ti/chip_form.html', context)
+    return render(request, 'ti/chip_form.html', context)
 
 @login_required
 def chip_update(request, pk):
@@ -4535,7 +4679,7 @@ def chip_update(request, pk):
         'funcionarios': Funcionario.objects.filter(status=True).order_by('nome_completo'),
     }
     
-    return render(request, 'apps/ti/chip_form.html', context)
+    return render(request, 'ti/chip_form.html', context)
 
 @login_required
 def chip_delete(request, pk):

@@ -16,10 +16,11 @@ from .models import (
     Chip,
     Email,
     Storm,
-    Sistema
+    Sistema,
+    CoordenadorSala
 )
 from apps.funcionarios.models import Funcionario
-from .utils import atribuir_item_pa, desatribuir_item_pa, verificar_disponibilidade_periferico, verificar_disponibilidade_computador
+from .utils import atribuir_item_pa, verificar_disponibilidade_periferico, verificar_disponibilidade_computador
 
 
 class LojaForm(forms.ModelForm):
@@ -208,13 +209,10 @@ class AtribuicaoPerifericoPAForm(forms.ModelForm):
 class ComputadorForm(forms.ModelForm):
     class Meta:
         model = Computador
-        fields = ['marca', 'modelo', 'numero_serie', 'condicao', 'estado', 'status', 'quantidade', 'loja', 'observacoes']
+        fields = ['marca', 'condicao', 'status', 'quantidade', 'loja', 'observacoes']
         widgets = {
             'marca': forms.TextInput(attrs={'class': 'form-control'}),
-            'modelo': forms.TextInput(attrs={'class': 'form-control'}),
-            'numero_serie': forms.TextInput(attrs={'class': 'form-control'}),
             'condicao': forms.Select(attrs={'class': 'form-control'}),
-            'estado': forms.Select(attrs={'class': 'form-control'}),
             'status': forms.Select(attrs={'class': 'form-control'}),
             'quantidade': forms.NumberInput(attrs={'class': 'form-control', 'min': 1}),
             'loja': forms.Select(attrs={'class': 'form-control'}),
@@ -274,18 +272,13 @@ class AtribuicaoComputadorPAForm(forms.ModelForm):
 class MonitorForm(forms.ModelForm):
     class Meta:
         model = Monitor
-        fields = ['marca', 'modelo', 'numero_serie', 'tamanho', 'resolucao', 'condicao', 'estado', 'status', 'loja', 'data_aquisicao', 'observacoes']
+        fields = ['marca', 'tamanho', 'condicao', 'status', 'loja', 'observacoes']
         widgets = {
             'marca': forms.TextInput(attrs={'class': 'form-control'}),
-            'modelo': forms.TextInput(attrs={'class': 'form-control'}),
-            'numero_serie': forms.TextInput(attrs={'class': 'form-control'}),
             'tamanho': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Ex: 24", 27"'}),
-            'resolucao': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Ex: 1920x1080'}),
             'condicao': forms.Select(attrs={'class': 'form-control'}),
-            'estado': forms.Select(attrs={'class': 'form-control'}),
             'status': forms.Select(attrs={'class': 'form-control'}),
             'loja': forms.Select(attrs={'class': 'form-control'}),
-            'data_aquisicao': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
             'observacoes': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
         }
 
@@ -358,9 +351,10 @@ class AtribuicaoMonitorPAForm(forms.ModelForm):
 class ChipForm(forms.ModelForm):
     class Meta:
         model = Chip
-        fields = ['numero', 'ramal', 'status', 'data_entrega', 'data_banimento']
+        fields = ['numero', 'funcionario', 'ramal', 'setor', 'status', 'data_entrega', 'data_banimento']
         widgets = {
             'numero': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Número do chip'}),
+            'funcionario': forms.Select(attrs={'class': 'form-select'}),
             'ramal': forms.Select(attrs={'class': 'form-select'}),
             'setor': forms.Select(attrs={'class': 'form-select'}),
             'status': forms.Select(attrs={'class': 'form-select'}),
@@ -369,8 +363,9 @@ class ChipForm(forms.ModelForm):
         }
         labels = {
             'numero': 'Número do Chip',
+            'funcionario': 'Funcionário',
             'ramal': 'Ramal (Funcionário)',
-
+            'setor': 'Setor (Funcionário)',
             'status': 'Status',
             'data_entrega': 'Data de Entrega',
             'data_banimento': 'Data de Banimento',
@@ -379,12 +374,38 @@ class ChipForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         # Filtrar funcionários ativos
+        self.fields['funcionario'].queryset = Funcionario.objects.filter(status=True).order_by('nome_completo')
         self.fields['ramal'].queryset = Funcionario.objects.filter(status=True).order_by('nome_completo')
+        self.fields['setor'].queryset = Funcionario.objects.filter(status=True).order_by('nome_completo')
 
+
+class CoordenadorSalaForm(forms.ModelForm):
+    class Meta:
+        model = CoordenadorSala
+        fields = ['funcionario', 'sala', 'tipo']
+        widgets = {
+            'funcionario': forms.Select(attrs={'class': 'form-select'}),
+            'sala': forms.Select(attrs={'class': 'form-select'}),
+            'tipo': forms.Select(attrs={'class': 'form-select'}),
+        }
+        labels = {
+            'funcionario': 'Funcionário',
+            'sala': 'Sala',
+            'tipo': 'Tipo de Coordenação',
+        }
+    
+    def __init__(self, *args, **kwargs):
+        loja_id = kwargs.pop('loja_id', None)
+        super().__init__(*args, **kwargs)
         
-        # Tornar campos opcionais conforme necessário
-        self.fields['data_banimento'].required = False
-        self.fields['ramal'].required = False
+        # Filtrar funcionários ativos
+        self.fields['funcionario'].queryset = Funcionario.objects.filter(status=True).order_by('nome_completo')
+        
+        # Filtrar salas por loja se fornecida
+        if loja_id:
+            self.fields['sala'].queryset = Sala.objects.filter(loja_id=loja_id).order_by('nome')
+        else:
+            self.fields['sala'].queryset = Sala.objects.all().order_by('nome')
 
 class EmailForm(forms.ModelForm):
     class Meta:
