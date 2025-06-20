@@ -9,9 +9,7 @@ urlpatterns = [
     path('controle-salas/', views.controle_salas, name='controle_salas'),
     path('all_forms/', views.controle_estoque, name='all_forms'),
     
-    # URLs para Auto Atribuição de PA
-    path('auto-atribuicao-pa/', views.auto_atribuicao_pa, name='auto_atribuicao_pa'),
-    path('api/auto-atribuicao-pa-reassign/', views.api_auto_atribuicao_pa_reassign, name='api_auto_atribuicao_pa_reassign'),
+
     
     # URLs para Controle de Manutenção
     path('controle-manutencao/', views.controle_manutencao, name='controle_manutencao'),
@@ -123,7 +121,7 @@ urlpatterns = [
     path('api/controle-salas-data/', views.api_controle_salas_data, name='api_controle_salas_data'),
     path('api/controle-estoque-data/', views.api_controle_estoque_data, name='api_controle_estoque_data'),
     path('api/controle-manutencao-data/', views.api_controle_manutencao_data, name='api_controle_manutencao_data'),
-    path('api/auto-atribuicao-pa-data/', views.api_auto_atribuicao_pa_data, name='api_auto_atribuicao_pa_data'),
+
     path('api/listar-perifericos/', views.api_listar_perifericos, name='api_listar_perifericos'),
     path('api/listar-computadores/', views.api_listar_computadores, name='api_listar_computadores'),
     path('api/listar-posicoes-atendimento/', views.api_listar_posicoes_atendimento, name='api_listar_posicoes_atendimento'),
